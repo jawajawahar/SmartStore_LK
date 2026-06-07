@@ -2,6 +2,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
+import { ThemeProvider } from "./context/ThemeContext";
 import "./index.css";
 
 import { BrowserRouter } from "react-router-dom";
@@ -11,7 +12,9 @@ import "react-toastify/dist/ReactToastify.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <BrowserRouter>
-    <App />
+    <ThemeProvider>
+      <App />
+    </ThemeProvider>
 
     <ToastContainer position="top-right" autoClose={3000} />
   </BrowserRouter>,

@@ -20,8 +20,28 @@ const userSchema = new mongoose.Schema(
 
     role: {
       type: String,
-      enum: ["admin", "cashier"],
+      enum: ["admin", "manager", "cashier"],
       default: "cashier",
+    },
+
+    permissions: {
+      type: [String],
+      default: [],
+    },
+
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+
+    phone: {
+      type: String,
+      default: "",
+    },
+
+    avatar: {
+      type: String,
+      default: "",
     },
   },
   { timestamps: true },

@@ -8,7 +8,15 @@ const productSchema = new mongoose.Schema(
     },
 
     category: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Category",
+      default: null,
+    },
+
+    brand: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Brand",
+      default: null,
     },
 
     buyingPrice: {
@@ -38,25 +46,71 @@ const productSchema = new mongoose.Schema(
       type: String,
     },
 
-    // NEW
+    // Product Type
     productType: {
       type: String,
-
       enum: ["fixed", "weighted"],
-
       default: "fixed",
     },
 
-    // NEW
+    // Unit
     unit: {
       type: String,
-
       default: "pcs",
+    },
+
+    // SKU Auto-generated
+    sku: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
+
+    // Stock level thresholds
+    minStockLevel: {
+      type: Number,
+      default: 5,
+    },
+
+    maxStockLevel: {
+      type: Number,
+      default: 1000,
+    },
+
+    // Tracking flags
+    expiryTracking: {
+      type: Boolean,
+      default: false,
+    },
+
+    batchTracking: {
+      type: Boolean,
+      default: false,
+    },
+
+    isActive: {
+      type: Boolean,
+      default: true,
     },
   },
   {
     timestamps: true,
   },
 );
+
+// Pre-save hook to auto-generate SKU
+productSchema.pre("save", async function (next) {
+  if (!this.sku) {
+    const count = await mongoose.model("Product").countDocuments();
+    this.sku = `SKU-${String(count + 1).padStart(6, "0")}`;
+  }
+  next();
+});
+
+// Indexes
+productSchema.index({ barcode: 1 });
+productSchema.index({ sku: 1 });
+productSchema.index({ category: 1 });
+productSchema.index({ brand: 1 });
 
 module.exports = mongoose.model("Product", productSchema);

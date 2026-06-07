@@ -100,10 +100,10 @@ const POS = () => {
       cart.map((item) =>
         item.product === id
           ? {
-              ...item,
-              quantity: item.quantity + 1,
-              total: (item.quantity + 1) * item.price,
-            }
+            ...item,
+            quantity: item.quantity + 1,
+            total: (item.quantity + 1) * item.price,
+          }
           : item,
       ),
     );
@@ -116,10 +116,10 @@ const POS = () => {
         .map((item) =>
           item.product === id
             ? {
-                ...item,
-                quantity: item.quantity - 1,
-                total: (item.quantity - 1) * item.price,
-              }
+              ...item,
+              quantity: item.quantity - 1,
+              total: (item.quantity - 1) * item.price,
+            }
             : item,
         )
         .filter((item) => item.quantity > 0),
@@ -262,11 +262,10 @@ const POS = () => {
                     <div className="flex items-start justify-between gap-2">
                       <h2 className="text-slate-200 font-semibold text-sm line-clamp-1">{product.name}</h2>
                       <span
-                        className={`inline-flex px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border shrink-0 ${
-                          product.productType === "weighted"
+                        className={`inline-flex px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border shrink-0 ${product.productType === "weighted"
                             ? "bg-amber-500/5 text-amber-400 border-amber-500/10"
                             : "bg-indigo-500/5 text-indigo-400 border-indigo-500/10"
-                        }`}
+                          }`}
                       >
                         {product.productType}
                       </span>
