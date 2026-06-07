@@ -1,0 +1,22 @@
+name: Docker Build Test
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+
+  docker:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - uses: actions/checkout@v4
+
+      - name: Build Backend Docker
+        run: docker build -t smartstore-backend ./server
+
+      - name: Build Frontend Docker
+        run: docker build -t smartstore-frontend ./client
