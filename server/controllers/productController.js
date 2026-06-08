@@ -42,6 +42,8 @@ const addProduct = async (req, res) => {
       product,
     });
   } catch (error) {
+    require('fs').writeFileSync('last_error.log', error.stack || error.message);
+    console.error("ADD PRODUCT ERROR:", error);
     res.status(500).json({
       message: error.message,
     });

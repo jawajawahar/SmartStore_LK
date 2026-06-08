@@ -8,9 +8,8 @@ const productSchema = new mongoose.Schema(
     },
 
     category: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Category",
-      default: null,
+      type: String,
+      default: "Uncategorized",
     },
 
     brand: {
@@ -99,12 +98,11 @@ const productSchema = new mongoose.Schema(
 );
 
 // Pre-save hook to auto-generate SKU
-productSchema.pre("save", async function (next) {
+productSchema.pre("save", async function () {
   if (!this.sku) {
     const count = await mongoose.model("Product").countDocuments();
     this.sku = `SKU-${String(count + 1).padStart(6, "0")}`;
   }
-  next();
 });
 
 // Indexes

@@ -176,11 +176,10 @@ const Dashboard = () => {
                     </div>
 
                     <div
-                      className={`text-sm font-bold ${
-                        transaction.flow === "income"
-                          ? "text-emerald-400"
-                          : "text-rose-400"
-                      }`}
+                      className={`text-sm font-bold ${transaction.flow === "income"
+                        ? "text-emerald-400"
+                        : "text-rose-400"
+                        }`}
                     >
                       {transaction.flow === "income" ? "+" : "-"}
                       Rs. {Number(transaction.amount).toLocaleString()}

@@ -24,14 +24,14 @@ const getDashboardAnalytics = async (req, res) => {
     // Paid
     const totalPaid = sales.reduce((acc, sale) => acc + sale.paidAmount, 0);
 
-    
-    // Pending Debts
-const debts = await Debt.find();
 
-const pendingAmount = debts.reduce(
-  (acc, debt) => acc + debt.remainingAmount,
-  0,
-);
+    // Pending Debts
+    const debts = await Debt.find();
+
+    const pendingAmount = debts.reduce(
+      (acc, debt) => acc + debt.remainingAmount,
+      0,
+    );
 
     // Transactions
     const transactions = await Transaction.find();
