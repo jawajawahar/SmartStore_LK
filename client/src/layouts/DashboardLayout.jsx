@@ -12,6 +12,9 @@ import {
   FaExchangeAlt,
   FaMoon,
   FaSun,
+  FaUndo,
+  FaReceipt,
+  FaCoins,
 } from "react-icons/fa";
 
 import { useNavigate, useLocation, Link } from "react-router-dom";
@@ -147,6 +150,30 @@ const DashboardLayout = ({ children }) => {
               text="Transactions"
               to="/transactions"
               active={location.pathname === "/transactions"}
+              theme={theme}
+            />
+
+            <SidebarItem
+              icon={<FaCoins />}
+              text="Expenses"
+              to="/expenses"
+              active={location.pathname === "/expenses"}
+              theme={theme}
+            />
+
+            <SidebarItem
+              icon={<FaUndo />}
+              text="Returns"
+              to="/returns"
+              active={location.pathname === "/returns"}
+              theme={theme}
+            />
+
+            <SidebarItem
+              icon={<FaReceipt />}
+              text="Daily Report"
+              to="/daily-report"
+              active={location.pathname === "/daily-report"}
               theme={theme}
             />
           </div>

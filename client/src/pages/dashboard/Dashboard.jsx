@@ -15,8 +15,9 @@ import API from "../../services/api";
 
 const Dashboard = () => {
   const [dashboard, setDashboard] = useState(null);
+  const [lowStockCount, setLowStockCount] = useState(0);
 
-  // Fetch Dashboard
+  // Fetch Dashboard Analytics
   const fetchDashboard = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -29,13 +30,30 @@ const Dashboard = () => {
 
       setDashboard(response.data);
     } catch (error) {
-      console.log(error);
+      console.log("Error fetching dashboard metrics:", error);
+    }
+  };
+
+  // Fetch Low Stock Count
+  const fetchLowStockCount = async () => {
+    try {
+      const token = localStorage.getItem("token");
+
+      const response = await API.get("/analytics/low-stock", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      setLowStockCount(response.data.length);
+    } catch (error) {
+      console.log("Error fetching low stock count:", error);
     }
   };
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchDashboard();
+    fetchLowStockCount();
   }, []);
 
   if (!dashboard) {
@@ -228,6 +246,17 @@ const Dashboard = () => {
             </div>
 
             <div className="space-y-3">
+              {lowStockCount > 0 && (
+                <Link to="/products" className="block">
+                  <div className="bg-amber-500/5 hover:bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-3.5 flex items-center justify-between transition-all cursor-pointer">
+                    <div>
+                      <h3 className="text-slate-200 text-xs font-semibold">Low Stock Products</h3>
+                      <p className="text-slate-500 text-[10px] mt-0.5 font-medium">Reorder needed</p>
+                    </div>
+                    <div className="text-amber-400 font-bold text-sm">{lowStockCount} items</div>
+                  </div>
+                </Link>
+              )}
               <AlertCard
                 title="Pending Debts Collection"
                 value={`Rs. ${Number(dashboard.pendingAmount || 0).toLocaleString()}`}
@@ -282,4 +311,3 @@ const AlertCard = ({ title, value }) => {
 };
 
 export default Dashboard;
-

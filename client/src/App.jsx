@@ -12,6 +12,9 @@ import POS from "./pages/dashboard/POS";
 import Analytics from "./pages/dashboard/Analytics";
 import SalesHistory from "./pages/dashboard/SalesHistory";
 import Transactions from "./pages/dashboard/Transactions";
+import Expenses from "./pages/dashboard/Expenses";
+import Returns from "./pages/dashboard/Returns";
+import DailyReport from "./pages/dashboard/DailyReport";
 
 function App() {
   return (
@@ -108,6 +111,33 @@ function App() {
         element={
           <ProtectedRoute>
             <Transactions />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/expenses"
+        element={
+          <ProtectedRoute>
+            <Expenses />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/returns"
+        element={
+          <ProtectedRoute>
+            <Returns />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/daily-report"
+        element={
+          <ProtectedRoute>
+            <DailyReport />
           </ProtectedRoute>
         }
       />

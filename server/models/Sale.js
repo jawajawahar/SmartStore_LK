@@ -45,6 +45,37 @@ const saleSchema = new mongoose.Schema(
       enum: ["cash", "partial", "credit"],
       default: "cash",
     },
+
+    discountType: {
+      type: String,
+      enum: ["percentage", "fixed", null],
+      default: null,
+    },
+
+    discountValue: {
+      type: Number,
+      default: 0,
+    },
+
+    discountAmount: {
+      type: Number,
+      default: 0,
+    },
+
+    taxRate: {
+      type: Number,
+      default: 0,
+    },
+
+    taxAmount: {
+      type: Number,
+      default: 0,
+    },
+
+    netAmount: {
+      type: Number,
+      required: true,
+    },
   },
   { timestamps: true },
 );

@@ -4,7 +4,16 @@ const transactionSchema = new mongoose.Schema(
   {
     type: {
       type: String,
-      enum: ["sale", "debt_payment", "supplier_payment", "supplier_purchase"],
+      enum: [
+        "sale",
+        "debt_payment",
+        "supplier_payment",
+        "supplier_purchase",
+        "expense",
+        "income",
+        "refund",
+        "return",
+      ],
       required: true,
     },
 
@@ -38,11 +47,27 @@ const transactionSchema = new mongoose.Schema(
       ref: "Sale",
     },
 
+    expense: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Expense",
+    },
+
+    category: {
+      type: String,
+      default: "general",
+    },
+
     description: {
       type: String,
     },
   },
   { timestamps: true },
 );
+
+// Indexes for performance
+transactionSchema.index({ flow: 1 });
+transactionSchema.index({ type: 1 });
+transactionSchema.index({ createdAt: -1 });
+transactionSchema.index({ category: 1 });
 
 module.exports = mongoose.model("Transaction", transactionSchema);
