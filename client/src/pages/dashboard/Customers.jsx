@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
-import { FaEdit, FaTrash } from "react-icons/fa";
+import { FaEdit, FaTrash, FaCloudUploadAlt } from "react-icons/fa";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import API from "../../services/api";
 import { toast } from "react-toastify";
+import BulkUpload from "../../components/BulkUpload";
 
 const Customers = () => {
   const [customers, setCustomers] = useState([]);
   const [search, setSearch] = useState("");
   const [editingId, setEditingId] = useState(null);
+  const [isBulkOpen, setIsBulkOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -143,6 +145,14 @@ const Customers = () => {
           <p className="text-text-secondary text-sm mt-1">
             Manage customer accounts, metrics, and outstanding balances
           </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setIsBulkOpen(true)}
+            className="flex items-center gap-2 bg-indigo-600/10 hover:bg-indigo-600/15 border border-indigo-600/20 text-indigo-500 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer"
+          >
+            <FaCloudUploadAlt /> Bulk Import CSV
+          </button>
         </div>
       </div>
 
@@ -287,6 +297,12 @@ const Customers = () => {
           </table>
         </div>
       </div>
+      <BulkUpload
+        isOpen={isBulkOpen}
+        onClose={() => setIsBulkOpen(false)}
+        type="customers"
+        onSuccess={fetchCustomers}
+      />
     </DashboardLayout>
   );
 };

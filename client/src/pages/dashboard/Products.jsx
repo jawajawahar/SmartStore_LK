@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
 import DashboardLayout from "../../layouts/DashboardLayout";
-import { FaEdit, FaTrash, FaPlus, FaFilter } from "react-icons/fa";
+import { FaEdit, FaTrash, FaPlus, FaFilter, FaCloudUploadAlt } from "react-icons/fa";
 import API from "../../services/api";
 import { toast } from "react-toastify";
+import BulkUpload from "../../components/BulkUpload";
 
 const Products = () => {
   const [products, setProducts] = useState([]);
   const [search, setSearch] = useState("");
   const [editingId, setEditingId] = useState(null);
   const [image, setImage] = useState(null);
+  const [isBulkOpen, setIsBulkOpen] = useState(false);
 
   // Product Type
   const [productType, setProductType] = useState("fixed");
@@ -179,6 +181,14 @@ const Products = () => {
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-text-main">Products</h1>
           <p className="text-text-secondary text-sm mt-1">Smart inventory management and catalog control</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setIsBulkOpen(true)}
+            className="flex items-center gap-2 bg-indigo-600/10 hover:bg-indigo-600/15 border border-indigo-600/20 text-indigo-500 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer"
+          >
+            <FaCloudUploadAlt /> Bulk Import CSV
+          </button>
         </div>
       </div>
 
@@ -421,6 +431,12 @@ const Products = () => {
           </table>
         </div>
       </div>
+      <BulkUpload
+        isOpen={isBulkOpen}
+        onClose={() => setIsBulkOpen(false)}
+        type="products"
+        onSuccess={fetchProducts}
+      />
     </DashboardLayout>
   );
 };

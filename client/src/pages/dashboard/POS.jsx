@@ -13,10 +13,12 @@ import {
   FaMoneyBillWave,
   FaUniversity,
   FaUserTag,
+  FaCamera,
 } from "react-icons/fa";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import API from "../../services/api";
 import { toast } from "react-toastify";
+import BarcodeScanner from "../../components/BarcodeScanner";
 
 const POS = () => {
   const [products, setProducts] = useState([]);
@@ -25,6 +27,7 @@ const POS = () => {
   const [cart, setCart] = useState([]);
   const [selectedCustomer, setSelectedCustomer] = useState("");
   const [paidAmount, setPaidAmount] = useState("");
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
 
   // Payment Mode State: cash, card, bank_transfer, credit
   const [paymentMode, setPaymentMode] = useState("cash");
@@ -128,6 +131,29 @@ const POS = () => {
           unit: product.unit || "pcs",
         },
       ]);
+    }
+  };
+
+  // Scan Barcode Handlers
+  const handleScanBarcode = async (barcode) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await API.get(`/products?barcode=${encodeURIComponent(barcode)}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.data && response.data.length > 0) {
+        const product = response.data[0];
+        addToCart(product);
+        toast.success(`Scanned: ${product.name}`);
+      } else {
+        toast.error(`Product with barcode "${barcode}" not found in inventory.`);
+      }
+    } catch (error) {
+      console.error("Barcode search error:", error);
+      toast.error("Error looking up barcode.");
     }
   };
 
@@ -403,17 +429,26 @@ const POS = () => {
         {/* Products Column */}
         <div className="xl:col-span-2 space-y-6">
           {/* Search bar & Barcode Indicator */}
-          <div className="relative">
-            <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-text-secondary">
-              <FaBarcode className="text-base" />
-            </span>
-            <input
-              type="text"
-              placeholder="Scan barcode or type product name/SKU..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-bg-card border border-border-color text-text-main pl-10 pr-5 py-3 rounded-xl outline-none text-sm transition-all focus:border-indigo-500 placeholder-text-secondary/50"
-            />
+          <div className="flex gap-3 items-center">
+            <div className="relative flex-1">
+              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-text-secondary">
+                <FaBarcode className="text-base" />
+              </span>
+              <input
+                type="text"
+                placeholder="Scan barcode or type product name/SKU..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full bg-bg-card border border-border-color text-text-main pl-10 pr-5 py-3 rounded-xl outline-none text-sm transition-all focus:border-indigo-500 placeholder-text-secondary/50"
+              />
+            </div>
+            <button
+              onClick={() => setIsScannerOpen(true)}
+              className="flex items-center justify-center bg-indigo-650 bg-indigo-600 hover:bg-indigo-550 hover:bg-indigo-550 text-white rounded-xl transition-all shadow-md active:scale-95 cursor-pointer h-[46px] w-[46px] shrink-0 border border-indigo-650/10"
+              title="Scan barcode with camera"
+            >
+              <FaCamera className="text-sm" />
+            </button>
           </div>
 
           {/* Product Grid */}
@@ -1008,6 +1043,11 @@ const POS = () => {
           </div>
         </div>
       )}
+      <BarcodeScanner
+        isOpen={isScannerOpen}
+        onClose={() => setIsScannerOpen(false)}
+        onScan={handleScanBarcode}
+      />
     </DashboardLayout>
   );
 };

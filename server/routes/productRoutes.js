@@ -5,6 +5,7 @@ const {
   getProducts,
   updateProduct,
   deleteProduct,
+  bulkAddProducts,
 } = require("../controllers/productController");
 
 const { protect } = require("../middleware/authMiddleware");
@@ -27,6 +28,8 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // Routes
+router.post("/bulk", protect, bulkAddProducts);
+
 router.post("/", protect, upload.single("image"), addProduct);
 
 router.get("/", protect, getProducts);

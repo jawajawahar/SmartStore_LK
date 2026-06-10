@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
-import { FaTruck, FaSearch, FaPlus } from "react-icons/fa";
+import { FaTruck, FaSearch, FaPlus, FaCloudUploadAlt } from "react-icons/fa";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import API from "../../services/api";
 import { toast } from "react-toastify";
+import BulkUpload from "../../components/BulkUpload";
 
 const Suppliers = () => {
   const [suppliers, setSuppliers] = useState([]);
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [isBulkOpen, setIsBulkOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -85,6 +87,13 @@ const Suppliers = () => {
               className="border border-border-color bg-bg-card text-text-main placeholder:text-text-secondary/50 pl-9 pr-4 py-2.5 rounded-xl outline-none focus:border-indigo-500 text-sm w-full md:w-[240px] transition-all"
             />
           </div>
+
+          <button
+            onClick={() => setIsBulkOpen(true)}
+            className="flex items-center gap-2 bg-indigo-600/10 hover:bg-indigo-600/15 border border-indigo-600/20 text-indigo-500 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all cursor-pointer"
+          >
+            <FaCloudUploadAlt /> Bulk Import
+          </button>
 
           <button
             onClick={() => setShowForm(!showForm)}
@@ -195,6 +204,12 @@ const Suppliers = () => {
           </table>
         </div>
       </div>
+      <BulkUpload
+        isOpen={isBulkOpen}
+        onClose={() => setIsBulkOpen(false)}
+        type="suppliers"
+        onSuccess={fetchSuppliers}
+      />
     </DashboardLayout>
   );
 };
