@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { FaEdit, FaTrash } from "react-icons/fa";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import API from "../../services/api";
+import { toast } from "react-toastify";
 
 const Customers = () => {
   const [customers, setCustomers] = useState([]);
@@ -29,11 +30,11 @@ const Customers = () => {
       setCustomers(response.data);
     } catch (error) {
       console.log(error);
+      toast.error("Failed to load customer accounts registry");
     }
   };
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchCustomers();
   }, []);
 
@@ -60,7 +61,7 @@ const Customers = () => {
           },
         });
 
-        alert("Customer Updated Successfully");
+        toast.success("Customer account updated successfully");
       } else {
         // ADD
         await API.post("/customers", formData, {
@@ -69,7 +70,7 @@ const Customers = () => {
           },
         });
 
-        alert("Customer Added Successfully");
+        toast.success("Customer registered successfully");
       }
 
       // Reset Form
@@ -84,7 +85,7 @@ const Customers = () => {
       fetchCustomers();
     } catch (error) {
       console.log(error);
-      alert("Failed to Save Customer");
+      toast.error("Failed to save customer record");
     }
   };
 
@@ -95,8 +96,8 @@ const Customers = () => {
     setFormData({
       name: customer.name,
       phone: customer.phone,
-      address: customer.address,
-      customerType: customer.customerType,
+      address: customer.address || "",
+      customerType: customer.customerType || "normal",
     });
 
     window.scrollTo({
@@ -109,7 +110,7 @@ const Customers = () => {
   const handleDelete = async (id) => {
     try {
       const token = localStorage.getItem("token");
-      const confirmDelete = window.confirm("Delete this customer?");
+      const confirmDelete = window.confirm("Are you sure you want to delete this customer account?");
 
       if (!confirmDelete) return;
 
@@ -119,17 +120,18 @@ const Customers = () => {
         },
       });
 
-      alert("Customer Deleted Successfully");
+      toast.success("Customer record deleted successfully");
       fetchCustomers();
     } catch (error) {
       console.log(error);
-      alert("Failed to Delete Customer");
+      toast.error("Failed to delete customer");
     }
   };
 
   // Search Filter
   const filteredCustomers = customers.filter((customer) =>
-    customer.name.toLowerCase().includes(search.toLowerCase()),
+    customer.name.toLowerCase().includes(search.toLowerCase()) ||
+    customer.phone?.includes(search)
   );
 
   return (
@@ -137,16 +139,16 @@ const Customers = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white">Customers</h1>
-          <p className="text-slate-500 text-sm mt-1">
+          <h1 className="text-3xl font-bold tracking-tight text-text-main">Customers</h1>
+          <p className="text-text-secondary text-sm mt-1">
             Manage customer accounts, metrics, and outstanding balances
           </p>
         </div>
       </div>
 
       {/* Add/Edit Customer Form */}
-      <div className="bg-[#0b0f19] border border-slate-800/80 rounded-xl p-6 mb-8">
-        <h2 className="text-lg font-bold text-white mb-5 tracking-tight">
+      <div className="bg-bg-card border border-border-color rounded-xl p-6 mb-8 shadow-sm">
+        <h2 className="text-lg font-bold text-text-main mb-5 tracking-tight">
           {editingId ? "Edit Customer Profile" : "Register New Customer"}
         </h2>
 
@@ -177,12 +179,12 @@ const Customers = () => {
 
           {/* Customer Type */}
           <div>
-            <label className="block text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Customer Type</label>
+            <label className="block text-text-secondary text-[10px] font-bold uppercase tracking-wider mb-2">Customer Type</label>
             <select
               name="customerType"
               value={formData.customerType}
               onChange={handleChange}
-              className="w-full bg-[#111827] border border-slate-800 text-slate-100 px-4 py-2.5 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 transition-all text-sm cursor-pointer"
+              className="w-full bg-bg-main border border-border-color text-text-main px-4 py-2.5 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 transition-all text-sm cursor-pointer"
             >
               <option value="normal">Normal Customer</option>
               <option value="bulk">Bulk Buyer</option>
@@ -204,45 +206,45 @@ const Customers = () => {
       {/* Search */}
       <input
         type="text"
-        placeholder="Filter customer accounts registry..."
+        placeholder="Filter customer accounts by name or phone..."
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        className="w-full bg-[#0b0f19] border border-slate-800 text-slate-200 placeholder-slate-500 px-5 py-3 rounded-xl outline-none focus:border-slate-700 transition-colors text-sm mb-6"
+        className="w-full bg-bg-card border border-border-color text-text-main placeholder-text-secondary/40 px-5 py-3 rounded-xl outline-none focus:border-indigo-500 transition-colors text-xs mb-6 shadow-xs"
       />
 
       {/* Customer Table */}
-      <div className="bg-[#0b0f19] border border-slate-800/80 rounded-xl overflow-hidden shadow-sm">
+      <div className="bg-bg-card border border-border-color rounded-xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-[#111827]/60 border-b border-slate-800">
+            <thead className="bg-bg-main/60 border-b border-border-color">
               <tr>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Name</th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Phone</th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Address</th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Type</th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Current Debt</th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Actions</th>
+                <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Name</th>
+                <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Phone</th>
+                <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Address</th>
+                <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Type</th>
+                <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Current Debt</th>
+                <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Actions</th>
               </tr>
             </thead>
 
-            <tbody className="divide-y divide-slate-850">
+            <tbody className="divide-y divide-border-color/60">
               {filteredCustomers.length > 0 ? (
                 filteredCustomers.map((customer) => (
                   <tr
                     key={customer._id}
-                    className="hover:bg-slate-800/25 transition-colors"
+                    className="hover:bg-bg-main/30 transition-colors"
                   >
-                    <td className="px-5 py-3.5 font-semibold text-slate-200 text-sm">{customer.name}</td>
-                    <td className="px-5 py-3.5 text-slate-400 text-sm">{customer.phone}</td>
-                    <td className="px-5 py-3.5 text-slate-400 text-sm">{customer.address}</td>
+                    <td className="px-5 py-3.5 font-bold text-text-main text-xs">{customer.name}</td>
+                    <td className="px-5 py-3.5 text-text-secondary text-xs">{customer.phone}</td>
+                    <td className="px-5 py-3.5 text-text-secondary text-xs text-slate-500">{customer.address || "—"}</td>
 
                     {/* Type Badge */}
-                    <td className="px-5 py-3.5 text-sm">
+                    <td className="px-5 py-3.5 text-xs">
                       <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold border ${
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-[10px] font-bold border uppercase ${
                           customer.customerType === "bulk"
-                            ? "bg-purple-500/10 text-purple-400 border-purple-500/20"
-                            : "bg-blue-500/10 text-blue-400 border-blue-500/20"
+                            ? "bg-purple-500/10 text-purple-500 border-purple-500/20"
+                            : "bg-blue-500/10 text-blue-500 border-blue-500/20"
                         }`}
                       >
                         {customer.customerType}
@@ -250,27 +252,27 @@ const Customers = () => {
                     </td>
 
                     {/* Debt */}
-                    <td className="px-5 py-3.5 text-rose-400 font-semibold text-sm">
+                    <td className="px-5 py-3.5 text-rose-500 font-extrabold text-xs">
                       Rs. {Number(customer.currentDebt || 0).toLocaleString()}
                     </td>
 
                     {/* Actions */}
-                    <td className="px-5 py-3.5 text-sm">
+                    <td className="px-5 py-3.5 text-xs">
                       <div className="flex items-center gap-2">
                         {/* Edit */}
                         <button
                           onClick={() => handleEdit(customer)}
-                          className="w-8 h-8 rounded-lg bg-indigo-500/10 hover:bg-indigo-650 hover:bg-indigo-600 text-indigo-400 hover:text-white flex items-center justify-center transition-all duration-150 cursor-pointer"
+                          className="w-8 h-8 rounded-lg bg-indigo-500/10 hover:bg-indigo-650 hover:bg-indigo-600 text-indigo-500 hover:text-white flex items-center justify-center transition-all duration-150 cursor-pointer"
                         >
-                          <FaEdit className="text-xs" />
+                          <FaEdit className="text-[10px]" />
                         </button>
 
                         {/* Delete */}
                         <button
                           onClick={() => handleDelete(customer._id)}
-                          className="w-8 h-8 rounded-lg bg-rose-500/10 hover:bg-rose-650 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center transition-all duration-150 cursor-pointer"
+                          className="w-8 h-8 rounded-lg bg-rose-500/10 hover:bg-rose-650 hover:bg-rose-600 text-rose-500 hover:text-white flex items-center justify-center transition-all duration-150 cursor-pointer"
                         >
-                          <FaTrash className="text-xs" />
+                          <FaTrash className="text-[10px]" />
                         </button>
                       </div>
                     </td>
@@ -278,7 +280,7 @@ const Customers = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="6" className="text-center py-6 text-slate-500 text-sm">No customers matched search parameters.</td>
+                  <td colSpan="6" className="text-center py-8 text-text-secondary text-xs">No customers matched search parameters.</td>
                 </tr>
               )}
             </tbody>
@@ -293,18 +295,17 @@ const Customers = () => {
 const Input = ({ label, name, value, onChange }) => {
   return (
     <div>
-      <label className="block text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">{label}</label>
+      <label className="block text-text-secondary text-[10px] font-bold uppercase tracking-wider mb-2">{label}</label>
       <input
         type="text"
         name={name}
         value={value}
         onChange={onChange}
         required
-        className="w-full bg-[#111827] border border-slate-800 text-slate-100 placeholder-slate-500 px-4 py-2.5 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 transition-all text-sm"
+        className="w-full bg-bg-main border border-border-color text-text-main placeholder-text-secondary/40 px-4 py-2.5 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 transition-all text-sm"
       />
     </div>
   );
 };
 
 export default Customers;
-

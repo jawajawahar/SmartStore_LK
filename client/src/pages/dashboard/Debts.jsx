@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import API from "../../services/api";
+import { toast } from "react-toastify";
 
 const Debts = () => {
   const [customers, setCustomers] = useState([]);
@@ -47,11 +48,11 @@ const Debts = () => {
       setDebts(response.data);
     } catch (error) {
       console.log(error);
+      toast.error("Failed to load debts ledger");
     }
   };
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchCustomers();
     fetchDebts();
   }, []);
@@ -77,7 +78,7 @@ const Debts = () => {
         },
       });
 
-      alert("Debt Added Successfully");
+      toast.success("Debt record logged successfully");
 
       setFormData({
         customer: "",
@@ -89,7 +90,7 @@ const Debts = () => {
       fetchDebts();
     } catch (error) {
       console.log(error);
-      alert("Failed to Add Debt");
+      toast.error("Failed to Log Debt Entry");
     }
   };
 
@@ -110,13 +111,13 @@ const Debts = () => {
         },
       );
 
-      alert("Payment Added");
+      toast.success("Payment recorded successfully");
       setSelectedDebt(null);
       setPaymentAmount("");
       fetchDebts();
     } catch (error) {
       console.log(error);
-      alert("Payment Failed");
+      toast.error("Payment settlement failed");
     }
   };
 
@@ -124,17 +125,17 @@ const Debts = () => {
     <DashboardLayout>
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight text-white font-sans">
+        <h1 className="text-3xl font-bold tracking-tight text-text-main font-sans">
           Borrow & Debt Management
         </h1>
-        <p className="text-slate-500 text-sm mt-1">
+        <p className="text-text-secondary text-sm mt-1">
           Track customer outstanding balances, payment schedules, and logs
         </p>
       </div>
 
       {/* Add Debt Form */}
-      <div className="bg-[#0b0f19] border border-slate-800/80 rounded-xl p-6 mb-8">
-        <h2 className="text-lg font-bold text-white mb-5 tracking-tight font-sans">Add Borrow Record</h2>
+      <div className="bg-bg-card border border-border-color rounded-xl p-6 mb-8 shadow-sm">
+        <h2 className="text-lg font-bold text-text-main mb-5 tracking-tight font-sans">Add Borrow Record</h2>
 
         <form
           onSubmit={handleSubmit}
@@ -142,13 +143,13 @@ const Debts = () => {
         >
           {/* Customer */}
           <div>
-            <label className="block text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Customer</label>
+            <label className="block text-text-secondary text-[10px] font-bold uppercase tracking-wider mb-2">Customer</label>
             <select
               name="customer"
               value={formData.customer}
               onChange={handleChange}
               required
-              className="w-full bg-[#111827] border border-slate-800 text-slate-105 text-slate-200 px-4 py-2.5 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 transition-all text-sm cursor-pointer"
+              className="w-full bg-bg-main border border-border-color text-text-main px-4 py-2.5 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 transition-all text-sm cursor-pointer"
             >
               <option value="">Select Customer</option>
               {customers.map((customer) => (
@@ -198,43 +199,43 @@ const Debts = () => {
       </div>
 
       {/* Debt Table */}
-      <div className="bg-[#0b0f19] border border-slate-800/80 rounded-xl overflow-hidden shadow-sm">
+      <div className="bg-bg-card border border-border-color rounded-xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-[#111827]/60 border-b border-slate-800">
+            <thead className="bg-bg-main/60 border-b border-border-color">
               <tr>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Customer</th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Description</th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Total</th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Paid</th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Remaining</th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Status</th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Action</th>
+                <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Customer</th>
+                <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Description</th>
+                <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Total</th>
+                <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Paid</th>
+                <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Remaining</th>
+                <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Status</th>
+                <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Action</th>
               </tr>
             </thead>
 
-            <tbody className="divide-y divide-slate-850">
+            <tbody className="divide-y divide-border-color/60">
               {debts.length > 0 ? (
                 debts.map((debt) => (
                   <tr
                     key={debt._id}
-                    className="hover:bg-slate-800/25 transition-colors"
+                    className="hover:bg-bg-main/30 transition-colors"
                   >
-                    <td className="px-5 py-3.5 font-semibold text-slate-200 text-sm">{debt.customer?.name}</td>
-                    <td className="px-5 py-3.5 text-slate-400 text-sm">{debt.description}</td>
-                    <td className="px-5 py-3.5 text-slate-350 text-sm">Rs. {Number(debt.totalAmount).toLocaleString()}</td>
-                    <td className="px-5 py-3.5 text-emerald-400 font-medium text-sm">Rs. {Number(debt.paidAmount).toLocaleString()}</td>
-                    <td className="px-5 py-3.5 text-rose-400 font-bold text-sm">
+                    <td className="px-5 py-3.5 font-bold text-text-main text-xs">{debt.customer?.name || "Deleted Customer"}</td>
+                    <td className="px-5 py-3.5 text-text-secondary text-xs">{debt.description}</td>
+                    <td className="px-5 py-3.5 text-text-main text-xs">Rs. {Number(debt.totalAmount).toLocaleString()}</td>
+                    <td className="px-5 py-3.5 text-emerald-500 font-bold text-xs">Rs. {Number(debt.paidAmount).toLocaleString()}</td>
+                    <td className="px-5 py-3.5 text-rose-505 text-rose-500 font-extrabold text-xs">
                       Rs. {Number(debt.remainingAmount).toLocaleString()}
                     </td>
 
                     {/* Status */}
-                    <td className="px-5 py-3.5 text-sm">
+                    <td className="px-5 py-3.5 text-xs">
                       <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold border ${
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-[10px] font-bold border uppercase ${
                           debt.status === "paid"
-                            ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                            : "bg-rose-500/10 text-rose-400 border-rose-500/20"
+                            ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+                            : "bg-rose-500/10 text-rose-500 border-rose-500/20"
                         }`}
                       >
                         {debt.status}
@@ -242,23 +243,23 @@ const Debts = () => {
                     </td>
 
                     {/* Action */}
-                    <td className="px-5 py-3.5 text-sm">
+                    <td className="px-5 py-3.5 text-xs">
                       {debt.status !== "paid" ? (
                         <button
                           onClick={() => setSelectedDebt(debt)}
-                          className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-colors active:scale-[0.97]"
+                          className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-1.5 rounded-lg font-bold uppercase text-[10px] cursor-pointer transition-colors active:scale-[0.97] shadow-sm hover:shadow"
                         >
                           Clear Part
                         </button>
                       ) : (
-                        <span className="text-slate-500 text-xs font-semibold">-</span>
+                        <span className="text-text-secondary font-semibold">-</span>
                       )}
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="7" className="text-center py-6 text-slate-500 text-sm">No borrow records found.</td>
+                  <td colSpan="7" className="text-center py-8 text-text-secondary text-xs">No borrow records found.</td>
                 </tr>
               )}
             </tbody>
@@ -268,39 +269,39 @@ const Debts = () => {
 
       {/* Payment Modal */}
       {selectedDebt && (
-        <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[#0b0f19] border border-slate-800 rounded-xl p-6 w-full max-w-sm shadow-2xl relative">
-            <h2 className="text-lg font-bold text-white mb-4 tracking-tight">Record Debt Payment</h2>
+        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-bg-card border border-border-color rounded-2xl p-6 w-full max-w-sm shadow-2xl relative text-text-main">
+            <h2 className="text-lg font-bold text-text-main mb-4 tracking-tight">Record Debt Payment</h2>
 
-            <div className="mb-5 bg-[#111827]/60 border border-slate-800/80 rounded-xl p-4 flex justify-between items-center text-sm">
-              <span className="text-slate-400 font-medium">Remaining balance:</span>
-              <span className="text-rose-400 font-bold text-base">
+            <div className="mb-5 bg-bg-main border border-border-color rounded-xl p-4 flex justify-between items-center text-xs">
+              <span className="text-text-secondary font-medium">Remaining balance:</span>
+              <span className="text-rose-500 font-extrabold text-base">
                 Rs. {Number(selectedDebt.remainingAmount).toLocaleString()}
               </span>
             </div>
 
             <div className="mb-6">
-              <label className="block text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Payment Amount (Rs.)</label>
+              <label className="block text-text-secondary text-[10px] font-bold uppercase tracking-wider mb-2">Payment Amount (Rs.)</label>
               <input
                 type="number"
                 placeholder="Enter paid amount"
                 value={paymentAmount}
                 onChange={(e) => setPaymentAmount(e.target.value)}
-                className="w-full bg-[#111827] border border-slate-800 text-white placeholder-slate-500 px-4 py-3 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 transition-all text-sm"
+                className="w-full bg-bg-main border border-border-color text-text-main placeholder-text-secondary/40 px-4 py-3 rounded-xl outline-none focus:border-indigo-500 transition-all text-xs"
               />
             </div>
 
             <div className="flex gap-3">
               <button
                 onClick={handlePayment}
-                className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 rounded-xl font-semibold text-sm transition-colors cursor-pointer active:scale-[0.98]"
+                className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer active:scale-[0.98] shadow-sm"
               >
                 Confirm Payment
               </button>
 
               <button
                 onClick={() => setSelectedDebt(null)}
-                className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 py-2.5 rounded-xl font-semibold text-sm transition-colors cursor-pointer active:scale-[0.98]"
+                className="flex-1 bg-bg-main hover:bg-border-color text-text-secondary py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer active:scale-[0.98]"
               >
                 Cancel
               </button>
@@ -316,18 +317,17 @@ const Debts = () => {
 const Input = ({ label, name, type = "text", value, onChange }) => {
   return (
     <div>
-      <label className="block text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">{label}</label>
+      <label className="block text-text-secondary text-[10px] font-bold uppercase tracking-wider mb-2">{label}</label>
       <input
         type={type}
         name={name}
         value={value}
         onChange={onChange}
         required
-        className="w-full bg-[#111827] border border-slate-800 text-slate-100 placeholder-slate-500 px-4 py-2.5 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 transition-all text-sm"
+        className="w-full bg-bg-main border border-border-color text-text-main placeholder-text-secondary/40 px-4 py-2.5 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 transition-all text-sm"
       />
     </div>
   );
 };
 
 export default Debts;
-

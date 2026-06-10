@@ -11,6 +11,7 @@ import {
 import DashboardLayout from "../../layouts/DashboardLayout";
 import PrintableInvoice from "../../components/PrintableInvoice";
 import API from "../../services/api";
+import { toast } from "react-toastify";
 
 const SalesHistory = () => {
   const [sales, setSales] = useState([]);
@@ -34,6 +35,7 @@ const SalesHistory = () => {
       setSales(response.data);
     } catch (error) {
       console.log(error);
+      toast.error("Failed to load invoice history logs");
     }
   };
 
@@ -58,18 +60,17 @@ const SalesHistory = () => {
       setShowModal(true);
     } catch (error) {
       console.log(error);
+      toast.error("Failed to load invoice details");
     }
   };
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchSales();
   }, []);
 
   // Search Filter
   const filteredSales = sales.filter((sale) => {
     const customer = sale.customer?.name || "Walk-in Customer";
-
     return customer.toLowerCase().includes(search.toLowerCase());
   });
 
@@ -78,8 +79,8 @@ const SalesHistory = () => {
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white font-sans">Sales History</h1>
-          <p className="text-slate-500 text-sm mt-1">
+          <h1 className="text-3xl font-bold tracking-tight text-text-main font-sans">Sales History</h1>
+          <p className="text-text-secondary text-sm mt-1">
             Store billing logs, client invoices history, and payments timeline
           </p>
         </div>
@@ -87,77 +88,77 @@ const SalesHistory = () => {
         {/* Search */}
         <input
           type="text"
-          placeholder="Filter invoice by customer..."
+          placeholder="Filter invoices by customer..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="bg-[#0b0f19] border border-slate-800 text-slate-200 placeholder-slate-500 px-5 py-2.5 rounded-xl outline-none w-full lg:w-[280px] text-sm focus:border-slate-700 transition-colors"
+          className="bg-bg-card border border-border-color text-text-main placeholder-text-secondary/40 px-5 py-2.5 rounded-xl outline-none w-full lg:w-[280px] text-xs focus:border-indigo-500 transition-colors"
         />
       </div>
 
       {/* Table */}
-      <div className="bg-[#0b0f19] border border-slate-800/80 rounded-xl overflow-hidden shadow-sm">
+      <div className="bg-bg-card border border-border-color rounded-xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-[#111827]/60 border-b border-slate-800">
+            <thead className="bg-bg-main/60 border-b border-border-color">
               <tr>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Invoice ID</th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Customer</th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Total</th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Paid</th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Remaining</th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Payment</th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Date</th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Action</th>
+                <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Invoice ID</th>
+                <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Customer</th>
+                <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Total</th>
+                <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Paid</th>
+                <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Remaining</th>
+                <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Payment</th>
+                <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Date</th>
+                <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Action</th>
               </tr>
             </thead>
 
-            <tbody className="divide-y divide-slate-850">
+            <tbody className="divide-y divide-border-color/60">
               {filteredSales.length > 0 ? (
                 filteredSales.map((sale, index) => (
                   <tr
                     key={sale._id}
-                    className="hover:bg-slate-800/25 transition-colors"
+                    className="hover:bg-bg-main/30 transition-colors"
                   >
                     {/* Invoice */}
-                    <td className="px-5 py-3.5 font-bold text-indigo-400 text-sm">
+                    <td className="px-5 py-3.5 font-bold text-indigo-550 text-indigo-500 text-xs">
                       INV-{index + 1}
                     </td>
 
                     {/* Customer */}
-                    <td className="px-5 py-3.5 font-semibold text-slate-200 text-sm">
+                    <td className="px-5 py-3.5 font-bold text-text-main text-xs animate-none">
                       {sale.customer?.name || "Walk-in Customer"}
                     </td>
 
                     {/* Total */}
-                    <td className="px-5 py-3.5 text-slate-300 text-sm font-medium">Rs. {Number(sale.totalAmount).toLocaleString()}</td>
+                    <td className="px-5 py-3.5 text-text-main text-xs font-semibold">Rs. {Number(sale.totalAmount).toLocaleString()}</td>
 
                     {/* Paid */}
-                    <td className="px-5 py-3.5 text-emerald-400 font-semibold text-sm">
+                    <td className="px-5 py-3.5 text-emerald-500 font-bold text-xs">
                       Rs. {Number(sale.paidAmount).toLocaleString()}
                     </td>
 
                     {/* Remaining */}
-                    <td className="px-5 py-3.5 text-rose-400 font-semibold text-sm">
+                    <td className="px-5 py-3.5 text-rose-505 text-rose-500 font-bold text-xs">
                       Rs. {Number(sale.remainingAmount).toLocaleString()}
                     </td>
 
                     {/* Payment */}
                     <td className="px-5 py-3.5 text-xs">
-                      <span className="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2 py-0.5 rounded-md font-bold uppercase tracking-wider">
+                      <span className="bg-indigo-500/10 text-indigo-500 border border-indigo-500/20 px-2.5 py-0.5 rounded-md font-bold uppercase tracking-wider text-[9px]">
                         {sale.paymentMethod}
                       </span>
                     </td>
 
                     {/* Date */}
-                    <td className="px-5 py-3.5 text-slate-500 text-xs">
+                    <td className="px-5 py-3.5 text-text-secondary text-xs font-medium">
                       {new Date(sale.createdAt).toLocaleDateString()}
                     </td>
 
                     {/* Action */}
-                    <td className="px-5 py-3.5 text-sm">
+                    <td className="px-5 py-3.5 text-xs">
                       <button
                         onClick={() => fetchInvoiceDetails(sale._id)}
-                        className="w-8 h-8 rounded-lg bg-indigo-500/10 hover:bg-indigo-650 hover:bg-indigo-600 text-indigo-400 hover:text-white flex items-center justify-center transition-all duration-150 cursor-pointer"
+                        className="w-8 h-8 rounded-lg bg-indigo-500/10 hover:bg-indigo-650 hover:bg-indigo-600 text-indigo-500 hover:text-white flex items-center justify-center transition-all duration-150 cursor-pointer"
                       >
                         <FaEye className="text-xs" />
                       </button>
@@ -166,7 +167,7 @@ const SalesHistory = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="8" className="text-center py-6 text-slate-500 text-sm">No invoice registry matched searches.</td>
+                  <td colSpan="8" className="text-center py-8 text-text-secondary text-xs">No invoice records matched search query.</td>
                 </tr>
               )}
             </tbody>
@@ -176,17 +177,17 @@ const SalesHistory = () => {
 
       {/* Invoice Modal */}
       {showModal && selectedInvoice && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
-          <div className="bg-[#0b0f19] border border-slate-800 rounded-xl w-full max-w-4xl max-h-[92vh] overflow-hidden flex flex-col shadow-2xl relative">
+        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-bg-card border border-border-color rounded-2xl w-full max-w-4xl max-h-[92vh] overflow-hidden flex flex-col shadow-2xl relative text-text-main">
             {/* Scroll */}
             <div className="overflow-y-auto p-6 font-sans">
               {/* Header */}
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 pb-4 border-b border-slate-800/80">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 pb-4 border-b border-border-color/60">
                 <div>
-                  <h2 className="text-xl font-bold text-white tracking-tight">
+                  <h2 className="text-xl font-bold text-text-main tracking-tight">
                     Invoice Details Lifecycle
                   </h2>
-                  <p className="text-slate-500 text-xs mt-0.5">
+                  <p className="text-text-secondary text-xs mt-0.5">
                     Logged transactions history and items list
                   </p>
                 </div>
@@ -196,7 +197,7 @@ const SalesHistory = () => {
                   {/* Print */}
                   <button
                     onClick={() => handlePrint()}
-                    className="w-9 h-9 rounded-lg bg-emerald-500/10 hover:bg-emerald-600 text-emerald-400 hover:text-white flex items-center justify-center transition-all cursor-pointer"
+                    className="w-9 h-9 rounded-lg bg-emerald-500/10 hover:bg-emerald-600 text-emerald-500 hover:text-white flex items-center justify-center transition-all cursor-pointer shadow-xs border border-emerald-500/20"
                   >
                     <FaPrint className="text-sm" />
                   </button>
@@ -204,7 +205,7 @@ const SalesHistory = () => {
                   {/* Close */}
                   <button
                     onClick={() => setShowModal(false)}
-                    className="w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 flex items-center justify-center transition-all cursor-pointer"
+                    className="w-9 h-9 rounded-lg bg-bg-main hover:bg-border-color text-text-secondary hover:text-text-main flex items-center justify-center transition-all cursor-pointer border border-border-color"
                   >
                     <FaTimes className="text-sm" />
                   </button>
@@ -214,70 +215,70 @@ const SalesHistory = () => {
               {/* Summary Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
                 {/* Customer */}
-                <div className="bg-[#111827]/40 border border-slate-800/60 rounded-xl p-4.5">
+                <div className="bg-bg-main/40 border border-border-color/60 rounded-xl p-4.5">
                   <div className="flex items-center gap-3 mb-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400 text-xs">
+                    <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-500 text-xs">
                       <FaMoneyBillWave />
                     </div>
-                    <p className="text-slate-500 text-[10px] uppercase font-bold tracking-wider">Customer</p>
+                    <p className="text-text-secondary text-[10px] font-bold uppercase tracking-wider">Customer</p>
                   </div>
-                  <h3 className="text-sm font-semibold text-slate-200 line-clamp-1">
+                  <h3 className="text-xs font-bold text-text-main line-clamp-1">
                     {selectedInvoice.sale.customer?.name || "Walk-in Customer"}
                   </h3>
                 </div>
 
                 {/* Total */}
-                <div className="bg-[#111827]/40 border border-slate-800/60 rounded-xl p-4.5">
+                <div className="bg-bg-main/40 border border-border-color/60 rounded-xl p-4.5">
                   <div className="flex items-center gap-3 mb-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 text-xs">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500 text-xs">
                       <FaMoneyBillWave />
                     </div>
-                    <p className="text-slate-500 text-[10px] uppercase font-bold tracking-wider">Total Amount</p>
+                    <p className="text-text-secondary text-[10px] font-bold uppercase tracking-wider">Total Amount</p>
                   </div>
-                  <h3 className="text-base font-bold text-white">
+                  <h3 className="text-sm font-extrabold text-text-main">
                     Rs. {Number(selectedInvoice.sale.totalAmount).toLocaleString()}
                   </h3>
                 </div>
 
                 {/* Remaining */}
-                <div className="bg-[#111827]/40 border border-slate-800/60 rounded-xl p-4.5">
+                <div className="bg-bg-main/40 border border-border-color/60 rounded-xl p-4.5">
                   <div className="flex items-center gap-3 mb-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-rose-500/10 flex items-center justify-center text-rose-400 text-xs">
+                    <div className="w-8 h-8 rounded-lg bg-rose-500/10 flex items-center justify-center text-rose-500 text-xs">
                       <FaClock />
                     </div>
-                    <p className="text-slate-500 text-[10px] uppercase font-bold tracking-wider">Remaining Balance</p>
+                    <p className="text-text-secondary text-[10px] font-bold uppercase tracking-wider">Remaining Balance</p>
                   </div>
-                  <h3 className="text-base font-bold text-rose-400">
+                  <h3 className="text-sm font-extrabold text-rose-500">
                     Rs. {Number(selectedInvoice.sale.remainingAmount).toLocaleString()}
                   </h3>
                 </div>
               </div>
 
               {/* Products Grid */}
-              <div className="bg-[#111827]/20 border border-slate-800/80 rounded-xl p-5 mb-6">
+              <div className="bg-bg-main/20 border border-border-color/85 rounded-xl p-5 mb-6">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-400 text-xs">
+                  <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-500 text-xs">
                     <FaBoxOpen />
                   </div>
-                  <h3 className="text-base font-bold text-white tracking-tight">Purchased Items ({selectedInvoice.sale.items.length})</h3>
+                  <h3 className="text-sm font-bold text-text-main tracking-tight">Purchased Items ({selectedInvoice.sale.items.length})</h3>
                 </div>
 
                 <div className="space-y-3">
                   {selectedInvoice.sale.items.map((item, index) => (
                     <div
                       key={index}
-                      className="flex items-center justify-between bg-[#111827]/50 border border-slate-800/40 rounded-xl p-4"
+                      className="flex items-center justify-between bg-bg-main/50 border border-border-color/40 rounded-xl p-4 text-xs font-semibold"
                     >
                       <div>
-                        <h4 className="text-slate-200 font-semibold text-sm">{item.name}</h4>
-                        <p className="text-slate-500 text-xs mt-0.5">
+                        <h4 className="text-text-main font-bold text-xs">{item.name}</h4>
+                        <p className="text-text-secondary text-[10px] mt-0.5 font-medium">
                           Quantity: {item.quantity}
                         </p>
                       </div>
 
                       <div className="text-right">
-                        <p className="text-slate-550 text-slate-500 text-[10px]">Price</p>
-                        <h4 className="font-bold text-indigo-400 text-sm">Rs. {Number(item.price).toLocaleString()}</h4>
+                        <p className="text-text-secondary text-[9px] font-bold uppercase">Price</p>
+                        <h4 className="font-extrabold text-indigo-500 text-xs">Rs. {Number(item.price).toLocaleString()}</h4>
                       </div>
                     </div>
                   ))}
@@ -285,37 +286,37 @@ const SalesHistory = () => {
               </div>
 
               {/* Payment Timeline */}
-              <div className="bg-[#111827]/20 border border-slate-800/80 rounded-xl p-5">
-                <h3 className="text-base font-bold text-white tracking-tight mb-4">Payment Transactions History</h3>
+              <div className="bg-bg-main/20 border border-border-color/85 rounded-xl p-5">
+                <h3 className="text-sm font-bold text-text-main tracking-tight mb-4">Payment Transactions History</h3>
 
                 <div className="space-y-3">
                   {selectedInvoice.transactions && selectedInvoice.transactions.length > 0 ? (
                     selectedInvoice.transactions.map((transaction) => (
                       <div
                         key={transaction._id}
-                        className="bg-[#111827]/50 border border-slate-800/40 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+                        className="bg-bg-main/50 border border-border-color/40 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs"
                       >
                         <div>
-                          <h4 className="text-slate-200 font-semibold text-sm">
+                          <h4 className="text-text-main font-bold text-xs">
                             {transaction.title}
                           </h4>
-                          <p className="text-slate-500 text-xs mt-1">
+                          <p className="text-text-secondary text-[10px] mt-1 font-medium">
                             {new Date(transaction.createdAt).toLocaleString()}
                           </p>
                         </div>
 
                         <div className="text-left sm:text-right">
-                          <h4 className="text-base font-bold text-emerald-450 text-emerald-400">
+                          <h4 className="text-sm font-extrabold text-emerald-500">
                             + Rs. {Number(transaction.amount).toLocaleString()}
                           </h4>
-                          <p className="text-slate-500 text-[10px] uppercase font-bold tracking-wider mt-0.5">
+                          <p className="text-text-secondary text-[9px] uppercase font-bold tracking-wider mt-0.5">
                             Method: {transaction.paymentMethod}
                           </p>
                         </div>
                       </div>
                     ))
                   ) : (
-                    <div className="text-slate-500 text-xs py-2">No transaction timeline entries.</div>
+                    <div className="text-text-secondary text-xs py-2">No transaction timeline entries.</div>
                   )}
                 </div>
               </div>
@@ -335,4 +336,3 @@ const SalesHistory = () => {
 };
 
 export default SalesHistory;
-

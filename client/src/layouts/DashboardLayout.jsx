@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import {
   FaBox,
   FaChartBar,
@@ -15,16 +16,29 @@ import {
   FaUndo,
   FaReceipt,
   FaCoins,
+  FaChevronLeft,
+  FaChevronRight,
 } from "react-icons/fa";
 
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
+import { motion, AnimatePresence } from "framer-motion";
 
 const DashboardLayout = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
-
   const { theme, toggleTheme } = useTheme();
+
+  // Collapsible Sidebar State
+  const [collapsed, setCollapsed] = useState(
+    localStorage.getItem("sidebar_collapsed") === "true"
+  );
+
+  const toggleSidebar = () => {
+    const nextCollapsed = !collapsed;
+    setCollapsed(nextCollapsed);
+    localStorage.setItem("sidebar_collapsed", String(nextCollapsed));
+  };
 
   const user = JSON.parse(localStorage.getItem("user"));
 
@@ -35,50 +49,50 @@ const DashboardLayout = ({ children }) => {
   };
 
   return (
-    <div
-      className={`min-h-screen flex font-sans transition-all duration-300 ${theme === "dark"
-          ? "bg-[#070a13] text-slate-100"
-          : "bg-slate-100 text-slate-900"
-        }`}
-    >
+    <div className="min-h-screen flex font-sans bg-bg-main text-text-main transition-colors duration-300">
       {/* Sidebar */}
       <div
-        className={`w-[280px] p-5 flex flex-col justify-between shrink-0 border-r transition-all duration-300 ${theme === "dark"
-            ? "bg-[#0b0f19] border-slate-800/80"
-            : "bg-white border-slate-200"
-          }`}
+        className={`p-5 flex flex-col justify-between shrink-0 border-r border-border-color bg-bg-card transition-all duration-300 relative ${
+          collapsed ? "w-[88px]" : "w-[280px]"
+        }`}
       >
-        <div>
+        {/* Toggle Collapse Button */}
+        <button
+          onClick={toggleSidebar}
+          className="absolute -right-3 top-8 w-6 h-6 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center text-[10px] shadow-md border border-indigo-500/20 cursor-pointer transition-colors z-20"
+        >
+          {collapsed ? <FaChevronRight /> : <FaChevronLeft />}
+        </button>
+
+        <div className="overflow-hidden">
           {/* Logo */}
-          <div className="mb-8 px-2">
-            <h1
-              className={`text-2xl font-bold tracking-tight flex items-center gap-2 ${theme === "dark" ? "text-white" : "text-slate-900"
-                }`}
-            >
-              <span className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-sm font-black text-white shadow-lg shadow-indigo-600/30">
-                S
-              </span>
+          <div className={`mb-8 px-2 flex items-center gap-2 ${collapsed ? "justify-center" : ""}`}>
+            <span className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-sm font-black text-white shadow-lg shadow-indigo-600/30 shrink-0">
+              S
+            </span>
 
-              SmartStore
-
-              <span className="text-indigo-400 text-sm font-semibold bg-indigo-500/10 px-2 py-0.5 rounded-md">
-                LK
-              </span>
-            </h1>
-
-            <p className="text-slate-500 text-xs mt-1.5 font-medium tracking-wide uppercase">
-              POS Platform
-            </p>
+            {!collapsed && (
+              <motion.h1
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="text-xl font-bold tracking-tight flex items-center gap-1.5 text-text-main"
+              >
+                SmartStore
+                <span className="text-indigo-500 text-xs font-bold bg-indigo-500/10 px-1.5 py-0.5 rounded">
+                  LK
+                </span>
+              </motion.h1>
+            )}
           </div>
 
           {/* Menu */}
-          <div className="space-y-1">
+          <div className="space-y-1.5 overflow-y-auto max-h-[72vh] pr-1">
             <SidebarItem
               icon={<FaHome />}
               text="Dashboard"
               to="/dashboard"
               active={location.pathname === "/dashboard"}
-              theme={theme}
+              collapsed={collapsed}
             />
 
             <SidebarItem
@@ -86,7 +100,7 @@ const DashboardLayout = ({ children }) => {
               text="Products"
               to="/products"
               active={location.pathname === "/products"}
-              theme={theme}
+              collapsed={collapsed}
             />
 
             <SidebarItem
@@ -94,7 +108,7 @@ const DashboardLayout = ({ children }) => {
               text="Customers"
               to="/customers"
               active={location.pathname === "/customers"}
-              theme={theme}
+              collapsed={collapsed}
             />
 
             <SidebarItem
@@ -102,7 +116,7 @@ const DashboardLayout = ({ children }) => {
               text="Debts"
               to="/debts"
               active={location.pathname === "/debts"}
-              theme={theme}
+              collapsed={collapsed}
             />
 
             <SidebarItem
@@ -110,7 +124,7 @@ const DashboardLayout = ({ children }) => {
               text="Suppliers"
               to="/suppliers"
               active={location.pathname === "/suppliers"}
-              theme={theme}
+              collapsed={collapsed}
             />
 
             <SidebarItem
@@ -118,7 +132,7 @@ const DashboardLayout = ({ children }) => {
               text="POS Billing"
               to="/pos"
               active={location.pathname === "/pos"}
-              theme={theme}
+              collapsed={collapsed}
             />
 
             <SidebarItem
@@ -126,7 +140,7 @@ const DashboardLayout = ({ children }) => {
               text="Supplier Payables"
               to="/supplier-payables"
               active={location.pathname === "/supplier-payables"}
-              theme={theme}
+              collapsed={collapsed}
             />
 
             <SidebarItem
@@ -134,7 +148,7 @@ const DashboardLayout = ({ children }) => {
               text="Analytics"
               to="/analytics"
               active={location.pathname === "/analytics"}
-              theme={theme}
+              collapsed={collapsed}
             />
 
             <SidebarItem
@@ -142,7 +156,7 @@ const DashboardLayout = ({ children }) => {
               text="Sales History"
               to="/sales-history"
               active={location.pathname === "/sales-history"}
-              theme={theme}
+              collapsed={collapsed}
             />
 
             <SidebarItem
@@ -150,7 +164,7 @@ const DashboardLayout = ({ children }) => {
               text="Transactions"
               to="/transactions"
               active={location.pathname === "/transactions"}
-              theme={theme}
+              collapsed={collapsed}
             />
 
             <SidebarItem
@@ -158,7 +172,7 @@ const DashboardLayout = ({ children }) => {
               text="Expenses"
               to="/expenses"
               active={location.pathname === "/expenses"}
-              theme={theme}
+              collapsed={collapsed}
             />
 
             <SidebarItem
@@ -166,7 +180,7 @@ const DashboardLayout = ({ children }) => {
               text="Returns"
               to="/returns"
               active={location.pathname === "/returns"}
-              theme={theme}
+              collapsed={collapsed}
             />
 
             <SidebarItem
@@ -174,90 +188,103 @@ const DashboardLayout = ({ children }) => {
               text="Daily Report"
               to="/daily-report"
               active={location.pathname === "/daily-report"}
-              theme={theme}
+              collapsed={collapsed}
             />
           </div>
         </div>
 
         {/* Bottom */}
-        <div
-          className={`pt-4 border-t ${theme === "dark"
-              ? "border-slate-800/80"
-              : "border-slate-200"
-            }`}
-        >
+        <div className="pt-4 border-t border-border-color">
           {/* User Card + Theme Toggle */}
           <div
-            className={`rounded-xl p-4 mb-3 border flex items-center justify-between transition-all ${theme === "dark"
-                ? "bg-[#111827] border-slate-800/60"
-                : "bg-slate-50 border-slate-200"
-              }`}
+            className={`rounded-xl p-3 mb-2.5 border border-border-color bg-bg-main/50 flex flex-col gap-3 transition-all ${
+              collapsed ? "items-center" : ""
+            }`}
           >
-            <div>
-              <p
-                className={`font-semibold text-sm ${theme === "dark"
-                    ? "text-slate-200"
-                    : "text-slate-900"
-                  }`}
+            {!collapsed && (
+              <div className="flex items-center justify-between w-full">
+                <div className="truncate pr-2">
+                  <p className="font-semibold text-xs text-text-main truncate">
+                    {user?.name || "System Admin"}
+                  </p>
+                  <p className="text-[10px] text-indigo-500 font-bold tracking-wider uppercase mt-0.5">
+                    {user?.role || "Administrator"}
+                  </p>
+                </div>
+
+                {/* Theme Toggle inside full view */}
+                <button
+                  onClick={toggleTheme}
+                  className="w-8 h-8 rounded-lg flex items-center justify-center transition-all cursor-pointer bg-bg-card hover:bg-bg-main text-text-secondary hover:text-indigo-500 border border-border-color"
+                >
+                  {theme === "dark" ? <FaSun className="text-yellow-400 text-xs" /> : <FaMoon className="text-xs" />}
+                </button>
+              </div>
+            )}
+
+            {collapsed && (
+              <button
+                onClick={toggleTheme}
+                className="w-9 h-9 rounded-lg flex items-center justify-center transition-all cursor-pointer bg-bg-card hover:bg-bg-main text-text-secondary hover:text-indigo-500 border border-border-color"
               >
-                {user?.name}
-              </p>
-
-              <p className="text-indigo-500 text-xs font-medium mt-0.5 tracking-wider uppercase">
-                {user?.role}
-              </p>
-            </div>
-
-            {/* Theme Toggle */}
-            <button
-              onClick={toggleTheme}
-              className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all cursor-pointer ${theme === "dark"
-                  ? "bg-slate-800 text-yellow-400 hover:bg-slate-700"
-                  : "bg-slate-200 text-slate-700 hover:bg-slate-300"
-                }`}
-            >
-              {theme === "dark" ? <FaSun /> : <FaMoon />}
-            </button>
+                {theme === "dark" ? <FaSun className="text-yellow-400 text-sm" /> : <FaMoon className="text-sm" />}
+              </button>
+            )}
           </div>
 
           {/* Logout */}
           <button
             onClick={handleLogout}
-            className="w-full bg-slate-800/10 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/20 text-slate-500 hover:text-rose-500 py-2.5 rounded-xl flex items-center justify-center gap-2.5 transition-all duration-200 text-sm font-medium cursor-pointer"
+            className={`w-full bg-rose-500/5 hover:bg-rose-500/10 border border-rose-500/10 hover:border-rose-500/25 text-rose-500 py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all text-xs font-semibold cursor-pointer ${
+              collapsed ? "px-0" : "px-4"
+            }`}
+            title="Logout"
           >
-            <FaSignOutAlt className="text-xs" />
-            Logout
+            <FaSignOutAlt className="text-xs shrink-0" />
+            {!collapsed && <span>Logout</span>}
           </button>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 p-8 overflow-auto h-screen">
-        <div className="max-w-7xl mx-auto">{children}</div>
+      <div className="flex-1 p-8 overflow-auto h-screen bg-bg-main">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={location.pathname}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="max-w-7xl mx-auto h-full"
+          >
+            {children}
+          </motion.div>
+        </AnimatePresence>
       </div>
     </div>
   );
 };
 
-const SidebarItem = ({
-  icon,
-  text,
-  to,
-  active,
-  theme,
-}) => {
+const SidebarItem = ({ icon, text, to, active, collapsed }) => {
   return (
-    <Link to={to} className="block">
+    <Link to={to} className="block relative">
+      {/* Visual Indicator on active item */}
+      {active && (
+        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 bg-indigo-600 rounded-r-md z-10" />
+      )}
+
       <button
-        className={`w-full flex items-center gap-3.5 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer ${active
+        className={`w-full flex items-center rounded-xl text-xs font-semibold transition-all duration-150 cursor-pointer ${
+          collapsed ? "justify-center py-3 px-0" : "gap-3 px-4 py-2.5"
+        } ${
+          active
             ? "bg-indigo-600/10 text-indigo-500 border border-indigo-500/20"
-            : theme === "dark"
-              ? "text-slate-400 hover:bg-slate-800/40 hover:text-slate-200 border border-transparent"
-              : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-transparent"
-          }`}
+            : "text-text-secondary hover:bg-bg-main hover:text-text-main border border-transparent"
+        }`}
+        title={collapsed ? text : ""}
       >
-        <span className="text-base shrink-0">{icon}</span>
-        <span>{text}</span>
+        <span className="text-sm shrink-0">{icon}</span>
+        {!collapsed && <span>{text}</span>}
       </button>
     </Link>
   );

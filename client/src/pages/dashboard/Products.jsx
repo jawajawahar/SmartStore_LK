@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import DashboardLayout from "../../layouts/DashboardLayout";
-import { FaEdit, FaTrash } from "react-icons/fa";
+import { FaEdit, FaTrash, FaPlus, FaFilter } from "react-icons/fa";
 import API from "../../services/api";
+import { toast } from "react-toastify";
 
 const Products = () => {
   const [products, setProducts] = useState([]);
@@ -40,11 +41,11 @@ const Products = () => {
       setProducts(response.data);
     } catch (error) {
       console.log(error);
+      toast.error("Failed to load products registry");
     }
   };
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchProducts();
   }, []);
 
@@ -63,8 +64,6 @@ const Products = () => {
     try {
       const token = localStorage.getItem("token");
 
-      // NEW
-      // eslint-disable-next-line react-hooks/immutability
       formData.productType = productType;
       formData.unit = unit;
 
@@ -76,7 +75,7 @@ const Products = () => {
           },
         });
 
-        alert("Product Updated Successfully");
+        toast.success("Product updated successfully");
       } else {
         // ADD
         const productData = new FormData();
@@ -96,7 +95,7 @@ const Products = () => {
           },
         });
 
-        alert("Product Added Successfully");
+        toast.success("Product added successfully");
       }
 
       // Reset
@@ -116,8 +115,8 @@ const Products = () => {
       setEditingId(null);
       fetchProducts();
     } catch (error) {
-      console.log(error);
-      alert("Failed to Save Product");
+      console.error(error);
+      toast.error(error.response?.data?.message || "Failed to Save Product");
     }
   };
 
@@ -130,12 +129,11 @@ const Products = () => {
       category: product.category,
       buyingPrice: product.buyingPrice,
       sellingPrice: product.sellingPrice,
-      bulkPrice: product.bulkPrice,
+      bulkPrice: product.bulkPrice || "",
       stock: product.stock,
-      barcode: product.barcode,
+      barcode: product.barcode || "",
     });
 
-    // NEW
     setProductType(product.productType || "fixed");
     setUnit(product.unit || "pcs");
 
@@ -149,7 +147,7 @@ const Products = () => {
   const handleDelete = async (id) => {
     try {
       const token = localStorage.getItem("token");
-      const confirmDelete = window.confirm("Delete this product?");
+      const confirmDelete = window.confirm("Are you sure you want to delete this product?");
 
       if (!confirmDelete) return;
 
@@ -159,17 +157,19 @@ const Products = () => {
         },
       });
 
-      alert("Product Deleted Successfully");
+      toast.success("Product deleted successfully");
       fetchProducts();
     } catch (error) {
       console.log(error);
-      alert("Failed to Delete Product");
+      toast.error("Failed to delete product");
     }
   };
 
   // Filter
   const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(search.toLowerCase()),
+    product.name.toLowerCase().includes(search.toLowerCase()) ||
+    product.sku?.toLowerCase().includes(search.toLowerCase()) ||
+    product.category?.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -177,14 +177,14 @@ const Products = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white">Products</h1>
-          <p className="text-slate-500 text-sm mt-1">Smart inventory management and catalog control</p>
+          <h1 className="text-3xl font-bold tracking-tight text-text-main">Products</h1>
+          <p className="text-text-secondary text-sm mt-1">Smart inventory management and catalog control</p>
         </div>
       </div>
 
       {/* Form */}
-      <div className="bg-[#0b0f19] border border-slate-800/80 rounded-xl p-6 mb-8">
-        <h2 className="text-lg font-bold text-white mb-5 tracking-tight">
+      <div className="bg-bg-card border border-border-color rounded-xl p-6 mb-8 shadow-sm">
+        <h2 className="text-lg font-bold text-text-main mb-5 tracking-tight">
           {editingId ? "Edit Product Details" : "Add New Product"}
         </h2>
 
@@ -247,11 +247,11 @@ const Products = () => {
 
           {/* Product Type */}
           <div>
-            <label className="block text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Product Type</label>
+            <label className="block text-text-secondary text-[10px] font-bold uppercase tracking-wider mb-2">Product Type</label>
             <select
               value={productType}
               onChange={(e) => setProductType(e.target.value)}
-              className="w-full bg-[#111827] border border-slate-800 text-slate-100 px-4 py-2.5 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 transition-all text-sm cursor-pointer"
+              className="w-full bg-bg-main border border-border-color text-text-main px-4 py-2.5 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 transition-all text-sm cursor-pointer"
             >
               <option value="fixed">Fixed Product</option>
               <option value="weighted">Weighted Product</option>
@@ -260,11 +260,11 @@ const Products = () => {
 
           {/* Unit */}
           <div>
-            <label className="block text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Unit</label>
+            <label className="block text-text-secondary text-[10px] font-bold uppercase tracking-wider mb-2">Unit</label>
             <select
               value={unit}
               onChange={(e) => setUnit(e.target.value)}
-              className="w-full bg-[#111827] border border-slate-800 text-slate-100 px-4 py-2.5 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 transition-all text-sm cursor-pointer"
+              className="w-full bg-bg-main border border-border-color text-text-main px-4 py-2.5 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 transition-all text-sm cursor-pointer"
             >
               <option value="pcs">Pieces (pcs)</option>
               <option value="kg">Kilograms (kg)</option>
@@ -277,11 +277,11 @@ const Products = () => {
           {/* Image */}
           {!editingId && (
             <div>
-              <label className="block text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Product Image</label>
+              <label className="block text-text-secondary text-[10px] font-bold uppercase tracking-wider mb-2">Product Image</label>
               <input
                 type="file"
                 onChange={(e) => setImage(e.target.files[0])}
-                className="w-full bg-[#111827] border border-slate-800 text-slate-400 rounded-xl px-4 py-1.5 text-xs outline-none cursor-pointer file:mr-4 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-600/15 file:text-indigo-400 hover:file:bg-indigo-600/25"
+                className="w-full bg-bg-main border border-border-color text-text-secondary rounded-xl px-4 py-1.5 text-xs outline-none cursor-pointer file:mr-4 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-600/15 file:text-indigo-500 hover:file:bg-indigo-600/25"
               />
             </div>
           )}
@@ -298,48 +298,51 @@ const Products = () => {
         </form>
       </div>
 
-      {/* Search */}
-      <div className="mb-6">
+      {/* Search Filter */}
+      <div className="mb-6 relative">
+        <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-text-secondary">
+          <FaFilter className="text-xs" />
+        </span>
         <input
           type="text"
-          placeholder="Filter products catalog by name..."
+          placeholder="Filter products catalog by name, category or SKU..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full bg-[#0b0f19] border border-slate-800 text-slate-200 placeholder-slate-500 px-5 py-3 rounded-xl outline-none focus:border-slate-700 transition-colors text-sm"
+          className="w-full bg-bg-card border border-border-color text-text-main pl-9 pr-5 py-3 rounded-xl outline-none focus:border-indigo-500 transition-colors text-xs placeholder-text-secondary/40 shadow-xs"
         />
       </div>
 
       {/* Table */}
-      <div className="bg-[#0b0f19] border border-slate-800/80 rounded-xl overflow-hidden shadow-sm">
+      <div className="bg-bg-card border border-border-color rounded-xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-[#111827]/60 border-b border-slate-800">
+            <thead className="bg-bg-main/60 border-b border-border-color">
               <tr>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Image</th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Name</th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Category</th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Buying (Rs.)</th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Selling (Rs.)</th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Stock</th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Type</th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Unit</th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Actions</th>
+                <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Image</th>
+                <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Name</th>
+                <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Category</th>
+                <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Buying (Rs.)</th>
+                <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Selling (Rs.)</th>
+                <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Stock</th>
+                <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Type</th>
+                <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Unit</th>
+                <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Actions</th>
               </tr>
             </thead>
 
-            <tbody className="divide-y divide-slate-850">
+            <tbody className="divide-y divide-border-color/60">
               {filteredProducts.length > 0 ? (
                 filteredProducts.map((product) => (
                   <tr
                     key={product._id}
-                    className="hover:bg-slate-800/25 transition-colors"
+                    className="hover:bg-bg-main/30 transition-colors"
                   >
                     {/* Image */}
                     <td className="px-5 py-3.5">
                       <img
                         src={`http://localhost:5000/${product.image}`}
                         alt={product.name}
-                        className="w-11 h-11 rounded-lg object-cover bg-slate-900 border border-slate-800"
+                        className="w-11 h-11 rounded-lg object-cover bg-bg-main border border-border-color/60"
                         onError={(e) => {
                           e.target.src = "https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=120&auto=format&fit=crop";
                         }}
@@ -347,24 +350,24 @@ const Products = () => {
                     </td>
 
                     {/* Name */}
-                    <td className="px-5 py-3.5 font-semibold text-slate-200 text-sm">{product.name}</td>
+                    <td className="px-5 py-3.5 font-bold text-text-main text-xs">{product.name}</td>
 
                     {/* Category */}
-                    <td className="px-5 py-3.5 text-slate-400 text-sm">{product.category}</td>
+                    <td className="px-5 py-3.5 text-text-secondary text-xs">{product.category || "General"}</td>
 
                     {/* Buying */}
-                    <td className="px-5 py-3.5 text-slate-300 text-sm">Rs. {Number(product.buyingPrice).toLocaleString()}</td>
+                    <td className="px-5 py-3.5 text-text-secondary text-xs">Rs. {Number(product.buyingPrice).toLocaleString()}</td>
 
                     {/* Selling */}
-                    <td className="px-5 py-3.5 text-indigo-400 font-medium text-sm">Rs. {Number(product.sellingPrice).toLocaleString()}</td>
+                    <td className="px-5 py-3.5 text-indigo-500 font-extrabold text-xs">Rs. {Number(product.sellingPrice).toLocaleString()}</td>
 
                     {/* Stock */}
-                    <td className="px-5 py-3.5 text-sm">
+                    <td className="px-5 py-3.5 text-xs">
                       <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold border ${
-                          product.stock <= 5
-                            ? "bg-rose-500/10 text-rose-400 border-rose-500/25"
-                            : "bg-emerald-500/10 text-emerald-400 border-emerald-500/25"
+                        className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold border ${
+                          product.stock <= product.minStockLevel
+                            ? "bg-rose-500/10 text-rose-500 border-rose-500/20"
+                            : "bg-emerald-550/10 bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
                         }`}
                       >
                         {product.stock} {product.unit}
@@ -372,12 +375,12 @@ const Products = () => {
                     </td>
 
                     {/* Type */}
-                    <td className="px-5 py-3.5 text-sm">
+                    <td className="px-5 py-3.5 text-xs">
                       <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold border ${
+                        className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold border ${
                           product.productType === "weighted"
-                            ? "bg-amber-500/10 text-amber-450 text-amber-400 border-amber-500/20"
-                            : "bg-indigo-500/10 text-indigo-450 text-indigo-400 border-indigo-500/20"
+                            ? "bg-amber-500/10 text-amber-500 border-amber-500/20"
+                            : "bg-indigo-500/10 text-indigo-500 border-indigo-500/20"
                         }`}
                       >
                         {product.productType}
@@ -385,25 +388,25 @@ const Products = () => {
                     </td>
 
                     {/* Unit */}
-                    <td className="px-5 py-3.5 uppercase text-slate-400 text-xs font-semibold">{product.unit}</td>
+                    <td className="px-5 py-3.5 uppercase text-text-secondary text-[10px] font-bold">{product.unit}</td>
 
                     {/* Actions */}
-                    <td className="px-5 py-3.5 text-sm">
+                    <td className="px-5 py-3.5 text-xs">
                       <div className="flex items-center gap-2">
                         {/* Edit */}
                         <button
                           onClick={() => handleEdit(product)}
-                          className="w-8 h-8 rounded-lg bg-indigo-500/10 hover:bg-indigo-650 hover:bg-indigo-600 text-indigo-400 hover:text-white flex items-center justify-center transition-all duration-150 cursor-pointer"
+                          className="w-8 h-8 rounded-lg bg-indigo-500/10 hover:bg-indigo-650 hover:bg-indigo-600 text-indigo-500 hover:text-white flex items-center justify-center transition-all duration-150 cursor-pointer"
                         >
-                          <FaEdit className="text-xs" />
+                          <FaEdit className="text-[10px]" />
                         </button>
 
                         {/* Delete */}
                         <button
                           onClick={() => handleDelete(product._id)}
-                          className="w-8 h-8 rounded-lg bg-rose-500/10 hover:bg-rose-650 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center transition-all duration-150 cursor-pointer"
+                          className="w-8 h-8 rounded-lg bg-rose-500/10 hover:bg-rose-650 hover:bg-rose-600 text-rose-500 hover:text-white flex items-center justify-center transition-all duration-150 cursor-pointer"
                         >
-                          <FaTrash className="text-xs" />
+                          <FaTrash className="text-[10px]" />
                         </button>
                       </div>
                     </td>
@@ -411,7 +414,7 @@ const Products = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="9" className="text-center py-6 text-slate-500 text-sm">No products matched search parameters.</td>
+                  <td colSpan="9" className="text-center py-8 text-text-secondary text-xs">No products matched search parameters.</td>
                 </tr>
               )}
             </tbody>
@@ -426,14 +429,14 @@ const Products = () => {
 const Input = ({ label, name, type = "text", value, onChange }) => {
   return (
     <div>
-      <label className="block text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">{label}</label>
+      <label className="block text-text-secondary text-[10px] font-bold uppercase tracking-wider mb-2">{label}</label>
       <input
         type={type}
         name={name}
         value={value}
         onChange={onChange}
         required
-        className="w-full bg-[#111827] border border-slate-800 text-slate-100 placeholder-slate-500 px-4 py-2.5 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 transition-all text-sm"
+        className="w-full bg-bg-main border border-border-color text-text-main placeholder-text-secondary/40 px-4 py-2.5 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 transition-all text-sm"
       />
     </div>
   );
@@ -443,13 +446,13 @@ const Input = ({ label, name, type = "text", value, onChange }) => {
 const Select = ({ label, name, value, onChange }) => {
   return (
     <div>
-      <label className="block text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">{label}</label>
+      <label className="block text-text-secondary text-[10px] font-bold uppercase tracking-wider mb-2">{label}</label>
       <select
         name={name}
         value={value}
         onChange={onChange}
         required
-        className="w-full bg-[#111827] border border-slate-800 text-slate-100 px-4 py-2.5 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 transition-all text-sm cursor-pointer"
+        className="w-full bg-bg-main border border-border-color text-text-main px-4 py-2.5 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 transition-all text-sm cursor-pointer"
       >
         <option value="">Select Category</option>
         <option value="Grocery">Grocery</option>
@@ -462,4 +465,3 @@ const Select = ({ label, name, value, onChange }) => {
 };
 
 export default Products;
-

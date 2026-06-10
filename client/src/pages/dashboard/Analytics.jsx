@@ -49,7 +49,6 @@ const Analytics = () => {
   };
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchAnalytics();
   }, []);
 
@@ -74,25 +73,25 @@ const Analytics = () => {
       title: "Total Revenue",
       value: `Rs. ${Number(dashboard.totalRevenue || 0).toLocaleString()}`,
       icon: <FaMoneyBillWave />,
-      iconBg: "bg-emerald-500/10 text-emerald-400",
+      iconBg: "bg-emerald-500/10 text-emerald-500",
     },
     {
       title: "Net Profit",
       value: `Rs. ${Number(profit || 0).toLocaleString()}`,
       icon: <FaArrowTrendUp />,
-      iconBg: "bg-indigo-500/10 text-indigo-400",
+      iconBg: "bg-indigo-500/10 text-indigo-500",
     },
     {
       title: "Total Expenses",
       value: `Rs. ${Number(dashboard.totalExpenses || 0).toLocaleString()}`,
       icon: <FaChartPie />,
-      iconBg: "bg-rose-500/10 text-rose-400",
+      iconBg: "bg-rose-500/10 text-rose-500",
     },
     {
       title: "Pending Debts",
       value: `Rs. ${Number(dashboard.pendingAmount || 0).toLocaleString()}`,
       icon: <FaClipboardList />,
-      iconBg: "bg-amber-500/10 text-amber-400",
+      iconBg: "bg-amber-500/10 text-amber-500",
     },
   ];
 
@@ -100,8 +99,8 @@ const Analytics = () => {
     <DashboardLayout>
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight text-white">Analytics</h1>
-        <p className="text-slate-500 text-sm mt-1">
+        <h1 className="text-3xl font-bold tracking-tight text-text-main">Analytics</h1>
+        <p className="text-text-secondary text-sm mt-1">
           SmartStore LK Business Intelligence Center
         </p>
       </div>
@@ -111,12 +110,12 @@ const Analytics = () => {
         {cards.map((card, index) => (
           <div
             key={index}
-            className="bg-[#0b0f19] border border-slate-800/80 rounded-xl p-5 hover:border-slate-700/60 transition-colors duration-200"
+            className="bg-bg-card border border-border-color rounded-xl p-5 hover:border-indigo-500/30 transition-all duration-200 shadow-sm"
           >
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider">{card.title}</p>
-                <h2 className="text-2xl font-bold text-white mt-2.5 tracking-tight">
+                <p className="text-text-secondary text-[10px] font-bold uppercase tracking-wider">{card.title}</p>
+                <h2 className="text-2xl font-extrabold text-text-main mt-2.5 tracking-tight">
                   {card.value}
                 </h2>
               </div>
@@ -134,10 +133,10 @@ const Analytics = () => {
       {/* Main Grid */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-6">
         {/* Revenue Chart */}
-        <div className="xl:col-span-2 bg-[#0b0f19] border border-slate-800/80 rounded-xl p-6">
+        <div className="xl:col-span-2 bg-bg-card border border-border-color rounded-xl p-6 shadow-sm">
           <div className="mb-5">
-            <h2 className="text-lg font-bold text-white tracking-tight">Revenue Trend</h2>
-            <p className="text-slate-500 text-xs mt-0.5">
+            <h2 className="text-lg font-bold text-text-main tracking-tight">Revenue Trend</h2>
+            <p className="text-text-secondary text-xs mt-0.5">
               Daily store revenue analytics
             </p>
           </div>
@@ -152,20 +151,19 @@ const Analytics = () => {
                   </linearGradient>
                 </defs>
 
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(243, 244, 246, 0.05)" />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" opacity={0.3} />
 
-                <XAxis dataKey="date" stroke="#4b5563" fontSize={11} tickLine={false} />
+                <XAxis dataKey="date" stroke="var(--text-secondary)" fontSize={10} tickLine={false} />
 
-                <YAxis stroke="#4b5563" fontSize={11} tickLine={false} />
+                <YAxis stroke="var(--text-secondary)" fontSize={10} tickLine={false} />
 
                 <Tooltip 
                   contentStyle={{
-                    backgroundColor: "#0f172a",
-                    borderColor: "#1f2937",
+                    backgroundColor: "var(--bg-card)",
+                    borderColor: "var(--border-color)",
                     borderRadius: "12px",
-                    color: "#f3f4f6",
+                    color: "var(--text-main)",
                     fontSize: "12px",
-                    boxShadow: "0 10px 15px -3px rgba(0,0,0,0.5)"
                   }}
                 />
 
@@ -183,12 +181,12 @@ const Analytics = () => {
         </div>
 
         {/* Finance Breakdown */}
-        <div className="bg-[#0b0f19] border border-slate-800/80 rounded-xl p-6">
+        <div className="bg-bg-card border border-border-color rounded-xl p-6 shadow-sm">
           <div className="mb-5">
-            <h2 className="text-lg font-bold text-white tracking-tight">
+            <h2 className="text-lg font-bold text-text-main tracking-tight">
               Finance Breakdown
             </h2>
-            <p className="text-slate-500 text-xs mt-0.5">Income vs expenses</p>
+            <p className="text-text-secondary text-xs mt-0.5">Income vs expenses</p>
           </div>
 
           <div className="h-[320px] flex items-center justify-center">
@@ -204,18 +202,17 @@ const Analytics = () => {
                   labelLine={false}
                 >
                   {financeData.map((entry, index) => (
-                    <Cell key={index} fill={COLORS[index % COLORS.length]} stroke="#0b0f19" strokeWidth={2} />
+                    <Cell key={index} fill={COLORS[index % COLORS.length]} stroke="var(--bg-card)" strokeWidth={2} />
                   ))}
                 </Pie>
 
                 <Tooltip 
                   contentStyle={{
-                    backgroundColor: "#0f172a",
-                    borderColor: "#1f2937",
+                    backgroundColor: "var(--bg-card)",
+                    borderColor: "var(--border-color)",
                     borderRadius: "12px",
-                    color: "#f3f4f6",
+                    color: "var(--text-main)",
                     fontSize: "12px",
-                    boxShadow: "0 10px 15px -3px rgba(0,0,0,0.5)"
                   }}
                 />
               </PieChart>
@@ -227,17 +224,17 @@ const Analytics = () => {
       {/* Bottom Grid */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         {/* Best Products */}
-        <div className="bg-[#0b0f19] border border-slate-800/80 rounded-xl p-6">
+        <div className="bg-bg-card border border-border-color rounded-xl p-6 shadow-sm">
           <div className="flex items-center gap-3.5 mb-5">
-            <div className="w-10 h-10 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center text-sm">
+            <div className="w-10 h-10 rounded-lg bg-indigo-500/10 text-indigo-500 flex items-center justify-center text-sm">
               <FaBox />
             </div>
 
             <div>
-              <h2 className="text-lg font-bold text-white tracking-tight">
+              <h2 className="text-lg font-bold text-text-main tracking-tight">
                 Best Selling Products
               </h2>
-              <p className="text-slate-500 text-xs mt-0.5">High velocity store inventory</p>
+              <p className="text-text-secondary text-xs mt-0.5">High velocity store inventory</p>
             </div>
           </div>
 
@@ -246,27 +243,27 @@ const Analytics = () => {
               dashboard.topProducts.map((product, index) => (
                 <div
                   key={index}
-                  className="bg-[#111827]/40 border border-slate-800/40 rounded-xl px-5 py-3.5 flex items-center justify-between"
+                  className="bg-bg-main/30 border border-border-color/60 rounded-xl px-5 py-3.5 flex items-center justify-between"
                 >
                   <div>
-                    <h3 className="text-slate-200 text-sm font-semibold">{product.name}</h3>
-                    <p className="text-slate-500 text-[10px] mt-0.5 uppercase tracking-wider font-semibold">Store Stock Item</p>
+                    <h3 className="text-text-main text-sm font-semibold">{product.name}</h3>
+                    <p className="text-text-secondary text-[10px] mt-0.5 uppercase tracking-wider font-bold">Store Stock Item</p>
                   </div>
 
-                  <div className="text-lg font-bold text-indigo-400">
-                    {product.totalSold} <span className="text-slate-500 text-xs font-normal">sold</span>
+                  <div className="text-lg font-extrabold text-indigo-500">
+                    {product.totalSold} <span className="text-text-secondary text-xs font-normal">sold</span>
                   </div>
                 </div>
               ))
             ) : (
-              <div className="text-slate-500 text-sm text-center py-4">No data available.</div>
+              <div className="text-text-secondary text-sm text-center py-4">No data available.</div>
             )}
           </div>
         </div>
 
         {/* Financial Health */}
-        <div className="bg-[#0b0f19] border border-slate-800/80 rounded-xl p-6">
-          <h2 className="text-lg font-bold text-white mb-5 tracking-tight">
+        <div className="bg-bg-card border border-border-color rounded-xl p-6 shadow-sm">
+          <h2 className="text-lg font-bold text-text-main mb-5 tracking-tight">
             Financial Health
           </h2>
 
@@ -274,22 +271,22 @@ const Analytics = () => {
             <HealthCard
               title="Net Balance"
               value={`Rs. ${Number(profit || 0).toLocaleString()}`}
-              color="text-emerald-400"
+              color="text-emerald-500"
             />
             <HealthCard
               title="Pending Collection"
               value={`Rs. ${Number(dashboard.pendingAmount || 0).toLocaleString()}`}
-              color="text-amber-400"
+              color="text-amber-500"
             />
             <HealthCard
               title="Supplier Payables"
               value={`Rs. ${Number(dashboard.totalPayables || 0).toLocaleString()}`}
-              color="text-rose-400"
+              color="text-rose-500"
             />
             <HealthCard
               title="Registered Customers"
               value={dashboard.totalCustomers || 0}
-              color="text-indigo-400"
+              color="text-indigo-500"
             />
           </div>
         </div>
@@ -301,12 +298,11 @@ const Analytics = () => {
 // Health Card Component
 const HealthCard = ({ title, value, color }) => {
   return (
-    <div className="bg-[#111827]/40 border border-slate-800/40 rounded-xl px-5 py-3.5 flex items-center justify-between">
-      <p className="text-slate-400 text-xs font-semibold">{title}</p>
+    <div className="bg-bg-main/30 border border-border-color/60 rounded-xl px-5 py-3.5 flex items-center justify-between">
+      <p className="text-text-secondary text-xs font-semibold">{title}</p>
       <h3 className={`text-sm font-bold ${color}`}>{value}</h3>
     </div>
   );
 };
 
 export default Analytics;
-

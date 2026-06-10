@@ -42,7 +42,7 @@ const saleSchema = new mongoose.Schema(
 
     paymentMethod: {
       type: String,
-      enum: ["cash", "partial", "credit"],
+      enum: ["cash", "card", "bank_transfer", "partial", "credit"],
       default: "cash",
     },
 

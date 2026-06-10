@@ -32,6 +32,26 @@ const createSale = async (req, res) => {
     const net = Number(netAmount) || total;
     const remainingAmount = net - paid;
 
+    // Validate credit buyer restrictions
+    if ((paymentMethod === "credit" || paymentMethod === "partial") && !customer) {
+      return res.status(400).json({
+        message: "Registered Customer is required for credit/partial payment terms.",
+      });
+    }
+
+    // Validate stock levels before writing to DB
+    for (const item of items) {
+      const prod = await Product.findById(item.product);
+      if (!prod) {
+        return res.status(404).json({ message: `Product not found: ${item.name}` });
+      }
+      if (prod.stock < item.quantity) {
+        return res.status(400).json({
+          message: `Insufficient stock for "${prod.name}". Available: ${prod.stock} ${prod.unit}, Cart: ${item.quantity} ${prod.unit}`,
+        });
+      }
+    }
+
     // Fetch customer name for transaction logging
     let customerName = "Walk-in Customer";
     if (customer) {
@@ -61,13 +81,16 @@ const createSale = async (req, res) => {
 
     // Create Transaction for the payment received
     if (paid > 0) {
+      const txPaymentMethod =
+        paymentMethod === "partial" || paymentMethod === "credit" ? "cash" : paymentMethod;
+
       await Transaction.create({
         type: "sale",
         title: "POS Sale",
         personName: customerName,
         amount: paid,
         flow: "income",
-        paymentMethod,
+        paymentMethod: txPaymentMethod,
         description: `POS billing payment — ${items.length} item(s)`,
         sale: sale._id,
       });
