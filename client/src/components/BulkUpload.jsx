@@ -93,19 +93,65 @@ const BulkUpload = ({ isOpen, onClose, type, onSuccess }) => {
 
     Papa.parse(selectedFile, {
       header: true,
-      skipEmptyLines: true,
+      skipEmptyLines: "greedy",
       complete: (results) => {
         const parsed = results.data;
-        const validationErrors = [];
+        
+        // Normalize CSV header keys case-insensitively and handle spaces/underscores
+        const normalizedData = parsed.map((row) => {
+          const normalizedRow = {};
+          
+          const findVal = (possibleKeys) => {
+            const matchedKey = Object.keys(row).find(k => 
+              possibleKeys.includes(k.trim().toLowerCase().replace(/[\s_-]/g, ""))
+            );
+            return matchedKey ? row[matchedKey] : undefined;
+          };
 
-        parsed.forEach((row, index) => {
+          if (type === "products") {
+            normalizedRow.name = findVal(["name", "productname", "title"]);
+            normalizedRow.category = findVal(["category", "cat"]);
+            normalizedRow.buyingPrice = findVal(["buyingprice", "buyprice", "costprice", "cost"]);
+            normalizedRow.sellingPrice = findVal(["sellingprice", "sellprice", "price"]);
+            normalizedRow.bulkPrice = findVal(["bulkprice", "wholesale", "wholesaleprice"]);
+            normalizedRow.stock = findVal(["stock", "qty", "quantity", "initialstock"]);
+            normalizedRow.barcode = findVal(["barcode", "code", "sku"]);
+            normalizedRow.unit = findVal(["unit", "measure"]);
+            normalizedRow.productType = findVal(["producttype", "type"]);
+          } else if (type === "customers") {
+            normalizedRow.name = findVal(["name", "customername"]);
+            normalizedRow.phone = findVal(["phone", "phonenumber", "contact", "mobile"]);
+            normalizedRow.address = findVal(["address", "location"]);
+            normalizedRow.customerType = findVal(["customertype", "type"]);
+          } else if (type === "suppliers") {
+            normalizedRow.name = findVal(["name", "suppliername"]);
+            normalizedRow.company = findVal(["company", "companyname", "vendor"]);
+            normalizedRow.phone = findVal(["phone", "phonenumber", "contact", "mobile"]);
+            normalizedRow.address = findVal(["address", "location"]);
+          }
+
+          // Fallback check to copy over exact case matches
+          config.templateHeaders.forEach(header => {
+            if (normalizedRow[header] === undefined) {
+              const exactKey = Object.keys(row).find(k => k.trim().toLowerCase() === header.toLowerCase());
+              if (exactKey) {
+                normalizedRow[header] = row[exactKey];
+              }
+            }
+          });
+
+          return normalizedRow;
+        });
+
+        const validationErrors = [];
+        normalizedData.forEach((row, index) => {
           const rowErrors = config.validate(row, index);
           if (rowErrors.length > 0) {
             validationErrors.push({ rowNumber: index + 1, name: row.name || `Row ${index + 1}`, issues: rowErrors });
           }
         });
 
-        setParsedData(parsed);
+        setParsedData(normalizedData);
         setErrors(validationErrors);
         setStep(3); // Advance to preview
       },
