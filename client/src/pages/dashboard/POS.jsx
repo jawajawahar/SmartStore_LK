@@ -46,6 +46,9 @@ const POS = () => {
   const [invoiceData, setInvoiceData] = useState(null);
   const [showInvoice, setShowInvoice] = useState(false);
 
+  // Payment Checkout Modal State
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+
   // Fetch Products
   const fetchProducts = async () => {
     try {
@@ -381,6 +384,7 @@ const POS = () => {
       });
 
       setShowInvoice(true);
+      setShowPaymentModal(false);
       toast.success("Sale completed successfully!");
 
       // Clear POS workspace
@@ -685,7 +689,7 @@ const POS = () => {
             )}
           </div>
 
-          {/* Cart Summary & Payments */}
+          {/* Cart Summary */}
           <div className="flex-none border-t border-border-color/60 pt-3 space-y-2">
             {/* Subtotal */}
             <div className="flex justify-between text-xs font-semibold text-text-secondary">
@@ -758,116 +762,171 @@ const POS = () => {
               <span>Grand Total</span>
               <span className="text-indigo-500 font-black text-base">Rs. {Number(netAmount).toLocaleString()}</span>
             </div>
-
-            {/* PAYMENT METHOD SELECTOR */}
-            <div className="border-t border-border-color/60 pt-3">
-              <label className="block text-[10px] text-text-secondary uppercase font-bold mb-2 tracking-wider">
-                Payment Method
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setPaymentMode("cash")}
-                  className={`flex items-center justify-center gap-1.5 py-2 px-1 rounded-xl text-[10px] font-bold border uppercase transition-all cursor-pointer ${
-                    paymentMode === "cash"
-                      ? "bg-indigo-600/10 text-indigo-500 border-indigo-500/40"
-                      : "bg-bg-main/40 text-text-secondary border-border-color hover:bg-bg-main"
-                  }`}
-                >
-                  <FaMoneyBillWave /> Cash
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPaymentMode("card")}
-                  className={`flex items-center justify-center gap-1.5 py-2 px-1 rounded-xl text-[10px] font-bold border uppercase transition-all cursor-pointer ${
-                    paymentMode === "card"
-                      ? "bg-indigo-600/10 text-indigo-500 border-indigo-500/40"
-                      : "bg-bg-main/40 text-text-secondary border-border-color hover:bg-bg-main"
-                  }`}
-                >
-                  <FaCreditCard /> Card
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPaymentMode("bank_transfer")}
-                  className={`flex items-center justify-center gap-1.5 py-2 px-1 rounded-xl text-[10px] font-bold border uppercase transition-all cursor-pointer ${
-                    paymentMode === "bank_transfer"
-                      ? "bg-indigo-600/10 text-indigo-500 border-indigo-500/40"
-                      : "bg-bg-main/40 text-text-secondary border-border-color hover:bg-bg-main"
-                  }`}
-                >
-                  <FaUniversity /> Bank
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPaymentMode("credit")}
-                  className={`flex items-center justify-center gap-1.5 py-2 px-1 rounded-xl text-[10px] font-bold border uppercase transition-all cursor-pointer ${
-                    paymentMode === "credit"
-                      ? "bg-indigo-600/10 text-indigo-500 border-indigo-500/40"
-                      : "bg-bg-main/40 text-text-secondary border-border-color hover:bg-bg-main"
-                  }`}
-                >
-                  <FaUserTag /> Credit
-                </button>
-              </div>
-            </div>
-
-            {/* Paid amount & Change Calculator */}
-            <div className="space-y-2 pt-2">
-              <input
-                type="number"
-                placeholder={paymentMode === "credit" ? "0 (Credit Payment)" : "Enter Paid Cash (Rs.)"}
-                value={paidAmount}
-                disabled={paymentMode === "card" || paymentMode === "bank_transfer" || paymentMode === "credit"}
-                onChange={(e) => setPaidAmount(e.target.value)}
-                className="w-full bg-bg-main border border-border-color text-text-main placeholder-text-secondary/40 px-4 py-2.5 rounded-xl outline-none text-xs transition-all focus:border-indigo-500 disabled:opacity-60"
-              />
-
-              {paymentMode === "cash" && paidVal > 0 && (
-                <div className="flex justify-between items-center text-[10px] p-2.5 rounded-xl bg-bg-main border border-border-color font-semibold">
-                  <span className="text-text-secondary">Change Due:</span>
-                  <span className="font-black text-emerald-500 text-xs">
-                    Rs. {changeAmount.toLocaleString()}
-                  </span>
-                </div>
-              )}
-
-              {paymentMode === "credit" && (
-                <div className="flex flex-col gap-1.5 p-2.5 rounded-xl bg-bg-main border border-border-color text-[10px]">
-                  <div className="flex justify-between items-center font-semibold">
-                    <span className="text-text-secondary">Upfront Payment:</span>
-                    <span className="font-bold text-text-main">Rs. {paidVal.toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between items-center font-semibold border-t border-border-color/60 pt-1.5">
-                    <span className="text-rose-500">Unpaid Credit Balance:</span>
-                    <span className="font-black text-rose-500 text-xs">
-                      Rs. {Math.max(0, netAmount - paidVal).toLocaleString()}
-                    </span>
-                  </div>
-                  <input
-                    type="number"
-                    placeholder="Enter upfront payment (if any)"
-                    value={paidAmount === "0" ? "" : paidAmount}
-                    onChange={(e) => setPaidAmount(e.target.value)}
-                    className="w-full mt-1.5 bg-bg-card border border-border-color text-text-main px-3 py-1.5 rounded-lg outline-none text-[10px]"
-                  />
-                </div>
-              )}
-            </div>
           </div>
 
           {/* Checkout CTA */}
           <div className="flex-none pt-3 border-t border-border-color/60 mt-2.5">
             <button
-              onClick={handleCheckout}
+              onClick={() => {
+                if (cart.length === 0) {
+                  toast.error("Cart is empty");
+                  return;
+                }
+                setShowPaymentModal(true);
+              }}
               disabled={cart.length === 0}
-              className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-xl font-bold text-xs uppercase tracking-wide transition-all shadow-md active:scale-[0.98] disabled:opacity-45 disabled:pointer-events-none cursor-pointer"
+              className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-3 rounded-xl font-bold text-xs uppercase tracking-wide transition-all shadow-md active:scale-[0.98] disabled:opacity-45 disabled:pointer-events-none cursor-pointer"
             >
-              Complete Sale & Print
+              Proceed to Payment
             </button>
           </div>
         </div>
       </div>
+
+      {/* Payment Checkout Modal */}
+      {showPaymentModal && (
+        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="w-full max-w-md border border-border-color rounded-2xl overflow-hidden shadow-2xl p-6 bg-bg-card text-text-main flex flex-col">
+            <div className="flex justify-between items-center mb-4 pb-2 border-b border-border-color/60">
+              <h3 className="font-bold text-sm">Billing Payment Checkout</h3>
+              <button
+                onClick={() => setShowPaymentModal(false)}
+                className="text-text-secondary hover:text-text-main p-1 cursor-pointer"
+              >
+                <FaTimes />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {/* Grand Total display */}
+              <div className="bg-indigo-600/10 border border-indigo-500/20 rounded-xl p-4 text-center">
+                <span className="text-xs text-text-secondary uppercase font-bold tracking-wider">Total Amount Due</span>
+                <h2 className="text-3xl font-black text-indigo-500 mt-1">Rs. {Number(netAmount).toLocaleString()}</h2>
+                <div className="text-[10px] text-text-secondary mt-1.5 font-semibold uppercase">
+                  Customer: {customers.find((c) => c._id === selectedCustomer)?.name || "Walk-in Customer"}
+                </div>
+              </div>
+
+              {/* PAYMENT METHOD SELECTOR */}
+              <div>
+                <label className="block text-[10px] text-text-secondary uppercase font-bold mb-2 tracking-wider">
+                  Select Payment Method
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMode("cash")}
+                    className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl text-xs font-bold border uppercase transition-all cursor-pointer ${
+                      paymentMode === "cash"
+                        ? "bg-indigo-600/10 text-indigo-500 border-indigo-500/40 shadow-sm"
+                        : "bg-bg-main/40 text-text-secondary border-border-color hover:bg-bg-main"
+                    }`}
+                  >
+                    <FaMoneyBillWave /> Cash
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMode("card")}
+                    className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl text-xs font-bold border uppercase transition-all cursor-pointer ${
+                      paymentMode === "card"
+                        ? "bg-indigo-600/10 text-indigo-500 border-indigo-500/40 shadow-sm"
+                        : "bg-bg-main/40 text-text-secondary border-border-color hover:bg-bg-main"
+                    }`}
+                  >
+                    <FaCreditCard /> Card
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMode("bank_transfer")}
+                    className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl text-xs font-bold border uppercase transition-all cursor-pointer ${
+                      paymentMode === "bank_transfer"
+                        ? "bg-indigo-600/10 text-indigo-500 border-indigo-500/40 shadow-sm"
+                        : "bg-bg-main/40 text-text-secondary border-border-color hover:bg-bg-main"
+                    }`}
+                  >
+                    <FaUniversity /> Bank
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMode("credit")}
+                    className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl text-xs font-bold border uppercase transition-all cursor-pointer ${
+                      paymentMode === "credit"
+                        ? "bg-indigo-600/10 text-indigo-500 border-indigo-500/40 shadow-sm"
+                        : "bg-bg-main/40 text-text-secondary border-border-color hover:bg-bg-main"
+                    }`}
+                  >
+                    <FaUserTag /> Credit
+                  </button>
+                </div>
+              </div>
+
+              {/* Paid amount & Change Calculator */}
+              <div className="space-y-3 pt-2">
+                <label className="block text-[10px] text-text-secondary uppercase font-bold tracking-wider">
+                  Payment Details
+                </label>
+                <input
+                  type="number"
+                  placeholder={paymentMode === "credit" ? "0 (Credit Payment)" : "Enter Paid Cash (Rs.)"}
+                  value={paidAmount}
+                  disabled={paymentMode === "card" || paymentMode === "bank_transfer" || paymentMode === "credit"}
+                  onChange={(e) => setPaidAmount(e.target.value)}
+                  className="w-full bg-bg-main border border-border-color text-text-main placeholder-text-secondary/40 px-4 py-3 rounded-xl outline-none text-sm transition-all focus:border-indigo-500 disabled:opacity-60"
+                  autoFocus
+                />
+
+                {paymentMode === "cash" && paidVal > 0 && (
+                  <div className="flex justify-between items-center p-3 rounded-xl bg-bg-main border border-border-color font-semibold">
+                    <span className="text-text-secondary text-xs">Change Due:</span>
+                    <span className="font-black text-emerald-500 text-sm">
+                      Rs. {changeAmount.toLocaleString()}
+                    </span>
+                  </div>
+                )}
+
+                {paymentMode === "credit" && (
+                  <div className="flex flex-col gap-1.5 p-3 rounded-xl bg-bg-main border border-border-color text-xs">
+                    <div className="flex justify-between items-center font-semibold">
+                      <span className="text-text-secondary">Upfront Payment:</span>
+                      <span className="font-bold text-text-main">Rs. {paidVal.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between items-center font-semibold border-t border-border-color/60 pt-2">
+                      <span className="text-rose-500">Unpaid Credit Balance:</span>
+                      <span className="font-black text-rose-500 text-sm">
+                        Rs. {Math.max(0, netAmount - paidVal).toLocaleString()}
+                      </span>
+                    </div>
+                    <input
+                      type="number"
+                      placeholder="Enter upfront payment (if any)"
+                      value={paidAmount === "0" ? "" : paidAmount}
+                      onChange={(e) => setPaidAmount(e.target.value)}
+                      className="w-full mt-2 bg-bg-card border border-border-color text-text-main px-3 py-2 rounded-xl outline-none text-xs"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Complete & Cancel Actions */}
+              <div className="pt-4 border-t border-border-color/60 flex gap-3">
+                <button
+                  onClick={handleCheckout}
+                  disabled={cart.length === 0}
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-xl font-bold text-xs uppercase tracking-wide transition-all shadow-md active:scale-[0.98] disabled:opacity-45 disabled:pointer-events-none cursor-pointer"
+                >
+                  Complete & Print
+                </button>
+                <button
+                  onClick={() => setShowPaymentModal(false)}
+                  className="flex-1 bg-bg-main hover:bg-border-color border border-border-color text-text-main py-3 rounded-xl font-bold text-xs uppercase tracking-wide transition-all active:scale-[0.98] cursor-pointer"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Hold/Park Sale Modal */}
       {showHoldModal && (
