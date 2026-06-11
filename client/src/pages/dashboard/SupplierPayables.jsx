@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { FaPlus, FaTimes, FaCheckCircle } from "react-icons/fa";
+import { FaPlus, FaTimes, FaCheckCircle, FaEdit, FaTrash } from "react-icons/fa";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import API from "../../services/api";
 import { toast } from "react-toastify";
@@ -8,6 +8,7 @@ const SupplierPayables = () => {
   const [suppliers, setSuppliers] = useState([]);
   const [payables, setPayables] = useState([]);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
 
   const [formData, setFormData] = useState({
     supplier: "",
@@ -55,21 +56,73 @@ const SupplierPayables = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Add Payable
+  // Add or Edit Payable
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const token = localStorage.getItem("token");
-      await API.post("/supplier-payables", formData, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      toast.success("Supplier purchase logged successfully");
+
+      if (editingId) {
+        // UPDATE
+        await API.put(`/supplier-payables/${editingId}`, formData, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        toast.success("Payable record updated successfully");
+      } else {
+        // ADD
+        await API.post("/supplier-payables", formData, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        toast.success("Supplier purchase logged successfully");
+      }
+
       setFormData({ supplier: "", description: "", totalAmount: "", paidAmount: "" });
       setShowForm(false);
+      setEditingId(null);
       fetchPayables();
     } catch (error) {
       console.error(error);
-      toast.error("Failed to log supplier purchase");
+      toast.error(editingId ? "Failed to update payable record" : "Failed to log supplier purchase");
+    }
+  };
+
+  // Pre-fill form for editing
+  const handleEdit = (payable) => {
+    setEditingId(payable._id);
+    setFormData({
+      supplier: payable.supplier?._id || "",
+      description: payable.description,
+      totalAmount: payable.totalAmount,
+      paidAmount: payable.paidAmount,
+    });
+    setShowForm(true);
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  };
+
+  // Delete Payable
+  const handleDelete = async (id) => {
+    try {
+      const token = localStorage.getItem("token");
+      const confirmDelete = window.confirm("Are you sure you want to delete this payable record?");
+      if (!confirmDelete) return;
+
+      await API.delete(`/supplier-payables/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      toast.success("Payable record deleted successfully");
+      fetchPayables();
+      if (editingId === id) {
+        setEditingId(null);
+        setShowForm(false);
+        setFormData({ supplier: "", description: "", totalAmount: "", paidAmount: "" });
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to delete payable record");
     }
   };
 
@@ -146,8 +199,10 @@ const SupplierPayables = () => {
       {showForm && (
         <div className="border border-border-color bg-bg-card rounded-xl p-6 mb-8 shadow-sm">
           <div className="flex items-center justify-between mb-5">
-            <h2 className="text-lg font-bold text-text-main tracking-tight">Add Supplier Purchase</h2>
-            <button onClick={() => setShowForm(false)} className="text-text-secondary hover:text-text-main cursor-pointer transition-colors">
+            <h2 className="text-lg font-bold text-text-main tracking-tight">
+              {editingId ? "Edit Supplier Purchase" : "Add Supplier Purchase"}
+            </h2>
+            <button onClick={() => { setShowForm(false); setEditingId(null); setFormData({ supplier: "", description: "", totalAmount: "", paidAmount: "" }); }} className="text-text-secondary hover:text-text-main cursor-pointer transition-colors">
               <FaTimes />
             </button>
           </div>
@@ -174,13 +229,26 @@ const SupplierPayables = () => {
             <FormInput label="Total Amount (Rs.)" name="totalAmount" type="number" value={formData.totalAmount} onChange={handleChange} />
             <FormInput label="Paid Amount (Rs.)" name="paidAmount" type="number" value={formData.paidAmount} onChange={handleChange} />
 
-            <div className="flex items-end">
+            <div className="flex items-end gap-2">
               <button
                 type="submit"
-                className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-2.5 rounded-xl font-semibold text-sm transition-all cursor-pointer active:scale-[0.98]"
+                className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white py-2.5 rounded-xl font-semibold text-sm transition-all cursor-pointer active:scale-[0.98]"
               >
-                Log Purchase
+                {editingId ? "Update Info" : "Log Purchase"}
               </button>
+              {editingId && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingId(null);
+                    setShowForm(false);
+                    setFormData({ supplier: "", description: "", totalAmount: "", paidAmount: "" });
+                  }}
+                  className="px-4 py-2.5 border border-border-color hover:bg-bg-main text-text-secondary rounded-xl text-sm font-semibold transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+              )}
             </div>
           </form>
         </div>
@@ -227,17 +295,32 @@ const SupplierPayables = () => {
                     </td>
 
                     {/* Action */}
-                    <td className="px-5 py-3.5">
-                      {payable.status !== "paid" ? (
+                    <td className="px-5 py-3.5 text-xs">
+                      <div className="flex items-center gap-2">
+                        {payable.status !== "paid" && (
+                          <button
+                            onClick={() => setSelectedPayable(payable)}
+                            className="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-all active:scale-[0.97]"
+                            title="Pay Vendor"
+                          >
+                            Pay Vendor
+                          </button>
+                        )}
                         <button
-                          onClick={() => setSelectedPayable(payable)}
-                          className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-all active:scale-[0.97]"
+                          onClick={() => handleEdit(payable)}
+                          className="w-7 h-7 rounded-lg bg-indigo-500/10 hover:bg-indigo-600 text-indigo-500 hover:text-white flex items-center justify-center transition-all cursor-pointer"
+                          title="Edit Payable"
                         >
-                          Pay Vendor
+                          <FaEdit className="text-[10px]" />
                         </button>
-                      ) : (
-                        <span className="text-text-secondary text-xs font-semibold">—</span>
-                      )}
+                        <button
+                          onClick={() => handleDelete(payable._id)}
+                          className="w-7 h-7 rounded-lg bg-rose-500/10 hover:bg-rose-600 text-rose-500 hover:text-white flex items-center justify-center transition-all cursor-pointer"
+                          title="Delete Payable"
+                        >
+                          <FaTrash className="text-[10px]" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))

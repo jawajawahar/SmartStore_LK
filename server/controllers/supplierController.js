@@ -86,8 +86,48 @@ const bulkAddSuppliers = async (req, res) => {
   }
 };
 
+// Update Supplier
+const updateSupplier = async (req, res) => {
+  try {
+    const { name, company, phone, address } = req.body;
+    const supplier = await Supplier.findById(req.params.id);
+
+    if (!supplier) {
+      return res.status(404).json({ message: "Supplier not found" });
+    }
+
+    supplier.name = name || supplier.name;
+    supplier.company = company !== undefined ? company : supplier.company;
+    supplier.phone = phone || supplier.phone;
+    supplier.address = address !== undefined ? address : supplier.address;
+
+    await supplier.save();
+    res.status(200).json({ message: "Supplier updated successfully", supplier });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Delete Supplier
+const deleteSupplier = async (req, res) => {
+  try {
+    const supplier = await Supplier.findById(req.params.id);
+
+    if (!supplier) {
+      return res.status(404).json({ message: "Supplier not found" });
+    }
+
+    await supplier.deleteOne();
+    res.status(200).json({ message: "Supplier deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   addSupplier,
   getSuppliers,
   bulkAddSuppliers,
+  updateSupplier,
+  deleteSupplier,
 };

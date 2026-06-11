@@ -119,8 +119,70 @@ const paySupplier = async (req, res) => {
   }
 };
 
+// Update Payable
+const updatePayable = async (req, res) => {
+  try {
+    const { description, totalAmount, paidAmount } = req.body;
+    const payable = await SupplierPayable.findById(req.params.id);
+
+    if (!payable) {
+      return res.status(404).json({ message: "Payable not found" });
+    }
+
+    const newTotal = totalAmount !== undefined ? Number(totalAmount) : payable.totalAmount;
+    const newPaid = paidAmount !== undefined ? Number(paidAmount) : payable.paidAmount;
+    const newRemaining = newTotal - newPaid;
+
+    const remainingDiff = newRemaining - payable.remainingAmount;
+
+    payable.description = description !== undefined ? description : payable.description;
+    payable.totalAmount = newTotal;
+    payable.paidAmount = newPaid;
+    payable.remainingAmount = newRemaining;
+    payable.status = newRemaining <= 0 ? "paid" : "pending";
+
+    await payable.save();
+
+    // Update supplier's payable amount
+    if (remainingDiff !== 0) {
+      await Supplier.findByIdAndUpdate(payable.supplier, {
+        $inc: { payableAmount: remainingDiff },
+      });
+    }
+
+    res.status(200).json({ message: "Supplier payable updated successfully", payable });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Delete Payable
+const deletePayable = async (req, res) => {
+  try {
+    const payable = await SupplierPayable.findById(req.params.id);
+
+    if (!payable) {
+      return res.status(404).json({ message: "Payable not found" });
+    }
+
+    // Deduct remaining payable from supplier's balance
+    if (payable.remainingAmount > 0) {
+      await Supplier.findByIdAndUpdate(payable.supplier, {
+        $inc: { payableAmount: -payable.remainingAmount },
+      });
+    }
+
+    await payable.deleteOne();
+    res.status(200).json({ message: "Supplier payable deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   addPayable,
   getPayables,
   paySupplier,
+  updatePayable,
+  deletePayable,
 };

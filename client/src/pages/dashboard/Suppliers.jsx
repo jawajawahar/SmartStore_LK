@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { FaTruck, FaSearch, FaPlus, FaCloudUploadAlt } from "react-icons/fa";
+import { FaTruck, FaSearch, FaPlus, FaCloudUploadAlt, FaEdit, FaTrash } from "react-icons/fa";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import API from "../../services/api";
 import { toast } from "react-toastify";
@@ -10,6 +10,7 @@ const Suppliers = () => {
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [isBulkOpen, setIsBulkOpen] = useState(false);
+  const [editingId, setEditingId] = useState(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -40,22 +41,73 @@ const Suppliers = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Add Supplier
+  // Add or Edit Supplier
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const token = localStorage.getItem("token");
-      await API.post("/suppliers", formData, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
 
-      toast.success("Supplier registered successfully");
+      if (editingId) {
+        // UPDATE
+        await API.put(`/suppliers/${editingId}`, formData, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        toast.success("Supplier updated successfully");
+      } else {
+        // ADD
+        await API.post("/suppliers", formData, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        toast.success("Supplier registered successfully");
+      }
+
       setFormData({ name: "", company: "", phone: "", address: "" });
       setShowForm(false);
+      setEditingId(null);
       fetchSuppliers();
     } catch (error) {
       console.error(error);
-      toast.error("Failed to register supplier");
+      toast.error(editingId ? "Failed to update supplier" : "Failed to register supplier");
+    }
+  };
+
+  // Pre-fill form for editing
+  const handleEdit = (supplier) => {
+    setEditingId(supplier._id);
+    setFormData({
+      name: supplier.name,
+      company: supplier.company || "",
+      phone: supplier.phone,
+      address: supplier.address || "",
+    });
+    setShowForm(true);
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  };
+
+  // Delete Supplier
+  const handleDelete = async (id) => {
+    try {
+      const token = localStorage.getItem("token");
+      const confirmDelete = window.confirm("Are you sure you want to delete this supplier?");
+      if (!confirmDelete) return;
+
+      await API.delete(`/suppliers/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      toast.success("Supplier deleted successfully");
+      fetchSuppliers();
+      if (editingId === id) {
+        setEditingId(null);
+        setShowForm(false);
+        setFormData({ name: "", company: "", phone: "", address: "" });
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to delete supplier");
     }
   };
 
@@ -118,18 +170,24 @@ const Suppliers = () => {
 
             <div className="xl:col-span-4 flex justify-end gap-3">
               <button
-                type="button"
-                onClick={() => setShowForm(false)}
-                className="px-6 py-2.5 rounded-xl font-semibold text-sm border border-border-color text-text-secondary hover:bg-bg-main transition-all cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
                 type="submit"
-                className="bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-2.5 rounded-xl font-semibold text-sm transition-all cursor-pointer active:scale-[0.98] shadow-lg shadow-indigo-600/10"
+                className="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-all cursor-pointer shadow-lg shadow-indigo-600/10"
               >
-                Register Supplier Account
+                {editingId ? "Update Supplier Info" : "Register Supplier Account"}
               </button>
+              {editingId && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingId(null);
+                    setShowForm(false);
+                    setFormData({ name: "", company: "", phone: "", address: "" });
+                  }}
+                  className="px-4 py-2.5 border border-border-color hover:bg-bg-main text-text-secondary rounded-xl text-sm font-semibold transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+              )}
             </div>
           </form>
         </div>
@@ -156,7 +214,7 @@ const Suppliers = () => {
           <table className="w-full">
             <thead className="bg-bg-main border-b border-border-color">
               <tr>
-                {["Supplier Name", "Company", "Phone", "Address", "Payable Balance"].map((th) => (
+                {["Supplier Name", "Company", "Phone", "Address", "Payable Balance", "Actions"].map((th) => (
                   <th key={th} className="text-left px-5 py-3.5 text-[10px] font-bold uppercase tracking-wider text-text-secondary">
                     {th}
                   </th>
@@ -189,6 +247,24 @@ const Suppliers = () => {
                           Settled
                         </span>
                       )}
+                    </td>
+                    <td className="px-5 py-3.5 text-sm">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleEdit(supplier)}
+                          className="w-7 h-7 rounded-lg bg-indigo-500/10 hover:bg-indigo-600 text-indigo-500 hover:text-white flex items-center justify-center transition-all cursor-pointer"
+                          title="Edit Supplier"
+                        >
+                          <FaEdit className="text-[10px]" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(supplier._id)}
+                          className="w-7 h-7 rounded-lg bg-rose-500/10 hover:bg-rose-600 text-rose-500 hover:text-white flex items-center justify-center transition-all cursor-pointer"
+                          title="Delete Supplier"
+                        >
+                          <FaTrash className="text-[10px]" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))

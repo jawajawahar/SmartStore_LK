@@ -233,9 +233,46 @@ const deleteDebt = async (req, res) => {
   }
 };
 
+// Update Debt
+const updateDebt = async (req, res) => {
+  try {
+    const { description, totalAmount, paidAmount } = req.body;
+    const debt = await Debt.findById(req.params.id);
+
+    if (!debt) {
+      return res.status(404).json({ message: "Debt record not found" });
+    }
+
+    const newTotal = totalAmount !== undefined ? Number(totalAmount) : debt.totalAmount;
+    const newPaid = paidAmount !== undefined ? Number(paidAmount) : debt.paidAmount;
+    const newRemaining = newTotal - newPaid;
+
+    const remainingDiff = newRemaining - debt.remainingAmount;
+
+    debt.description = description !== undefined ? description : debt.description;
+    debt.totalAmount = newTotal;
+    debt.paidAmount = newPaid;
+    debt.remainingAmount = newRemaining;
+    debt.status = newRemaining <= 0 ? "paid" : "pending";
+
+    await debt.save();
+
+    if (remainingDiff !== 0) {
+      await Customer.findByIdAndUpdate(debt.customer, {
+        $inc: { currentDebt: remainingDiff },
+      });
+    }
+
+    res.status(200).json({ message: "Debt record updated successfully", debt });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   addDebt,
   getDebts,
   payDebt,
   deleteDebt,
+  updateDebt,
 };

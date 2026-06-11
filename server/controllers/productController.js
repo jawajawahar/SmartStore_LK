@@ -164,6 +164,15 @@ const updateProduct = async (req, res) => {
       },
     );
 
+    if (updatedProduct && updatedProduct.stock <= 0) {
+      await Product.findByIdAndDelete(updatedProduct._id);
+      return res.status(200).json({
+        message: "Product stock reached 0 and was automatically removed from the system",
+        deleted: true,
+        productId: req.params.id,
+      });
+    }
+
     res.status(200).json({
       message: "Product Updated Successfully",
 

@@ -97,13 +97,20 @@ const createSale = async (req, res) => {
       });
     }
 
-    // Reduce Product Stock
+    // Reduce Product Stock & Remove if stock becomes 0
     for (const item of items) {
-      await Product.findByIdAndUpdate(item.product, {
-        $inc: {
-          stock: -item.quantity,
+      const updatedProduct = await Product.findByIdAndUpdate(
+        item.product,
+        {
+          $inc: { stock: -item.quantity },
         },
-      });
+        { new: true }
+      );
+
+      if (updatedProduct && updatedProduct.stock <= 0) {
+        await Product.findByIdAndDelete(item.product);
+        console.log(`Product "${updatedProduct.name}" automatically removed because stock reached 0.`);
+      }
     }
 
     // Create or update Debt if needed (any transaction with remaining balance)

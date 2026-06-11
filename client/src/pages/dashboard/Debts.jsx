@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { FaEdit, FaTrash } from "react-icons/fa";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import API from "../../services/api";
 import { toast } from "react-toastify";
@@ -6,6 +7,7 @@ import { toast } from "react-toastify";
 const Debts = () => {
   const [customers, setCustomers] = useState([]);
   const [debts, setDebts] = useState([]);
+  const [editingId, setEditingId] = useState(null);
 
   const [formData, setFormData] = useState({
     customer: "",
@@ -65,20 +67,30 @@ const Debts = () => {
     });
   };
 
-  // Add Debt
+  // Add or Edit Debt
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
       const token = localStorage.getItem("token");
 
-      await API.post("/debts", formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      toast.success("Debt record logged successfully");
+      if (editingId) {
+        // UPDATE
+        await API.put(`/debts/${editingId}`, formData, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        toast.success("Debt record updated successfully");
+      } else {
+        // ADD
+        await API.post("/debts", formData, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        toast.success("Debt record logged successfully");
+      }
 
       setFormData({
         customer: "",
@@ -87,10 +99,51 @@ const Debts = () => {
         paidAmount: "",
       });
 
+      setEditingId(null);
       fetchDebts();
     } catch (error) {
       console.log(error);
-      toast.error("Failed to Log Debt Entry");
+      toast.error(editingId ? "Failed to Update Debt Entry" : "Failed to Log Debt Entry");
+    }
+  };
+
+  // Pre-fill form for editing
+  const handleEdit = (debt) => {
+    setEditingId(debt._id);
+    setFormData({
+      customer: debt.customer?._id || "",
+      description: debt.description,
+      totalAmount: debt.totalAmount,
+      paidAmount: debt.paidAmount,
+    });
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  };
+
+  // Delete Debt
+  const handleDelete = async (id) => {
+    try {
+      const token = localStorage.getItem("token");
+      const confirmDelete = window.confirm("Are you sure you want to delete this debt record?");
+      if (!confirmDelete) return;
+
+      await API.delete(`/debts/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      toast.success("Debt record deleted successfully");
+      fetchDebts();
+      if (editingId === id) {
+        setEditingId(null);
+        setFormData({ customer: "", description: "", totalAmount: "", paidAmount: "" });
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to delete debt record");
     }
   };
 
@@ -135,7 +188,9 @@ const Debts = () => {
 
       {/* Add Debt Form */}
       <div className="bg-bg-card border border-border-color rounded-xl p-6 mb-8 shadow-sm">
-        <h2 className="text-lg font-bold text-text-main mb-5 tracking-tight font-sans">Add Borrow Record</h2>
+        <h2 className="text-lg font-bold text-text-main mb-5 tracking-tight font-sans">
+          {editingId ? "Edit Debt Record" : "Add Borrow Record"}
+        </h2>
 
         <form
           onSubmit={handleSubmit}
@@ -187,13 +242,25 @@ const Debts = () => {
           />
 
           {/* Button */}
-          <div className="flex items-end">
+          <div className="flex items-end gap-3">
             <button
               type="submit"
-              className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-2.5 rounded-xl font-semibold text-sm transition-all duration-150 cursor-pointer active:scale-[0.99] shadow-lg shadow-indigo-600/10"
+              className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white py-2.5 rounded-xl font-semibold text-sm transition-all duration-150 cursor-pointer active:scale-[0.99] shadow-lg shadow-indigo-600/10"
             >
-              Log Debt Entry
+              {editingId ? "Update Debt Entry" : "Log Debt Entry"}
             </button>
+            {editingId && (
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingId(null);
+                  setFormData({ customer: "", description: "", totalAmount: "", paidAmount: "" });
+                }}
+                className="px-4 py-2.5 border border-border-color hover:bg-bg-main text-text-secondary rounded-xl text-sm font-semibold transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+            )}
           </div>
         </form>
       </div>
@@ -244,16 +311,31 @@ const Debts = () => {
 
                     {/* Action */}
                     <td className="px-5 py-3.5 text-xs">
-                      {debt.status !== "paid" ? (
+                      <div className="flex items-center gap-2">
+                        {debt.status !== "paid" && (
+                          <button
+                            onClick={() => setSelectedDebt(debt)}
+                            className="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg font-bold uppercase text-[9px] cursor-pointer transition-all active:scale-[0.97] shadow-sm hover:shadow"
+                            title="Clear Part"
+                          >
+                            Clear Part
+                          </button>
+                        )}
                         <button
-                          onClick={() => setSelectedDebt(debt)}
-                          className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-1.5 rounded-lg font-bold uppercase text-[10px] cursor-pointer transition-colors active:scale-[0.97] shadow-sm hover:shadow"
+                          onClick={() => handleEdit(debt)}
+                          className="w-7 h-7 rounded-lg bg-indigo-500/10 hover:bg-indigo-600 text-indigo-500 hover:text-white flex items-center justify-center transition-all cursor-pointer"
+                          title="Edit Debt"
                         >
-                          Clear Part
+                          <FaEdit className="text-[10px]" />
                         </button>
-                      ) : (
-                        <span className="text-text-secondary font-semibold">-</span>
-                      )}
+                        <button
+                          onClick={() => handleDelete(debt._id)}
+                          className="w-7 h-7 rounded-lg bg-rose-500/10 hover:bg-rose-600 text-rose-500 hover:text-white flex items-center justify-center transition-all cursor-pointer"
+                          title="Delete Debt"
+                        >
+                          <FaTrash className="text-[10px]" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
