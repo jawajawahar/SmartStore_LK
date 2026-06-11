@@ -50,6 +50,10 @@ const POS = () => {
   // Payment Checkout Modal State
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 
+  // Compact summary toggles
+  const [showDiscountInput, setShowDiscountInput] = useState(false);
+  const [showTaxSelect, setShowTaxSelect] = useState(false);
+
   // Fetch Products
   const fetchProducts = async () => {
     try {
@@ -593,7 +597,7 @@ const POS = () => {
         </div>
 
         {/* Cart Column */}
-        <div className="border border-border-color rounded-xl p-5 bg-bg-card shadow-sm sticky top-5 h-[calc(100vh-170px)] min-h-[480px] flex flex-col">
+        <div className="border border-border-color rounded-xl p-5 bg-bg-card shadow-sm sticky top-5 h-[calc(100vh-140px)] min-h-[520px] flex flex-col">
           {/* Header */}
           <div className="flex-none flex justify-between items-center mb-4 pb-2 border-b border-border-color/60">
             <h2 className="text-base font-bold tracking-tight text-text-main">Active Cart</h2>
@@ -715,82 +719,124 @@ const POS = () => {
           </div>
 
           {/* Cart Summary */}
-          <div className="flex-none border-t border-border-color/60 pt-3 space-y-2">
+          <div className="flex-none border-t border-border-color/60 pt-3.5 space-y-2.5">
             {/* Subtotal */}
             <div className="flex justify-between text-xs font-semibold text-text-secondary">
               <span>Subtotal</span>
               <span>Rs. {Number(subtotalAmount).toLocaleString()}</span>
             </div>
 
-            {/* Discount Section */}
-            <div className="space-y-1.5 p-3 rounded-lg border border-dashed border-border-color">
-              <div className="flex justify-between items-center text-xs">
-                <span className="text-text-secondary font-bold uppercase tracking-wider text-[9px] flex items-center gap-1">
-                  <FaPercentage className="text-[8px]" /> Discount
+            {/* Discount Row (Compact Inline Input) */}
+            <div className="space-y-1.5">
+              <div className="flex justify-between text-xs font-semibold text-text-secondary items-center">
+                <span className="flex items-center gap-1">
+                  Discount
+                  {discountAmount > 0 && (
+                    <span className="text-[10px] text-emerald-500 font-bold bg-emerald-500/5 px-1.5 py-0.2 rounded border border-emerald-500/10">
+                      {discountType === "percentage" ? `${discountValue}%` : `Flat`}
+                    </span>
+                  )}
                 </span>
-                <select
-                  value={discountType}
-                  onChange={(e) => {
-                    setDiscountType(e.target.value);
-                    setDiscountValue("");
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowDiscountInput(!showDiscountInput);
+                    setShowTaxSelect(false);
                   }}
-                  className="border border-border-color px-2 py-0.5 rounded text-[9px] bg-bg-main text-text-main cursor-pointer"
+                  className="text-indigo-500 hover:text-indigo-400 text-[10px] uppercase font-bold tracking-wider cursor-pointer transition-colors"
                 >
-                  <option value="none">None</option>
-                  <option value="percentage">% Percent</option>
-                  <option value="fixed">Flat (Rs.)</option>
-                </select>
+                  {discountType === "none" && !showDiscountInput ? "Add" : showDiscountInput ? "Close" : "Adjust"}
+                </button>
               </div>
-
-              {discountType !== "none" && (
-                <input
-                  type="number"
-                  placeholder={discountType === "percentage" ? "Enter % (e.g. 10)" : "Enter Flat Rs."}
-                  value={discountValue}
-                  onChange={(e) => setDiscountValue(e.target.value)}
-                  className="w-full border border-border-color px-3 py-1.5 rounded-lg text-xs outline-none bg-bg-main text-text-main placeholder-text-secondary/40"
-                />
+              {showDiscountInput && (
+                <div className="flex gap-2 items-center bg-bg-main/35 p-2 rounded-xl border border-border-color/60 transition-all">
+                  <select
+                    value={discountType}
+                    onChange={(e) => {
+                      setDiscountType(e.target.value);
+                      setDiscountValue("");
+                    }}
+                    className="border border-border-color px-2 py-1 rounded-lg text-[10px] bg-bg-card text-text-main cursor-pointer outline-none"
+                  >
+                    <option value="none">None</option>
+                    <option value="percentage">% Percent</option>
+                    <option value="fixed">Flat (Rs.)</option>
+                  </select>
+                  {discountType !== "none" && (
+                    <input
+                      type="number"
+                      placeholder={discountType === "percentage" ? "Enter %" : "Enter Rs."}
+                      value={discountValue}
+                      onChange={(e) => setDiscountValue(e.target.value)}
+                      className="flex-1 border border-border-color px-2.5 py-1 rounded-lg text-[10px] outline-none bg-bg-card text-text-main placeholder-text-secondary/35"
+                      autoFocus
+                    />
+                  )}
+                </div>
               )}
             </div>
 
-            {/* Tax Section */}
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-text-secondary font-medium">Tax / VAT (%)</span>
-              <select
-                value={taxRate}
-                onChange={(e) => setTaxRate(e.target.value)}
-                className="border border-border-color px-2.5 py-1 rounded-lg text-xs bg-bg-main text-text-main cursor-pointer"
-              >
-                <option value="0">0% Tax</option>
-                <option value="5">5% VAT</option>
-                <option value="12">12% Service</option>
-                <option value="15">15% VAT + Luxury</option>
-              </select>
+            {/* Tax Row (Compact Inline Select) */}
+            <div className="space-y-1.5">
+              <div className="flex justify-between text-xs font-semibold text-text-secondary items-center">
+                <span className="flex items-center gap-1">
+                  Tax / VAT
+                  {taxPercent > 0 && (
+                    <span className="text-[10px] text-rose-500 font-bold bg-rose-500/5 px-1.5 py-0.2 rounded border border-rose-500/10">
+                      {taxRate}%
+                    </span>
+                  )}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowTaxSelect(!showTaxSelect);
+                    setShowDiscountInput(false);
+                  }}
+                  className="text-indigo-500 hover:text-indigo-400 text-[10px] uppercase font-bold tracking-wider cursor-pointer transition-colors"
+                >
+                  {taxRate === "0" && !showTaxSelect ? "Add" : showTaxSelect ? "Close" : "Adjust"}
+                </button>
+              </div>
+              {showTaxSelect && (
+                <div className="bg-bg-main/35 p-2 rounded-xl border border-border-color/60 transition-all">
+                  <select
+                    value={taxRate}
+                    onChange={(e) => setTaxRate(e.target.value)}
+                    className="w-full border border-border-color px-2 py-1 rounded-lg text-[10px] bg-bg-card text-text-main cursor-pointer outline-none"
+                  >
+                    <option value="0">0% Tax</option>
+                    <option value="5">5% VAT</option>
+                    <option value="12">12% Service</option>
+                    <option value="15">15% VAT + Luxury</option>
+                  </select>
+                </div>
+              )}
             </div>
 
-            {/* Sub-breakdowns if applicable */}
+            {/* Sub-breakdowns display */}
             {discountAmount > 0 && (
-              <div className="flex justify-between text-xs text-emerald-500 font-semibold">
-                <span>Discount</span>
+              <div className="flex justify-between text-[11px] text-emerald-500 font-semibold">
+                <span>Discount Amount</span>
                 <span>- Rs. {discountAmount.toLocaleString()}</span>
               </div>
             )}
             {taxAmount > 0 && (
-              <div className="flex justify-between text-xs text-rose-500 font-semibold">
-                <span>Tax ({taxRate}%)</span>
+              <div className="flex justify-between text-[11px] text-rose-500 font-semibold">
+                <span>Tax Amount</span>
                 <span>+ Rs. {taxAmount.toLocaleString()}</span>
               </div>
             )}
 
-            {/* Net Total */}
-            <div className="flex justify-between text-sm font-bold border-t border-border-color/60 pt-2 text-text-main">
+            {/* Net Grand Total */}
+            <div className="flex justify-between text-sm font-bold border-t border-border-color/60 pt-2.5 text-text-main">
               <span>Grand Total</span>
               <span className="text-indigo-500 font-black text-base">Rs. {Number(netAmount).toLocaleString()}</span>
             </div>
           </div>
 
           {/* Checkout CTA */}
-          <div className="flex-none pt-3 border-t border-border-color/60 mt-2.5">
+          <div className="flex-none pt-3.5 border-t border-border-color/60 mt-3">
             <button
               onClick={() => {
                 if (cart.length === 0) {
@@ -800,7 +846,7 @@ const POS = () => {
                 setShowPaymentModal(true);
               }}
               disabled={cart.length === 0}
-              className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-3 rounded-xl font-bold text-xs uppercase tracking-wide transition-all shadow-md active:scale-[0.98] disabled:opacity-45 disabled:pointer-events-none cursor-pointer"
+              className="w-full bg-indigo-650 bg-indigo-600 hover:bg-indigo-550 text-white py-3 rounded-xl font-bold text-xs uppercase tracking-wide transition-all shadow-md active:scale-[0.98] disabled:opacity-45 disabled:pointer-events-none cursor-pointer"
             >
               Proceed to Payment
             </button>
