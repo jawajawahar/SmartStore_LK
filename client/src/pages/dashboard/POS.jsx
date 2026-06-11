@@ -28,6 +28,7 @@ const POS = () => {
   const [selectedCustomer, setSelectedCustomer] = useState("");
   const [paidAmount, setPaidAmount] = useState("");
   const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState("All");
 
   // Payment Mode State: cash, card, bank_transfer, credit
   const [paymentMode, setPaymentMode] = useState("cash");
@@ -400,12 +401,21 @@ const POS = () => {
     }
   };
 
-  // Search Filter
-  const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(search.toLowerCase()) ||
-    product.sku?.toLowerCase().includes(search.toLowerCase()) ||
-    product.barcode?.toLowerCase().includes(search.toLowerCase())
-  );
+  // Dynamic Categories list based on inventory
+  const categories = ["All", ...new Set(products.map((p) => p.category).filter(Boolean))];
+
+  // Search & Category Filter
+  const filteredProducts = products.filter((product) => {
+    const matchesSearch =
+      product.name.toLowerCase().includes(search.toLowerCase()) ||
+      product.sku?.toLowerCase().includes(search.toLowerCase()) ||
+      product.barcode?.toLowerCase().includes(search.toLowerCase());
+    
+    const matchesCategory =
+      selectedCategory === "All" || product.category === selectedCategory;
+
+    return matchesSearch && matchesCategory;
+  });
 
   return (
     <DashboardLayout>
@@ -456,73 +466,88 @@ const POS = () => {
             </button>
           </div>
 
-          {/* Product Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
-            {filteredProducts.length > 0 ? (
-              filteredProducts.map((product) => (
-                <div
-                  key={product._id}
-                  className="bg-bg-card border border-border-color rounded-xl p-4.5 flex flex-col justify-between hover:border-indigo-500/30 transition-all duration-200 shadow-sm hover:shadow-md group"
+          {/* Categories Horizontal Scroll Row */}
+          {categories.length > 1 && (
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
+              {categories.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+                    selectedCategory === cat
+                      ? "bg-indigo-650 bg-indigo-600 text-white shadow-sm"
+                      : "bg-bg-card border border-border-color text-text-secondary hover:text-text-main hover:bg-bg-main"
+                  }`}
                 >
-                  <div>
-                    <div className="relative mb-3.5 rounded-lg overflow-hidden border border-border-color/60 bg-bg-main">
-                      <img
-                        src={`http://localhost:5000/${product.image}`}
-                        alt={product.name}
-                        className="w-full h-36 object-cover bg-bg-main group-hover:scale-105 transition-transform duration-300"
-                        onError={(e) => {
-                          e.target.src = "https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=120&auto=format&fit=crop";
-                        }}
-                      />
-                      {product.stock <= product.minStockLevel && (
-                        <span className="absolute top-2 right-2 bg-rose-500/90 text-white text-[9px] font-bold px-1.5 py-0.5 rounded tracking-wide uppercase shadow-sm">
-                          Low Stock
-                        </span>
-                      )}
-                    </div>
+                  {cat}
+                </button>
+              ))}
+            </div>
+          )}
 
-                    <div className="flex items-start justify-between gap-2">
-                      <h2 className="font-bold text-sm line-clamp-2 text-text-main leading-tight" title={product.name}>
+          {/* Product Grid - Ultra Compact clickable POS items */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-5 gap-3.5">
+            {filteredProducts.length > 0 ? (
+              filteredProducts.map((product) => {
+                const isOutOfStock = product.stock <= 0;
+                const isLowStock = product.stock > 0 && product.stock <= product.minStockLevel;
+                return (
+                  <div
+                    key={product._id}
+                    onClick={() => !isOutOfStock && addToCart(product)}
+                    className={`relative bg-bg-card border border-border-color/85 rounded-xl p-2.5 flex flex-col justify-between hover:border-indigo-500/60 hover:shadow-md cursor-pointer transition-all duration-150 active:scale-[0.97] select-none group ${
+                      isOutOfStock ? "opacity-55 pointer-events-none" : ""
+                    }`}
+                  >
+                    <div>
+                      {/* Product Image Box */}
+                      <div className="relative h-24 w-full rounded-lg overflow-hidden border border-border-color/40 bg-bg-main mb-2">
+                        <img
+                          src={`http://localhost:5000/${product.image}`}
+                          alt={product.name}
+                          className="w-full h-full object-cover bg-bg-main group-hover:scale-105 transition-transform duration-200"
+                          onError={(e) => {
+                            e.target.src = "https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=120&auto=format&fit=crop";
+                          }}
+                        />
+                        {/* Stock Badges */}
+                        {isOutOfStock ? (
+                          <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-[1px] flex items-center justify-center">
+                            <span className="bg-rose-600 text-white text-[9px] font-black px-2 py-0.5 rounded shadow-sm tracking-wider uppercase">
+                              SOLD OUT
+                            </span>
+                          </div>
+                        ) : isLowStock ? (
+                          <span className="absolute top-1.5 right-1.5 bg-amber-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded shadow-sm tracking-wider uppercase">
+                            LOW STOCK
+                          </span>
+                        ) : null}
+                      </div>
+
+                      {/* Product Name */}
+                      <h3 className="font-bold text-xs line-clamp-2 text-text-main leading-tight group-hover:text-indigo-500 transition-colors" title={product.name}>
                         {product.name}
-                      </h2>
+                      </h3>
                     </div>
 
-                    <div className="flex items-center gap-1.5 mt-2">
-                      <span className="text-[10px] text-text-secondary font-medium tracking-wide">
-                        SKU: {product.sku || "N/A"}
-                      </span>
-                      <span
-                        className={`inline-flex px-1.5 py-0.2 rounded text-[8px] font-bold uppercase tracking-wider border shrink-0 ${
-                          product.productType === "weighted"
-                            ? "bg-amber-500/5 text-amber-500 border-amber-500/10"
-                            : "bg-indigo-500/5 text-indigo-500 border-indigo-500/10"
-                        }`}
-                      >
-                        {product.productType}
-                      </span>
+                    <div className="mt-2.5 pt-2 border-t border-border-color/40 flex items-center justify-between gap-1">
+                      <div className="text-left">
+                        <p className="text-indigo-500 font-extrabold text-xs">
+                          Rs. {Number(product.sellingPrice).toLocaleString()}
+                        </p>
+                        <p className="text-[8px] text-text-secondary mt-0.5">
+                          per {product.unit}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <span className={`text-[9px] font-bold ${isLowStock ? "text-rose-500" : "text-text-secondary"}`}>
+                          Stock: {product.stock}
+                        </span>
+                      </div>
                     </div>
-
-                    <p className="text-text-secondary text-xs mt-1 font-semibold">
-                      Stock: <span className={product.stock <= product.minStockLevel ? "text-rose-500" : "text-text-main"}>{product.stock} {product.unit}</span>
-                    </p>
                   </div>
-
-                  <div className="mt-4">
-                    <p className="text-indigo-500 font-extrabold text-base">
-                      Rs. {Number(product.sellingPrice).toLocaleString()}{" "}
-                      <span className="text-[10px] font-normal text-text-secondary">/{product.unit}</span>
-                    </p>
-
-                    <button
-                      onClick={() => addToCart(product)}
-                      disabled={product.stock <= 0}
-                      className="w-full bg-indigo-650 bg-indigo-600 hover:bg-indigo-500 disabled:bg-bg-main disabled:text-text-secondary/40 text-white py-2 rounded-lg mt-3 text-xs font-semibold cursor-pointer transition-all active:scale-[0.98] disabled:scale-100 disabled:pointer-events-none shadow-sm hover:shadow"
-                    >
-                      {product.stock <= 0 ? "Out of Stock" : "Add to Cart"}
-                    </button>
-                  </div>
-                </div>
-              ))
+                );
+              })
             ) : (
               <div className="col-span-full text-center py-12 text-text-secondary text-sm bg-bg-card border border-border-color rounded-xl">
                 No inventory items match search parameters.
