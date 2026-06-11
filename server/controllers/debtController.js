@@ -12,24 +12,56 @@ const addDebt = async (req, res) => {
     const paid = Number(paidAmount) || 0;
     const remainingAmount = total - paid;
 
-    const debt = new Debt({
-      customer,
-      description,
-      totalAmount: total,
-      paidAmount: paid,
-      remainingAmount,
-      sale: sale || null,
-      status: remainingAmount <= 0 ? "paid" : "pending",
-    });
+    let debt;
+    if (remainingAmount > 0) {
+      // Look for an existing pending debt
+      const existingDebt = await Debt.findOne({
+        customer,
+        status: "pending",
+      });
 
-    await debt.save();
+      if (existingDebt) {
+        // Update existing debt
+        existingDebt.totalAmount += total;
+        existingDebt.paidAmount += paid;
+        existingDebt.remainingAmount += remainingAmount;
+        existingDebt.description = `${existingDebt.description}, ${description}`;
+        if (sale) existingDebt.sale = sale;
+        await existingDebt.save();
+        debt = existingDebt;
+      } else {
+        // Create new pending debt
+        debt = new Debt({
+          customer,
+          description,
+          totalAmount: total,
+          paidAmount: paid,
+          remainingAmount,
+          sale: sale || null,
+          status: "pending",
+        });
+        await debt.save();
+      }
+    } else {
+      // Remaining is 0 or less (already paid)
+      debt = new Debt({
+        customer,
+        description,
+        totalAmount: total,
+        paidAmount: paid,
+        remainingAmount: 0,
+        sale: sale || null,
+        status: "paid",
+      });
+      await debt.save();
+    }
 
     // Update Related Sale if linked
     if (sale) {
       const linkedSale = await Sale.findById(sale);
       if (linkedSale) {
         linkedSale.paidAmount += paid;
-        linkedSale.remainingAmount = linkedSale.totalAmount - linkedSale.paidAmount;
+        linkedSale.remainingAmount = Math.max(0, linkedSale.totalAmount - linkedSale.paidAmount);
         await linkedSale.save();
       }
     }
@@ -59,7 +91,7 @@ const addDebt = async (req, res) => {
     }
 
     res.status(201).json({
-      message: "Debt record added",
+      message: "Debt record processed successfully",
       debt,
     });
   } catch (error) {

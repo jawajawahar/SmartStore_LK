@@ -26,11 +26,12 @@ const createSale = async (req, res) => {
     }
 
     const total = Number(totalAmount);
-    const paid = Number(paidAmount) || 0;
+    const rawPaid = Number(paidAmount) || 0;
     const discount = Number(discountAmount) || 0;
     const tax = Number(taxAmount) || 0;
     const net = Number(netAmount) || total;
-    const remainingAmount = net - paid;
+    const remainingAmount = Math.max(0, net - rawPaid);
+    const paid = remainingAmount > 0 ? rawPaid : net;
 
     // Validate credit buyer restrictions
     if ((paymentMethod === "credit" || paymentMethod === "partial") && !customer) {
@@ -67,7 +68,7 @@ const createSale = async (req, res) => {
       items,
       totalAmount: total,
       paidAmount: paid,
-      remainingAmount: remainingAmount > 0 ? remainingAmount : 0,
+      remainingAmount: remainingAmount,
       paymentMethod,
       discountType: discountType || null,
       discountValue: Number(discountValue) || 0,
@@ -105,20 +106,37 @@ const createSale = async (req, res) => {
       });
     }
 
-    // Create Debt if needed (partial or credit payment)
+    // Create or update Debt if needed (partial or credit payment)
     if (
       (paymentMethod === "partial" || paymentMethod === "credit") &&
       remainingAmount > 0
     ) {
-      const debt = await Debt.create({
+      // Check if there is an active (pending) debt for this customer
+      const existingDebt = await Debt.findOne({
         customer,
-        sale: sale._id,
-        description: `POS Invoice Debt — ${items.length} item(s)`,
-        totalAmount: net,
-        paidAmount: paid,
-        remainingAmount,
         status: "pending",
       });
+
+      if (existingDebt) {
+        // Update the existing debt record
+        existingDebt.totalAmount += net;
+        existingDebt.paidAmount += paid;
+        existingDebt.remainingAmount += remainingAmount;
+        existingDebt.description = `${existingDebt.description}, POS Invoice Debt — ${items.length} item(s)`;
+        existingDebt.sale = sale._id;
+        await existingDebt.save();
+      } else {
+        // Create new pending debt record
+        await Debt.create({
+          customer,
+          sale: sale._id,
+          description: `POS Invoice Debt — ${items.length} item(s)`,
+          totalAmount: net,
+          paidAmount: paid,
+          remainingAmount,
+          status: "pending",
+        });
+      }
 
       // Update customer's total debt balance
       if (customer) {
