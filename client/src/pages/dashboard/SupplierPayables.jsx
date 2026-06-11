@@ -21,6 +21,10 @@ const SupplierPayables = () => {
   const [selectedPayable, setSelectedPayable] = useState(null);
   const [payLoading, setPayLoading] = useState(false);
 
+  // Search and Filter states
+  const [filter, setFilter] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+
   // Fetch Suppliers
   const fetchSuppliers = async () => {
     try {
@@ -157,6 +161,20 @@ const SupplierPayables = () => {
   const totalPaid = payables.reduce((a, p) => a + Number(p.paidAmount || 0), 0);
   const pending = payables.filter(p => p.status !== "paid").length;
 
+  // Filtered Payables
+  const filteredPayables = payables.filter((p) => {
+    const matchesSearch =
+      (p.supplier?.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (p.description || "").toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesFilter =
+      filter === "all" ||
+      (filter === "pending" && p.status === "pending") ||
+      (filter === "paid" && p.status === "paid");
+
+    return matchesSearch && matchesFilter;
+  });
+
   return (
     <DashboardLayout>
       {/* Header */}
@@ -220,9 +238,30 @@ const SupplierPayables = () => {
               >
                 <option value="">Select Supplier</option>
                 {suppliers.map((s) => (
-                  <option key={s._id} value={s._id}>{s.name}</option>
+                  <option key={s._id} value={s._id}>
+                    {s.name} {s.payableAmount > 0 ? `(Owed: Rs. ${Number(s.payableAmount).toLocaleString()})` : ""}
+                  </option>
                 ))}
               </select>
+              {formData.supplier && (
+                (() => {
+                  const selectedSub = suppliers.find(s => s._id === formData.supplier);
+                  if (selectedSub && selectedSub.payableAmount > 0) {
+                    return (
+                      <p className="text-[10px] text-rose-500 font-bold mt-1.5 flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500 inline-block animate-pulse"></span>
+                        Current Outstanding: Rs. {Number(selectedSub.payableAmount).toLocaleString()}
+                      </p>
+                    );
+                  }
+                  return (
+                    <p className="text-[10px] text-emerald-500 font-bold mt-1.5 flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
+                      No outstanding balance (Settled)
+                    </p>
+                  );
+                })()
+              )}
             </div>
 
             <FormInput label="Description" name="description" value={formData.description} onChange={handleChange} />
@@ -254,6 +293,55 @@ const SupplierPayables = () => {
         </div>
       )}
 
+      {/* Search & Filter Row */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-5">
+        {/* Status Filters */}
+        <div className="flex gap-1.5 bg-bg-card border border-border-color p-1 rounded-xl w-fit">
+          {[
+            { id: "all", label: "All Payables", count: payables.length },
+            { id: "pending", label: "Outstanding Only", count: payables.filter(p => p.status !== "paid").length },
+            { id: "paid", label: "Fully Settled", count: payables.filter(p => p.status === "paid").length }
+          ].map((tab) => {
+            const isActive = filter === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setFilter(tab.id)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  isActive
+                    ? "bg-indigo-600 text-white shadow-sm"
+                    : "text-text-secondary hover:text-text-main hover:bg-bg-main"
+                }`}
+              >
+                <span>{tab.label}</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-md ${
+                  isActive ? "bg-white/20 text-white" : "bg-bg-main text-text-secondary"
+                }`}>
+                  {tab.count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Search */}
+        <div className="relative w-full md:w-[280px]">
+          <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-text-secondary">
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </span>
+          <input
+            type="text"
+            placeholder="Search supplier or description..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-bg-card border border-border-color text-text-main pl-9 pr-4 py-2.5 rounded-xl outline-none text-xs focus:border-indigo-500 transition-all placeholder:text-text-secondary/40"
+          />
+        </div>
+      </div>
+
       {/* Payable Table */}
       <div className="border border-border-color bg-bg-card rounded-xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
@@ -269,8 +357,8 @@ const SupplierPayables = () => {
             </thead>
 
             <tbody className="divide-y divide-border-color">
-              {payables.length > 0 ? (
-                payables.map((payable) => (
+              {filteredPayables.length > 0 ? (
+                filteredPayables.map((payable) => (
                   <tr key={payable._id} className="hover:bg-bg-main/50 transition-colors">
                     <td className="px-5 py-3.5 font-semibold text-text-main text-sm">{payable.supplier?.name}</td>
                     <td className="px-5 py-3.5 text-text-secondary text-sm max-w-[160px] truncate">{payable.description}</td>
@@ -327,7 +415,7 @@ const SupplierPayables = () => {
               ) : (
                 <tr>
                   <td colSpan="7" className="text-center py-10 text-text-secondary text-sm">
-                    No payables transactions found.
+                    No matching payable records found.
                   </td>
                 </tr>
               )}

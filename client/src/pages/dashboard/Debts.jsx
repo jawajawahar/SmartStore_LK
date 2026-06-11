@@ -209,10 +209,29 @@ const Debts = () => {
               <option value="">Select Customer</option>
               {customers.map((customer) => (
                 <option key={customer._id} value={customer._id}>
-                  {customer.name}
+                  {customer.name} {customer.currentDebt > 0 ? `(Debt: Rs. ${Number(customer.currentDebt).toLocaleString()})` : ""}
                 </option>
               ))}
             </select>
+            {formData.customer && (
+              (() => {
+                const selectedCust = customers.find(c => c._id === formData.customer);
+                if (selectedCust && selectedCust.currentDebt > 0) {
+                  return (
+                    <p className="text-[10px] text-rose-500 font-bold mt-1.5 flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-rose-500 inline-block animate-pulse"></span>
+                      Current Debt: Rs. {Number(selectedCust.currentDebt).toLocaleString()}
+                    </p>
+                  );
+                }
+                return (
+                  <p className="text-[10px] text-emerald-500 font-bold mt-1.5 flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
+                    No outstanding debt (Settled)
+                  </p>
+                );
+              })()
+            )}
           </div>
 
           {/* Description */}
