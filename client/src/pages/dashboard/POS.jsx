@@ -499,53 +499,88 @@ const POS = () => {
                   <div
                     key={product._id}
                     onClick={() => !isOutOfStock && addToCart(product)}
-                    className={`relative bg-bg-card border border-border-color/85 rounded-xl p-2.5 flex flex-col justify-between hover:border-indigo-500/60 hover:shadow-md cursor-pointer transition-all duration-150 active:scale-[0.97] select-none group ${
-                      isOutOfStock ? "opacity-55 pointer-events-none" : ""
+                    className={`group relative bg-bg-card border border-border-color/70 rounded-2xl p-3 flex flex-col justify-between hover:border-indigo-500/40 hover:-translate-y-1 hover:shadow-[0_8px_30px_rgb(99,102,241,0.08)] cursor-pointer transition-all duration-300 active:scale-[0.98] select-none ${
+                      isOutOfStock ? "opacity-50 pointer-events-none" : ""
                     }`}
                   >
                     <div>
-                      {/* Product Image Box */}
-                      <div className="relative h-24 w-full rounded-lg overflow-hidden border border-border-color/40 bg-bg-main mb-2">
+                      {/* Product Image Container with hover effects */}
+                      <div className="relative h-28 w-full rounded-xl overflow-hidden border border-border-color/30 bg-bg-main mb-3 group-hover:shadow-sm transition-all duration-300">
                         <img
                           src={`http://localhost:5000/${product.image}`}
                           alt={product.name}
-                          className="w-full h-full object-cover bg-bg-main group-hover:scale-105 transition-transform duration-200"
+                          className="w-full h-full object-cover bg-bg-main group-hover:scale-110 transition-transform duration-300 ease-out"
                           onError={(e) => {
-                            e.target.src = "https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=120&auto=format&fit=crop";
+                            e.target.src = "https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=240&auto=format&fit=crop";
                           }}
                         />
-                        {/* Stock Badges */}
-                        {isOutOfStock ? (
-                          <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-[1px] flex items-center justify-center">
-                            <span className="bg-rose-600 text-white text-[9px] font-black px-2 py-0.5 rounded shadow-sm tracking-wider uppercase">
+                        
+                        {/* Category Badge on image */}
+                        {product.category && (
+                          <span className="absolute top-2 left-2 bg-slate-900/70 backdrop-blur-md text-white text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                            {product.category}
+                          </span>
+                        )}
+
+                        {/* Hover overlay with Add To Cart indicator */}
+                        {!isOutOfStock && (
+                          <div className="absolute inset-0 bg-indigo-600/45 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center gap-1.5">
+                            <div className="w-9 h-9 rounded-full bg-white text-indigo-600 flex items-center justify-center shadow-lg transform scale-75 group-hover:scale-100 transition-transform duration-300 delay-75">
+                              <FaPlus className="text-xs" />
+                            </div>
+                            <span className="text-[10px] text-white font-extrabold uppercase tracking-widest shadow-sm">
+                              Add to Cart
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Out of Stock Overlay */}
+                        {isOutOfStock && (
+                          <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-[1px] flex items-center justify-center">
+                            <span className="bg-rose-600 text-white text-[9px] font-black px-2.5 py-1 rounded shadow-md tracking-wider uppercase">
                               SOLD OUT
                             </span>
                           </div>
-                        ) : isLowStock ? (
-                          <span className="absolute top-1.5 right-1.5 bg-amber-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded shadow-sm tracking-wider uppercase">
-                            LOW STOCK
-                          </span>
-                        ) : null}
+                        )}
+                      </div>
+
+                      {/* SKU / Code */}
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-[9px] font-bold text-text-secondary/50 uppercase tracking-wider">
+                          {product.sku || "NO SKU"}
+                        </span>
                       </div>
 
                       {/* Product Name */}
-                      <h3 className="font-bold text-xs line-clamp-2 text-text-main leading-tight group-hover:text-indigo-500 transition-colors" title={product.name}>
+                      <h3 className="font-bold text-xs text-text-main leading-snug line-clamp-2 min-h-[32px] group-hover:text-indigo-500 transition-colors" title={product.name}>
                         {product.name}
                       </h3>
                     </div>
 
-                    <div className="mt-2.5 pt-2 border-t border-border-color/40 flex items-center justify-between gap-1">
+                    {/* Footer Details */}
+                    <div className="mt-3 pt-3 border-t border-border-color/40 flex items-center justify-between">
                       <div className="text-left">
-                        <p className="text-indigo-500 font-extrabold text-xs">
+                        <p className="text-indigo-600 dark:text-indigo-400 font-extrabold text-sm tracking-tight">
                           Rs. {Number(product.sellingPrice).toLocaleString()}
                         </p>
-                        <p className="text-[8px] text-text-secondary mt-0.5">
+                        <p className="text-[8px] text-text-secondary uppercase font-bold tracking-wider mt-0.5">
                           per {product.unit}
                         </p>
                       </div>
-                      <div className="text-right">
-                        <span className={`text-[9px] font-bold ${isLowStock ? "text-rose-500" : "text-text-secondary"}`}>
-                          Stock: {product.stock}
+                      
+                      <div className="flex flex-col items-end">
+                        {/* Visual Stock indicator pill */}
+                        <span className={`text-[9px] font-black px-2 py-0.5 rounded-full flex items-center gap-1.5 ${
+                          isOutOfStock 
+                            ? "bg-rose-500/10 text-rose-500" 
+                            : isLowStock 
+                            ? "bg-amber-500/10 text-amber-500" 
+                            : "bg-emerald-500/10 text-emerald-500"
+                        }`}>
+                          <span className={`w-1 h-1 rounded-full ${
+                            isOutOfStock ? "bg-rose-500" : isLowStock ? "bg-amber-500" : "bg-emerald-500"
+                          }`}></span>
+                          {product.stock} {product.unit}
                         </span>
                       </div>
                     </div>
@@ -664,10 +699,10 @@ const POS = () => {
                   {/* Fixed Qty adjustment */}
                   {item.productType !== "weighted" ? (
                     <div className="flex items-center justify-between mt-3.5">
-                      <div className="flex items-center gap-2.5 bg-bg-card border border-border-color rounded-lg p-0.5">
+                      <div className="flex items-center gap-2 bg-bg-card border border-border-color rounded-lg p-0.5">
                         <button
                           onClick={() => decreaseQty(item.product)}
-                          className="bg-bg-main hover:bg-border-color text-text-main w-6.5 h-6.5 rounded-md font-extrabold flex items-center justify-center cursor-pointer transition-colors text-xs active:scale-90"
+                          className="bg-bg-main hover:bg-border-color text-text-main w-7 h-7 rounded-md font-extrabold flex items-center justify-center cursor-pointer transition-colors text-xs active:scale-90"
                         >
                           -
                         </button>
@@ -676,7 +711,7 @@ const POS = () => {
                         </span>
                         <button
                           onClick={() => increaseQty(item.product)}
-                          className="bg-bg-main hover:bg-border-color text-text-main w-6.5 h-6.5 rounded-md font-extrabold flex items-center justify-center cursor-pointer transition-colors text-xs active:scale-90"
+                          className="bg-bg-main hover:bg-border-color text-text-main w-7 h-7 rounded-md font-extrabold flex items-center justify-center cursor-pointer transition-colors text-xs active:scale-90"
                         >
                           +
                         </button>
