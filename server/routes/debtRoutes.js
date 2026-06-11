@@ -1,3 +1,4 @@
+const express = require("express");
 const { addDebt, getDebts, payDebt, deleteDebt, updateDebt } = require("../controllers/debtController");
 
 const { protect } = require("../middleware/authMiddleware");

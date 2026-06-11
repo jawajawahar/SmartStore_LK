@@ -346,6 +346,8 @@ const POS = () => {
     try {
       const token = localStorage.getItem("token");
 
+      const checkoutMethod = getPayloadPaymentMethod();
+
       const saleData = {
         customer: selectedCustomer || null,
         items: cart,
@@ -562,297 +564,305 @@ const POS = () => {
         </div>
 
         {/* Cart Column */}
-        <div className="border border-border-color rounded-xl p-5 bg-bg-card shadow-sm sticky top-5 h-fit">
-          <div className="flex justify-between items-center mb-4 pb-2 border-b border-border-color/60">
-            <h2 className="text-base font-bold tracking-tight text-text-main">Active Cart</h2>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] text-text-secondary font-bold bg-bg-main px-2 py-0.5 rounded-md border border-border-color">
-                {cart.reduce((acc, item) => acc + (item.productType === "weighted" ? 1 : item.quantity), 0)} items
-              </span>
-              {cart.length > 0 && (
-                <button
-                  onClick={() => setShowHoldModal(true)}
-                  className="bg-amber-600/10 hover:bg-amber-600 text-amber-500 hover:text-white border border-amber-500/20 px-2 py-1 rounded-md text-[10px] font-bold uppercase transition-all cursor-pointer flex items-center gap-1"
-                >
-                  <FaPause className="text-[8px]" /> Park
-                </button>
+        <div className="border border-border-color rounded-xl p-5 bg-bg-card shadow-sm sticky top-5 h-[calc(100vh-170px)] min-h-[450px] flex flex-col">
+          {/* Header & Customer Selection (Fixed at top) */}
+          <div className="flex-none">
+            <div className="flex justify-between items-center mb-4 pb-2 border-b border-border-color/60">
+              <h2 className="text-base font-bold tracking-tight text-text-main">Active Cart</h2>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-text-secondary font-bold bg-bg-main px-2 py-0.5 rounded-md border border-border-color">
+                  {cart.reduce((acc, item) => acc + (item.productType === "weighted" ? 1 : item.quantity), 0)} items
+                </span>
+                {cart.length > 0 && (
+                  <button
+                    onClick={() => setShowHoldModal(true)}
+                    className="bg-amber-600/10 hover:bg-amber-600 text-amber-500 hover:text-white border border-amber-500/20 px-2 py-1 rounded-md text-[10px] font-bold uppercase transition-all cursor-pointer flex items-center gap-1"
+                  >
+                    <FaPause className="text-[8px]" /> Park
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Customer Dropdown */}
+            <div className="mb-4">
+              <div className="flex items-center gap-1 text-[10px] text-text-secondary uppercase font-bold mb-1.5 tracking-wider">
+                <FaUserTag /> <span>Select Customer</span>
+              </div>
+              <select
+                value={selectedCustomer}
+                onChange={(e) => setSelectedCustomer(e.target.value)}
+                className="w-full bg-bg-main border border-border-color text-text-main px-4 py-2.5 rounded-xl outline-none text-xs cursor-pointer focus:border-indigo-500 transition-colors"
+              >
+                <option value="">Walk-in Customer</option>
+                {customers.map((customer) => (
+                  <option key={customer._id} value={customer._id}>
+                    {customer.name} {customer.currentDebt > 0 ? `(Debt: Rs. ${customer.currentDebt})` : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Scrollable middle section */}
+          <div className="flex-1 overflow-y-auto pr-1 space-y-4 my-2 scrollbar-thin">
+            {/* Cart Items Area */}
+            <div className="space-y-3">
+              {cart.length > 0 ? (
+                cart.map((item) => (
+                  <div
+                    key={item.product}
+                    className="border border-border-color/60 rounded-xl p-3 bg-bg-main/30 hover:border-border-color transition-colors"
+                  >
+                    <div className="flex justify-between items-start gap-2">
+                      <div>
+                        <h3 className="font-bold text-xs leading-snug line-clamp-1 text-text-main" title={item.name}>
+                          {item.name}
+                        </h3>
+                        <p className="text-text-secondary text-[10px] mt-0.5 font-medium">
+                          Rs. {Number(item.price).toLocaleString()} / {item.unit}
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={() => removeItem(item.product)}
+                        className="text-text-secondary hover:text-rose-500 transition-colors cursor-pointer text-xs font-bold px-1"
+                      >
+                        ✕
+                      </button>
+                    </div>
+
+                    {/* Fixed Qty adjustment */}
+                    {item.productType !== "weighted" ? (
+                      <div className="flex items-center justify-between mt-3.5">
+                        <div className="flex items-center gap-2.5 bg-bg-card border border-border-color rounded-lg p-0.5">
+                          <button
+                            onClick={() => decreaseQty(item.product)}
+                            className="bg-bg-main hover:bg-border-color text-text-main w-6.5 h-6.5 rounded-md font-extrabold flex items-center justify-center cursor-pointer transition-colors text-xs active:scale-90"
+                          >
+                            -
+                          </button>
+                          <span className="text-text-main font-bold text-xs px-1">
+                            {item.quantity}
+                          </span>
+                          <button
+                            onClick={() => increaseQty(item.product)}
+                            className="bg-bg-main hover:bg-border-color text-text-main w-6.5 h-6.5 rounded-md font-extrabold flex items-center justify-center cursor-pointer transition-colors text-xs active:scale-90"
+                          >
+                            +
+                          </button>
+                        </div>
+
+                        <div className="font-bold text-indigo-500 text-xs">
+                          Rs. {Number(item.total).toLocaleString()}
+                        </div>
+                      </div>
+                    ) : (
+                      /* Weighted product adjustments */
+                      <div className="mt-3">
+                        <label className="text-text-secondary text-[9px] uppercase font-bold block mb-1 tracking-wider">
+                          Enter Weight ({item.unit})
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={item.quantity}
+                          onChange={(e) => updateWeight(item.product, e.target.value)}
+                          className="w-full border border-border-color rounded-lg px-2.5 py-1.5 text-xs outline-none bg-bg-card text-text-main focus:border-indigo-500 transition-colors"
+                        />
+
+                        {/* Subtotal block */}
+                        <div className="mt-2 flex justify-between items-center text-[10px] bg-indigo-500/5 border border-indigo-500/10 p-1.5 rounded-lg">
+                          <span className="text-text-secondary font-medium">Subtotal</span>
+                          <span className="font-bold text-indigo-500">
+                            Rs. {Number(item.total).toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-10 text-text-secondary text-xs">
+                  Cart is empty. Select items to checkout.
+                </div>
               )}
             </div>
-          </div>
 
-          {/* Customer Dropdown */}
-          <div className="mb-4">
-            <div className="flex items-center gap-1 text-[10px] text-text-secondary uppercase font-bold mb-1.5 tracking-wider">
-              <FaUserTag /> <span>Select Customer</span>
-            </div>
-            <select
-              value={selectedCustomer}
-              onChange={(e) => setSelectedCustomer(e.target.value)}
-              className="w-full bg-bg-main border border-border-color text-text-main px-4 py-2.5 rounded-xl outline-none text-xs cursor-pointer focus:border-indigo-500 transition-colors"
-            >
-              <option value="">Walk-in Customer</option>
-              {customers.map((customer) => (
-                <option key={customer._id} value={customer._id}>
-                  {customer.name} {customer.currentDebt > 0 ? `(Debt: Rs. ${customer.currentDebt})` : ""}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Cart Items Area */}
-          <div className="space-y-3 max-h-[250px] overflow-y-auto pr-1">
-            {cart.length > 0 ? (
-              cart.map((item) => (
-                <div
-                  key={item.product}
-                  className="border border-border-color/60 rounded-xl p-3 bg-bg-main/30 hover:border-border-color transition-colors"
-                >
-                  <div className="flex justify-between items-start gap-2">
-                    <div>
-                      <h3 className="font-bold text-xs leading-snug line-clamp-1 text-text-main" title={item.name}>
-                        {item.name}
-                      </h3>
-                      <p className="text-text-secondary text-[10px] mt-0.5 font-medium">
-                        Rs. {Number(item.price).toLocaleString()} / {item.unit}
-                      </p>
-                    </div>
-
-                    <button
-                      onClick={() => removeItem(item.product)}
-                      className="text-text-secondary hover:text-rose-500 transition-colors cursor-pointer text-xs font-bold px-1"
-                    >
-                      ✕
-                    </button>
-                  </div>
-
-                  {/* Fixed Qty adjustment */}
-                  {item.productType !== "weighted" ? (
-                    <div className="flex items-center justify-between mt-3.5">
-                      <div className="flex items-center gap-2.5 bg-bg-card border border-border-color rounded-lg p-0.5">
-                        <button
-                          onClick={() => decreaseQty(item.product)}
-                          className="bg-bg-main hover:bg-border-color text-text-main w-6.5 h-6.5 rounded-md font-extrabold flex items-center justify-center cursor-pointer transition-colors text-xs active:scale-90"
-                        >
-                          -
-                        </button>
-                        <span className="text-text-main font-bold text-xs px-1">
-                          {item.quantity}
-                        </span>
-                        <button
-                          onClick={() => increaseQty(item.product)}
-                          className="bg-bg-main hover:bg-border-color text-text-main w-6.5 h-6.5 rounded-md font-extrabold flex items-center justify-center cursor-pointer transition-colors text-xs active:scale-90"
-                        >
-                          +
-                        </button>
-                      </div>
-
-                      <div className="font-bold text-indigo-500 text-xs">
-                        Rs. {Number(item.total).toLocaleString()}
-                      </div>
-                    </div>
-                  ) : (
-                    /* Weighted product adjustments */
-                    <div className="mt-3">
-                      <label className="text-text-secondary text-[9px] uppercase font-bold block mb-1 tracking-wider">
-                        Enter Weight ({item.unit})
-                      </label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={item.quantity}
-                        onChange={(e) => updateWeight(item.product, e.target.value)}
-                        className="w-full border border-border-color rounded-lg px-2.5 py-1.5 text-xs outline-none bg-bg-card text-text-main focus:border-indigo-500 transition-colors"
-                      />
-
-                      {/* Subtotal block */}
-                      <div className="mt-2 flex justify-between items-center text-[10px] bg-indigo-500/5 border border-indigo-500/10 p-1.5 rounded-lg">
-                        <span className="text-text-secondary font-medium">Subtotal</span>
-                        <span className="font-bold text-indigo-500">
-                          Rs. {Number(item.total).toLocaleString()}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))
-            ) : (
-              <div className="text-center py-10 text-text-secondary text-xs">
-                Cart is empty. Select items to checkout.
+            {/* Cart Summary & Payments */}
+            <div className="border-t border-border-color/60 pt-3.5 space-y-3">
+              {/* Subtotal */}
+              <div className="flex justify-between text-xs font-semibold text-text-secondary">
+                <span>Subtotal</span>
+                <span>Rs. {Number(subtotalAmount).toLocaleString()}</span>
               </div>
-            )}
-          </div>
 
-          {/* Cart Summary & Payments */}
-          <div className="mt-4 border-t border-border-color/60 pt-3.5 space-y-3">
-            {/* Subtotal */}
-            <div className="flex justify-between text-xs font-semibold text-text-secondary">
-              <span>Subtotal</span>
-              <span>Rs. {Number(subtotalAmount).toLocaleString()}</span>
-            </div>
+              {/* Discount Section */}
+              <div className="space-y-1.5 p-3 rounded-lg border border-dashed border-border-color">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-text-secondary font-bold uppercase tracking-wider text-[9px] flex items-center gap-1">
+                    <FaPercentage className="text-[8px]" /> Discount
+                  </span>
+                  <select
+                    value={discountType}
+                    onChange={(e) => {
+                      setDiscountType(e.target.value);
+                      setDiscountValue("");
+                    }}
+                    className="border border-border-color px-2 py-0.5 rounded text-[9px] bg-bg-main text-text-main cursor-pointer"
+                  >
+                    <option value="none">None</option>
+                    <option value="percentage">% Percent</option>
+                    <option value="fixed">Flat (Rs.)</option>
+                  </select>
+                </div>
 
-            {/* Discount Section */}
-            <div className="space-y-1.5 p-3 rounded-lg border border-dashed border-border-color">
-              <div className="flex justify-between items-center text-xs">
-                <span className="text-text-secondary font-bold uppercase tracking-wider text-[9px] flex items-center gap-1">
-                  <FaPercentage className="text-[8px]" /> Discount
-                </span>
+                {discountType !== "none" && (
+                  <input
+                    type="number"
+                    placeholder={discountType === "percentage" ? "Enter % (e.g. 10)" : "Enter Flat Rs."}
+                    value={discountValue}
+                    onChange={(e) => setDiscountValue(e.target.value)}
+                    className="w-full border border-border-color px-3 py-1.5 rounded-lg text-xs outline-none bg-bg-main text-text-main placeholder-text-secondary/40"
+                  />
+                )}
+              </div>
+
+              {/* Tax Section */}
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-text-secondary font-medium">Tax / VAT (%)</span>
                 <select
-                  value={discountType}
-                  onChange={(e) => {
-                    setDiscountType(e.target.value);
-                    setDiscountValue("");
-                  }}
-                  className="border border-border-color px-2 py-0.5 rounded text-[9px] bg-bg-main text-text-main cursor-pointer"
+                  value={taxRate}
+                  onChange={(e) => setTaxRate(e.target.value)}
+                  className="border border-border-color px-2.5 py-1 rounded-lg text-xs bg-bg-main text-text-main cursor-pointer"
                 >
-                  <option value="none">None</option>
-                  <option value="percentage">% Percent</option>
-                  <option value="fixed">Flat (Rs.)</option>
+                  <option value="0">0% Tax</option>
+                  <option value="5">5% VAT</option>
+                  <option value="12">12% Service</option>
+                  <option value="15">15% VAT + Luxury</option>
                 </select>
               </div>
 
-              {discountType !== "none" && (
+              {/* Sub-breakdowns if applicable */}
+              {discountAmount > 0 && (
+                <div className="flex justify-between text-xs text-emerald-500 font-semibold">
+                  <span>Discount</span>
+                  <span>- Rs. {discountAmount.toLocaleString()}</span>
+                </div>
+              )}
+              {taxAmount > 0 && (
+                <div className="flex justify-between text-xs text-rose-500 font-semibold">
+                  <span>Tax ({taxRate}%)</span>
+                  <span>+ Rs. {taxAmount.toLocaleString()}</span>
+                </div>
+              )}
+
+              {/* Net Total */}
+              <div className="flex justify-between text-sm font-bold border-t border-border-color/60 pt-2 text-text-main">
+                <span>Grand Total</span>
+                <span className="text-indigo-500 font-black text-base">Rs. {Number(netAmount).toLocaleString()}</span>
+              </div>
+
+              {/* PAYMENT METHOD SELECTOR */}
+              <div className="border-t border-border-color/60 pt-3">
+                <label className="block text-[10px] text-text-secondary uppercase font-bold mb-2 tracking-wider">
+                  Payment Method
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMode("cash")}
+                    className={`flex items-center justify-center gap-1.5 py-2 px-1 rounded-xl text-[10px] font-bold border uppercase transition-all cursor-pointer ${
+                      paymentMode === "cash"
+                        ? "bg-indigo-600/10 text-indigo-500 border-indigo-500/40"
+                        : "bg-bg-main/40 text-text-secondary border-border-color hover:bg-bg-main"
+                    }`}
+                  >
+                    <FaMoneyBillWave /> Cash
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMode("card")}
+                    className={`flex items-center justify-center gap-1.5 py-2 px-1 rounded-xl text-[10px] font-bold border uppercase transition-all cursor-pointer ${
+                      paymentMode === "card"
+                        ? "bg-indigo-600/10 text-indigo-500 border-indigo-500/40"
+                        : "bg-bg-main/40 text-text-secondary border-border-color hover:bg-bg-main"
+                    }`}
+                  >
+                    <FaCreditCard /> Card
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMode("bank_transfer")}
+                    className={`flex items-center justify-center gap-1.5 py-2 px-1 rounded-xl text-[10px] font-bold border uppercase transition-all cursor-pointer ${
+                      paymentMode === "bank_transfer"
+                        ? "bg-indigo-600/10 text-indigo-500 border-indigo-500/40"
+                        : "bg-bg-main/40 text-text-secondary border-border-color hover:bg-bg-main"
+                    }`}
+                  >
+                    <FaUniversity /> Bank
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMode("credit")}
+                    className={`flex items-center justify-center gap-1.5 py-2 px-1 rounded-xl text-[10px] font-bold border uppercase transition-all cursor-pointer ${
+                      paymentMode === "credit"
+                        ? "bg-indigo-600/10 text-indigo-500 border-indigo-500/40"
+                        : "bg-bg-main/40 text-text-secondary border-border-color hover:bg-bg-main"
+                    }`}
+                  >
+                    <FaUserTag /> Credit
+                  </button>
+                </div>
+              </div>
+
+              {/* Paid amount & Change Calculator */}
+              <div className="space-y-2 pt-2">
                 <input
                   type="number"
-                  placeholder={discountType === "percentage" ? "Enter % (e.g. 10)" : "Enter Flat Rs."}
-                  value={discountValue}
-                  onChange={(e) => setDiscountValue(e.target.value)}
-                  className="w-full border border-border-color px-3 py-1.5 rounded-lg text-xs outline-none bg-bg-main text-text-main placeholder-text-secondary/40"
+                  placeholder={paymentMode === "credit" ? "0 (Credit Payment)" : "Enter Paid Cash (Rs.)"}
+                  value={paidAmount}
+                  disabled={paymentMode === "card" || paymentMode === "bank_transfer" || paymentMode === "credit"}
+                  onChange={(e) => setPaidAmount(e.target.value)}
+                  className="w-full bg-bg-main border border-border-color text-text-main placeholder-text-secondary/40 px-4 py-2.5 rounded-xl outline-none text-xs transition-all focus:border-indigo-500 disabled:opacity-60"
                 />
-              )}
-            </div>
 
-            {/* Tax Section */}
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-text-secondary font-medium">Tax / VAT (%)</span>
-              <select
-                value={taxRate}
-                onChange={(e) => setTaxRate(e.target.value)}
-                className="border border-border-color px-2.5 py-1 rounded-lg text-xs bg-bg-main text-text-main cursor-pointer"
-              >
-                <option value="0">0% Tax</option>
-                <option value="5">5% VAT</option>
-                <option value="12">12% Service</option>
-                <option value="15">15% VAT + Luxury</option>
-              </select>
-            </div>
-
-            {/* Sub-breakdowns if applicable */}
-            {discountAmount > 0 && (
-              <div className="flex justify-between text-xs text-emerald-500 font-semibold">
-                <span>Discount</span>
-                <span>- Rs. {discountAmount.toLocaleString()}</span>
-              </div>
-            )}
-            {taxAmount > 0 && (
-              <div className="flex justify-between text-xs text-rose-500 font-semibold">
-                <span>Tax ({taxRate}%)</span>
-                <span>+ Rs. {taxAmount.toLocaleString()}</span>
-              </div>
-            )}
-
-            {/* Net Total */}
-            <div className="flex justify-between text-sm font-bold border-t border-border-color/60 pt-2 text-text-main">
-              <span>Grand Total</span>
-              <span className="text-indigo-500 font-black text-base">Rs. {Number(netAmount).toLocaleString()}</span>
-            </div>
-
-            {/* PAYMENT METHOD SELECTOR */}
-            <div className="border-t border-border-color/60 pt-3">
-              <label className="block text-[10px] text-text-secondary uppercase font-bold mb-2 tracking-wider">
-                Payment Method
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setPaymentMode("cash")}
-                  className={`flex items-center justify-center gap-1.5 py-2 px-1 rounded-xl text-[10px] font-bold border uppercase transition-all cursor-pointer ${
-                    paymentMode === "cash"
-                      ? "bg-indigo-600/10 text-indigo-500 border-indigo-500/40"
-                      : "bg-bg-main/40 text-text-secondary border-border-color hover:bg-bg-main"
-                  }`}
-                >
-                  <FaMoneyBillWave /> Cash
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPaymentMode("card")}
-                  className={`flex items-center justify-center gap-1.5 py-2 px-1 rounded-xl text-[10px] font-bold border uppercase transition-all cursor-pointer ${
-                    paymentMode === "card"
-                      ? "bg-indigo-600/10 text-indigo-500 border-indigo-500/40"
-                      : "bg-bg-main/40 text-text-secondary border-border-color hover:bg-bg-main"
-                  }`}
-                >
-                  <FaCreditCard /> Card
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPaymentMode("bank_transfer")}
-                  className={`flex items-center justify-center gap-1.5 py-2 px-1 rounded-xl text-[10px] font-bold border uppercase transition-all cursor-pointer ${
-                    paymentMode === "bank_transfer"
-                      ? "bg-indigo-600/10 text-indigo-500 border-indigo-500/40"
-                      : "bg-bg-main/40 text-text-secondary border-border-color hover:bg-bg-main"
-                  }`}
-                >
-                  <FaUniversity /> Bank
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPaymentMode("credit")}
-                  className={`flex items-center justify-center gap-1.5 py-2 px-1 rounded-xl text-[10px] font-bold border uppercase transition-all cursor-pointer ${
-                    paymentMode === "credit"
-                      ? "bg-indigo-600/10 text-indigo-500 border-indigo-500/40"
-                      : "bg-bg-main/40 text-text-secondary border-border-color hover:bg-bg-main"
-                  }`}
-                >
-                  <FaUserTag /> Credit
-                </button>
-              </div>
-            </div>
-
-            {/* Paid amount & Change Calculator */}
-            <div className="space-y-2 pt-2">
-              <input
-                type="number"
-                placeholder={paymentMode === "credit" ? "0 (Credit Payment)" : "Enter Paid Cash (Rs.)"}
-                value={paidAmount}
-                disabled={paymentMode === "card" || paymentMode === "bank_transfer" || paymentMode === "credit"}
-                onChange={(e) => setPaidAmount(e.target.value)}
-                className="w-full bg-bg-main border border-border-color text-text-main placeholder-text-secondary/40 px-4 py-2.5 rounded-xl outline-none text-xs transition-all focus:border-indigo-500 disabled:opacity-60"
-              />
-
-              {paymentMode === "cash" && paidVal > 0 && (
-                <div className="flex justify-between items-center text-[10px] p-2.5 rounded-xl bg-bg-main border border-border-color font-semibold">
-                  <span className="text-text-secondary">Change Due:</span>
-                  <span className="font-black text-emerald-500 text-xs">
-                    Rs. {changeAmount.toLocaleString()}
-                  </span>
-                </div>
-              )}
-
-              {paymentMode === "credit" && (
-                <div className="flex flex-col gap-1.5 p-2.5 rounded-xl bg-bg-main border border-border-color text-[10px]">
-                  <div className="flex justify-between items-center font-semibold">
-                    <span className="text-text-secondary">Upfront Payment:</span>
-                    <span className="font-bold text-text-main">Rs. {paidVal.toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between items-center font-semibold border-t border-border-color/60 pt-1.5">
-                    <span className="text-rose-500">Unpaid Credit Balance:</span>
-                    <span className="font-black text-rose-500 text-xs">
-                      Rs. {Math.max(0, netAmount - paidVal).toLocaleString()}
+                {paymentMode === "cash" && paidVal > 0 && (
+                  <div className="flex justify-between items-center text-[10px] p-2.5 rounded-xl bg-bg-main border border-border-color font-semibold">
+                    <span className="text-text-secondary">Change Due:</span>
+                    <span className="font-black text-emerald-500 text-xs">
+                      Rs. {changeAmount.toLocaleString()}
                     </span>
                   </div>
-                  <input
-                    type="number"
-                    placeholder="Enter upfront payment (if any)"
-                    value={paidAmount === "0" ? "" : paidAmount}
-                    onChange={(e) => setPaidAmount(e.target.value)}
-                    className="w-full mt-1.5 bg-bg-card border border-border-color text-text-main px-3 py-1.5 rounded-lg outline-none text-[10px]"
-                  />
-                </div>
-              )}
-            </div>
+                )}
 
-            {/* Checkout CTA */}
+                {paymentMode === "credit" && (
+                  <div className="flex flex-col gap-1.5 p-2.5 rounded-xl bg-bg-main border border-border-color text-[10px]">
+                    <div className="flex justify-between items-center font-semibold">
+                      <span className="text-text-secondary">Upfront Payment:</span>
+                      <span className="font-bold text-text-main">Rs. {paidVal.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between items-center font-semibold border-t border-border-color/60 pt-1.5">
+                      <span className="text-rose-500">Unpaid Credit Balance:</span>
+                      <span className="font-black text-rose-500 text-xs">
+                        Rs. {Math.max(0, netAmount - paidVal).toLocaleString()}
+                      </span>
+                    </div>
+                    <input
+                      type="number"
+                      placeholder="Enter upfront payment (if any)"
+                      value={paidAmount === "0" ? "" : paidAmount}
+                      onChange={(e) => setPaidAmount(e.target.value)}
+                      className="w-full mt-1.5 bg-bg-card border border-border-color text-text-main px-3 py-1.5 rounded-lg outline-none text-[10px]"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Checkout CTA (Fixed at bottom) */}
+          <div className="flex-none pt-3.5 border-t border-border-color/60">
             <button
               onClick={handleCheckout}
               disabled={cart.length === 0}
