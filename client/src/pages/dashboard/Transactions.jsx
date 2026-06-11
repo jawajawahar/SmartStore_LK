@@ -2,11 +2,14 @@ import { useEffect, useState } from "react";
 import { FaArrowDown, FaArrowUp, FaSearch, FaFilter } from "react-icons/fa";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import API from "../../services/api";
+import Pagination from "../../components/Pagination";
 
 const Transactions = () => {
   const [transactions, setTransactions] = useState([]);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   // Fetch Transactions
   const fetchTransactions = async () => {
@@ -35,6 +38,15 @@ const Transactions = () => {
     const matchesFilter = filter === "all" ? true : transaction.flow === filter;
     return matchesSearch && matchesFilter;
   });
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, filter]);
+
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentTransactions = filteredTransactions.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
 
   // Totals
   const totalIncome = transactions
@@ -173,8 +185,8 @@ const Transactions = () => {
             </thead>
 
             <tbody className="divide-y divide-border-color">
-              {filteredTransactions.length > 0 ? (
-                filteredTransactions.map((transaction) => (
+              {currentTransactions.length > 0 ? (
+                currentTransactions.map((transaction) => (
                   <tr key={transaction._id} className="hover:bg-bg-main/50 transition-colors">
                     {/* Type */}
                     <td className="px-5 py-3.5">
@@ -239,14 +251,11 @@ const Transactions = () => {
           </table>
         </div>
 
-        {/* Table footer with count */}
-        {filteredTransactions.length > 0 && (
-          <div className="px-5 py-3 border-t border-border-color bg-bg-main flex justify-between items-center">
-            <p className="text-[10px] text-text-secondary font-semibold">
-              Showing {filteredTransactions.length} of {transactions.length} transactions
-            </p>
-          </div>
-        )}
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
       </div>
     </DashboardLayout>
   );

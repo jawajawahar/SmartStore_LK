@@ -14,7 +14,7 @@ import SalesHistory from "./pages/dashboard/SalesHistory";
 import Transactions from "./pages/dashboard/Transactions";
 import Expenses from "./pages/dashboard/Expenses";
 import Returns from "./pages/dashboard/Returns";
-import DailyReport from "./pages/dashboard/DailyReport";
+import AIReports from "./pages/dashboard/AIReports";
 
 function App() {
   return (
@@ -137,7 +137,7 @@ function App() {
         path="/daily-report"
         element={
           <ProtectedRoute>
-            <DailyReport />
+            <AIReports />
           </ProtectedRoute>
         }
       />

@@ -46,8 +46,16 @@ app.use("/api/returns", returnRoutes);
 // MongoDB Connection
 mongoose
   .connect(process.env.MONGO_URI)
-  .then(() => {
+  .then(async () => {
     console.log("MongoDB Connected");
+
+    // Reconcile supplier balances with transaction payables
+    try {
+      const { reconcileSupplierBalances } = require("./utils/reconcile");
+      await reconcileSupplierBalances();
+    } catch (reconcileError) {
+      console.error("Reconciliation error during startup:", reconcileError);
+    }
 
     const PORT =
       process.env.PORT || 5000;

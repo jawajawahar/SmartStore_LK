@@ -18,6 +18,7 @@ import {
   FaCoins,
   FaChevronLeft,
   FaChevronRight,
+  FaRobot,
 } from "react-icons/fa";
 
 import { useNavigate, useLocation, Link } from "react-router-dom";
@@ -184,8 +185,8 @@ const DashboardLayout = ({ children }) => {
             />
 
             <SidebarItem
-              icon={<FaReceipt />}
-              text="Daily Report"
+              icon={<FaRobot />}
+              text="AI Reports"
               to="/daily-report"
               active={location.pathname === "/daily-report"}
               collapsed={collapsed}

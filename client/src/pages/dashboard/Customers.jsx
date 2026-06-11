@@ -4,12 +4,15 @@ import DashboardLayout from "../../layouts/DashboardLayout";
 import API from "../../services/api";
 import { toast } from "react-toastify";
 import BulkUpload from "../../components/BulkUpload";
+import Pagination from "../../components/Pagination";
 
 const Customers = () => {
   const [customers, setCustomers] = useState([]);
   const [search, setSearch] = useState("");
   const [editingId, setEditingId] = useState(null);
   const [isBulkOpen, setIsBulkOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const [formData, setFormData] = useState({
     name: "",
@@ -136,6 +139,15 @@ const Customers = () => {
     customer.phone?.includes(search)
   );
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
+
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentCustomers = filteredCustomers.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredCustomers.length / itemsPerPage);
+
   return (
     <DashboardLayout>
       {/* Header */}
@@ -238,8 +250,8 @@ const Customers = () => {
             </thead>
 
             <tbody className="divide-y divide-border-color/60">
-              {filteredCustomers.length > 0 ? (
-                filteredCustomers.map((customer) => (
+              {currentCustomers.length > 0 ? (
+                currentCustomers.map((customer) => (
                   <tr
                     key={customer._id}
                     className="hover:bg-bg-main/30 transition-colors"
@@ -296,6 +308,11 @@ const Customers = () => {
             </tbody>
           </table>
         </div>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
       </div>
       <BulkUpload
         isOpen={isBulkOpen}

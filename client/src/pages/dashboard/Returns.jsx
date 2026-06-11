@@ -3,6 +3,7 @@ import { FaTrash, FaUndo, FaSearch, FaShoppingBag, FaBoxOpen, FaHandHoldingUsd }
 import DashboardLayout from "../../layouts/DashboardLayout";
 import API from "../../services/api";
 import { toast } from "react-toastify";
+import Pagination from "../../components/Pagination";
 
 const Returns = () => {
   const [returns, setReturns] = useState([]);
@@ -14,6 +15,8 @@ const Returns = () => {
   const [refundAmount, setRefundAmount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5; // Smaller size for sidebar layout
 
   // Fetch Returns History
   const fetchReturns = async () => {
@@ -58,28 +61,28 @@ const Returns = () => {
   const handleSelectSale = (sale) => {
     setSelectedSale(sale);
     setReason("");
-    // Initialize return quantities to 0
+    // Initialize return quantities to 0 using item._id
     const initialQty = {};
     sale.items.forEach(item => {
-      initialQty[item.product] = 0;
+      initialQty[item._id] = 0;
     });
     setReturnItems(initialQty);
     setRefundAmount(0);
   };
 
   // Handle quantity change
-  const handleQtyChange = (productId, qty, price, maxQty) => {
+  const handleQtyChange = (itemId, qty, price, maxQty) => {
     const parsedQty = Math.max(0, Math.min(maxQty, Number(qty)));
     const updatedReturnItems = {
       ...returnItems,
-      [productId]: parsedQty
+      [itemId]: parsedQty
     };
     setReturnItems(updatedReturnItems);
 
     // Recalculate refund amount (auto-suggest total return value)
     let totalRefund = 0;
     selectedSale.items.forEach(item => {
-      const returnQty = updatedReturnItems[item.product] || 0;
+      const returnQty = updatedReturnItems[item._id] || 0;
       totalRefund += returnQty * item.price;
     });
     setRefundAmount(totalRefund);
@@ -92,13 +95,14 @@ const Returns = () => {
 
     // Filter out items with 0 return quantity
     const itemsToReturn = selectedSale.items
-      .filter(item => (returnItems[item.product] || 0) > 0)
+      .filter(item => (returnItems[item._id] || 0) > 0)
       .map(item => ({
-        product: item.product,
+        itemId: item._id,
+        product: item.product?._id || item.product,
         name: item.name,
-        quantity: returnItems[item.product],
+        quantity: returnItems[item._id],
         price: item.price,
-        total: returnItems[item.product] * item.price
+        total: returnItems[item._id] * item.price
       }));
 
     if (itemsToReturn.length === 0) {
@@ -144,6 +148,15 @@ const Returns = () => {
     const custMatches = custName.toLowerCase().includes(searchSale.toLowerCase());
     return (idMatches || custMatches) && searchSale !== "";
   });
+
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentReturns = returns.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(returns.length / itemsPerPage);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [returns.length]);
 
   return (
     <DashboardLayout>
@@ -239,7 +252,7 @@ const Returns = () => {
               <div className="space-y-3">
                 <h4 className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">Select Items to Return</h4>
                 {selectedSale.items.map((item) => (
-                  <div key={item.product} className="p-4 border border-border-color rounded-xl flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-bg-main/20">
+                  <div key={item._id} className="p-4 border border-border-color rounded-xl flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-bg-main/20">
                     <div className="flex-1">
                       <h5 className="font-bold text-xs text-text-main">{item.name}</h5>
                       <div className="flex items-center gap-2 mt-1 text-[10px] text-text-secondary font-semibold">
@@ -257,8 +270,8 @@ const Returns = () => {
                           type="number"
                           min="0"
                           max={item.quantity}
-                          value={returnItems[item.product] || 0}
-                          onChange={(e) => handleQtyChange(item.product, e.target.value, item.price, item.quantity)}
+                          value={returnItems[item._id] || 0}
+                          onChange={(e) => handleQtyChange(item._id, e.target.value, item.price, item.quantity)}
                           className="w-20 border border-border-color px-3 py-1.5 rounded-lg outline-none text-xs text-center font-bold bg-bg-card text-text-main focus:border-indigo-500"
                         />
                       </div>
@@ -266,7 +279,7 @@ const Returns = () => {
                       <div className="text-right w-24">
                         <span className="text-[9px] text-text-secondary block font-semibold">Total return</span>
                         <span className="text-xs font-black text-indigo-500">
-                          Rs. {((returnItems[item.product] || 0) * item.price).toLocaleString()}
+                          Rs. {((returnItems[item._id] || 0) * item.price).toLocaleString()}
                         </span>
                       </div>
                     </div>
@@ -332,8 +345,8 @@ const Returns = () => {
             <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
               {historyLoading ? (
                 <div className="text-center py-6 text-text-secondary text-xs">Loading return records...</div>
-              ) : returns.length > 0 ? (
-                returns.map((ret) => (
+              ) : currentReturns.length > 0 ? (
+                currentReturns.map((ret) => (
                   <div key={ret._id} className="p-4 border border-border-color rounded-xl space-y-3 text-xs bg-bg-main/40">
                     <div className="flex justify-between items-center">
                       <span className="font-bold text-indigo-500">ID: {ret._id.slice(-6).toUpperCase()}</span>
@@ -373,6 +386,11 @@ const Returns = () => {
                 <div className="text-center py-6 text-text-secondary text-xs font-semibold">No return records registered.</div>
               )}
             </div>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
           </div>
         </div>
       </div>

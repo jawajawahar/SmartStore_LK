@@ -53,15 +53,18 @@ const BulkUpload = ({ isOpen, onClose, type, onSuccess }) => {
     },
     suppliers: {
       title: "Bulk Suppliers Import",
-      templateHeaders: ["name", "company", "phone", "address"],
+      templateHeaders: ["name", "company", "phone", "address", "payableAmount"],
       templateData: [
-        ["Distributor X", "Agro Foods PLC", "0112345678", "789 Negombo Rd, Ja-Ela"],
-        ["Wholesaler Y", "Lanka Beverages", "0339876543", "12 Line St, Gampaha"]
+        ["Distributor X", "Agro Foods PLC", "0112345678", "789 Negombo Rd, Ja-Ela", "0"],
+        ["Wholesaler Y", "Lanka Beverages", "0339876543", "12 Line St, Gampaha", "1500"]
       ],
       validate: (row, index) => {
         const rowErrors = [];
         if (!row.name?.trim()) rowErrors.push("Supplier name is required");
         if (!row.phone?.trim()) rowErrors.push("Phone number is required");
+        if (row.payableAmount !== undefined && row.payableAmount !== "" && isNaN(Number(row.payableAmount))) {
+          rowErrors.push("Payable amount must be a valid number");
+        }
         return rowErrors;
       },
       endpoint: "/suppliers/bulk",
@@ -128,6 +131,7 @@ const BulkUpload = ({ isOpen, onClose, type, onSuccess }) => {
             normalizedRow.company = findVal(["company", "companyname", "vendor"]);
             normalizedRow.phone = findVal(["phone", "phonenumber", "contact", "mobile"]);
             normalizedRow.address = findVal(["address", "location"]);
+            normalizedRow.payableAmount = findVal(["payableamount", "balance", "outstanding", "due"]);
           }
 
           // Fallback check to copy over exact case matches

@@ -41,8 +41,10 @@ const createReturn = async (req, res) => {
     // Process each item and adjust product stocks
     const processedItems = [];
     for (const item of items) {
+      // Find sale item by itemId first, fallback to product ID comparison
       const saleItem = sale.items.find(
-        (si) => si.product.toString() === item.product.toString()
+        (si) => (item.itemId && si._id.toString() === item.itemId.toString()) || 
+                (si.product && item.product && si.product.toString() === item.product.toString())
       );
 
       if (!saleItem) {
@@ -57,13 +59,30 @@ const createReturn = async (req, res) => {
         });
       }
 
-      // Restock the product
-      await Product.findByIdAndUpdate(item.product, {
-        $inc: { stock: Number(item.quantity) },
-      });
+      const actualProductId = saleItem.product;
+
+      // Restock the product (recreate if auto-deleted when stock reached 0)
+      if (actualProductId) {
+        const prodExists = await Product.findById(actualProductId);
+        if (!prodExists) {
+          const newProd = new Product({
+            _id: actualProductId,
+            name: item.name || saleItem.name || "Restocked Product",
+            stock: Number(item.quantity),
+            buyingPrice: Number(item.price || saleItem.price || 0),
+            sellingPrice: Number(item.price || saleItem.price || 0),
+            category: "Restocked",
+            unit: "pcs",
+          });
+          await newProd.save();
+        } else {
+          prodExists.stock += Number(item.quantity);
+          await prodExists.save();
+        }
+      }
 
       processedItems.push({
-        product: item.product,
+        product: actualProductId || item.product,
         name: item.name || saleItem.name,
         quantity: Number(item.quantity),
         price: Number(item.price || saleItem.price),

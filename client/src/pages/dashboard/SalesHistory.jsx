@@ -12,12 +12,15 @@ import DashboardLayout from "../../layouts/DashboardLayout";
 import PrintableInvoice from "../../components/PrintableInvoice";
 import API from "../../services/api";
 import { toast } from "react-toastify";
+import Pagination from "../../components/Pagination";
 
 const SalesHistory = () => {
   const [sales, setSales] = useState([]);
   const [search, setSearch] = useState("");
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const printRef = useRef();
 
@@ -74,6 +77,15 @@ const SalesHistory = () => {
     return customer.toLowerCase().includes(search.toLowerCase());
   });
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
+
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentSales = filteredSales.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredSales.length / itemsPerPage);
+
   return (
     <DashboardLayout>
       {/* Header */}
@@ -113,16 +125,18 @@ const SalesHistory = () => {
             </thead>
 
             <tbody className="divide-y divide-border-color/60">
-              {filteredSales.length > 0 ? (
-                filteredSales.map((sale, index) => (
-                  <tr
-                    key={sale._id}
-                    className="hover:bg-bg-main/30 transition-colors"
-                  >
-                    {/* Invoice */}
-                    <td className="px-5 py-3.5 font-bold text-indigo-550 text-indigo-500 text-xs">
-                      INV-{index + 1}
-                    </td>
+              {currentSales.length > 0 ? (
+                currentSales.map((sale, index) => {
+                  const actualIndex = indexOfFirstItem + index;
+                  return (
+                    <tr
+                      key={sale._id}
+                      className="hover:bg-bg-main/30 transition-colors"
+                    >
+                      {/* Invoice */}
+                      <td className="px-5 py-3.5 font-bold text-indigo-555 text-indigo-550 text-indigo-500 text-xs">
+                        INV-{actualIndex + 1}
+                      </td>
 
                     {/* Customer */}
                     <td className="px-5 py-3.5 font-bold text-text-main text-xs animate-none">
@@ -164,7 +178,7 @@ const SalesHistory = () => {
                       </button>
                     </td>
                   </tr>
-                ))
+                )})
               ) : (
                 <tr>
                   <td colSpan="8" className="text-center py-8 text-text-secondary text-xs">No invoice records matched search query.</td>
@@ -173,6 +187,11 @@ const SalesHistory = () => {
             </tbody>
           </table>
         </div>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
       </div>
 
       {/* Invoice Modal */}

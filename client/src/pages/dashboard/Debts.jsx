@@ -3,11 +3,14 @@ import { FaEdit, FaTrash } from "react-icons/fa";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import API from "../../services/api";
 import { toast } from "react-toastify";
+import Pagination from "../../components/Pagination";
 
 const Debts = () => {
   const [customers, setCustomers] = useState([]);
   const [debts, setDebts] = useState([]);
   const [editingId, setEditingId] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const [formData, setFormData] = useState({
     customer: "",
@@ -174,6 +177,15 @@ const Debts = () => {
     }
   };
 
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentDebts = debts.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(debts.length / itemsPerPage);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debts.length]);
+
   return (
     <DashboardLayout>
       {/* Header */}
@@ -301,8 +313,8 @@ const Debts = () => {
             </thead>
 
             <tbody className="divide-y divide-border-color/60">
-              {debts.length > 0 ? (
-                debts.map((debt) => (
+              {currentDebts.length > 0 ? (
+                currentDebts.map((debt) => (
                   <tr
                     key={debt._id}
                     className="hover:bg-bg-main/30 transition-colors"
@@ -366,6 +378,11 @@ const Debts = () => {
             </tbody>
           </table>
         </div>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
       </div>
 
       {/* Payment Modal */}

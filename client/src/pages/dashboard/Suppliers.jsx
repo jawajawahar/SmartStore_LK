@@ -4,6 +4,7 @@ import DashboardLayout from "../../layouts/DashboardLayout";
 import API from "../../services/api";
 import { toast } from "react-toastify";
 import BulkUpload from "../../components/BulkUpload";
+import Pagination from "../../components/Pagination";
 
 const Suppliers = () => {
   const [suppliers, setSuppliers] = useState([]);
@@ -11,6 +12,8 @@ const Suppliers = () => {
   const [showForm, setShowForm] = useState(false);
   const [isBulkOpen, setIsBulkOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const [formData, setFormData] = useState({
     name: "",
@@ -115,6 +118,15 @@ const Suppliers = () => {
     s.name.toLowerCase().includes(search.toLowerCase()) ||
     s.company?.toLowerCase().includes(search.toLowerCase())
   );
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
+
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentSuppliers = filteredSuppliers.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredSuppliers.length / itemsPerPage);
 
   return (
     <DashboardLayout>
@@ -223,8 +235,8 @@ const Suppliers = () => {
             </thead>
 
             <tbody className="divide-y divide-border-color">
-              {filteredSuppliers.length > 0 ? (
-                filteredSuppliers.map((supplier) => (
+              {currentSuppliers.length > 0 ? (
+                currentSuppliers.map((supplier) => (
                   <tr key={supplier._id} className="hover:bg-bg-main/50 transition-colors">
                     <td className="px-5 py-3.5 text-sm">
                       <div className="flex items-center gap-3">
@@ -279,6 +291,11 @@ const Suppliers = () => {
             </tbody>
           </table>
         </div>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
       </div>
       <BulkUpload
         isOpen={isBulkOpen}

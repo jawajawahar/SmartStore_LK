@@ -3,6 +3,7 @@ import { FaPlus, FaTimes, FaCheckCircle, FaEdit, FaTrash } from "react-icons/fa"
 import DashboardLayout from "../../layouts/DashboardLayout";
 import API from "../../services/api";
 import { toast } from "react-toastify";
+import Pagination from "../../components/Pagination";
 
 const SupplierPayables = () => {
   const [suppliers, setSuppliers] = useState([]);
@@ -24,6 +25,8 @@ const SupplierPayables = () => {
   // Search and Filter states
   const [filter, setFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   // Fetch Suppliers
   const fetchSuppliers = async () => {
@@ -174,6 +177,15 @@ const SupplierPayables = () => {
 
     return matchesSearch && matchesFilter;
   });
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, filter]);
+
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentPayables = filteredPayables.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredPayables.length / itemsPerPage);
 
   return (
     <DashboardLayout>
@@ -357,8 +369,8 @@ const SupplierPayables = () => {
             </thead>
 
             <tbody className="divide-y divide-border-color">
-              {filteredPayables.length > 0 ? (
-                filteredPayables.map((payable) => (
+              {currentPayables.length > 0 ? (
+                currentPayables.map((payable) => (
                   <tr key={payable._id} className="hover:bg-bg-main/50 transition-colors">
                     <td className="px-5 py-3.5 font-semibold text-text-main text-sm">{payable.supplier?.name}</td>
                     <td className="px-5 py-3.5 text-text-secondary text-sm max-w-[160px] truncate">{payable.description}</td>
@@ -422,6 +434,11 @@ const SupplierPayables = () => {
             </tbody>
           </table>
         </div>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
       </div>
 
       {/* Payment Modal */}

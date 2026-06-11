@@ -3,12 +3,15 @@ import { FaTrash, FaPlus, FaMoneyBillWave, FaArrowDown, FaCalendarAlt, FaFilter 
 import DashboardLayout from "../../layouts/DashboardLayout";
 import API from "../../services/api";
 import { toast } from "react-toastify";
+import Pagination from "../../components/Pagination";
 
 const Expenses = () => {
   const [expenses, setExpenses] = useState([]);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const [formData, setFormData] = useState({
     category: "misc",
@@ -117,6 +120,15 @@ const Expenses = () => {
     const matchesCategory = categoryFilter === "all" ? true : exp.category === categoryFilter;
     return matchesSearch && matchesCategory;
   });
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, categoryFilter]);
+
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentExpenses = filteredExpenses.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredExpenses.length / itemsPerPage);
 
   // Calculate totals
   const totalExpense = expenses.reduce((sum, exp) => sum + exp.amount, 0);
@@ -323,8 +335,8 @@ const Expenses = () => {
                     <tr>
                       <td colSpan="6" className="text-center py-6 text-text-secondary text-xs">Loading expenses...</td>
                     </tr>
-                  ) : filteredExpenses.length > 0 ? (
-                    filteredExpenses.map((exp) => (
+                  ) : currentExpenses.length > 0 ? (
+                    currentExpenses.map((exp) => (
                       <tr key={exp._id} className="hover:bg-bg-main/30 transition-colors">
                         <td className="px-5 py-3 text-text-secondary text-xs">
                           {new Date(exp.date).toLocaleDateString()}
@@ -369,6 +381,11 @@ const Expenses = () => {
                 </tbody>
               </table>
             </div>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
           </div>
         </div>
       </div>

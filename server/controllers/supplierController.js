@@ -1,4 +1,5 @@
 const Supplier = require("../models/Supplier");
+const SupplierPayable = require("../models/SupplierPayable");
 
 // Add Supplier
 const addSupplier = async (req, res) => {
@@ -73,6 +74,22 @@ const bulkAddSuppliers = async (req, res) => {
     let inserted = [];
     if (validRows.length > 0) {
       inserted = await Supplier.insertMany(validRows, { ordered: false });
+
+      // Create SupplierPayable records for imported suppliers with payableAmount > 0
+      const payablesToCreate = inserted
+        .filter((s) => s.payableAmount > 0)
+        .map((s) => ({
+          supplier: s._id,
+          description: "Imported outstanding balance",
+          totalAmount: s.payableAmount,
+          paidAmount: 0,
+          remainingAmount: s.payableAmount,
+          status: "pending",
+        }));
+
+      if (payablesToCreate.length > 0) {
+        await SupplierPayable.insertMany(payablesToCreate);
+      }
     }
 
     res.status(201).json({

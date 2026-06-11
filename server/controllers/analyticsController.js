@@ -6,6 +6,9 @@ const SupplierPayable = require("../models/SupplierPayable");
 const Transaction = require("../models/Transaction");
 const Debt = require("../models/Debt");
 const Return = require("../models/Return");
+// Register all ref-schemas so Mongoose doesn't throw MissingSchemaError
+require("../models/Brand");
+require("../models/Category");
 
 // Dashboard Analytics
 const getDashboardAnalytics = async (req, res) => {
@@ -227,8 +230,200 @@ const getLowStockProducts = async (req, res) => {
   }
 };
 
+// Get Comprehensive Report Data for AI Agent
+const getReportData = async (req, res) => {
+  try {
+    const { from, to } = req.query;
+
+    const startDate = from ? new Date(from) : new Date(new Date().setDate(1));
+    startDate.setHours(0, 0, 0, 0);
+
+    const endDate = to ? new Date(to) : new Date();
+    endDate.setHours(23, 59, 59, 999);
+
+    const dateFilter = { createdAt: { $gte: startDate, $lte: endDate } };
+
+    // Fetch all relevant data in parallel
+    const [sales, transactions, products, returnRecords, debts, suppliers, payables] =
+      await Promise.all([
+        Sale.find(dateFilter),
+        Transaction.find(dateFilter),
+        Product.find(),
+        Return.find(dateFilter),
+        Debt.find(),
+        Supplier.find(),
+        SupplierPayable.find(),
+      ]);
+
+    // --- SALES SUMMARY ---
+    const totalSalesCount = sales.length;
+    const grossRevenue = sales.reduce(
+      (acc, s) => acc + (s.netAmount || s.totalAmount || 0),
+      0
+    );
+    const totalPaid = sales.reduce((acc, s) => acc + (s.paidAmount || 0), 0);
+    const totalCredit = sales.reduce((acc, s) => acc + (s.remainingAmount || 0), 0);
+    const totalDiscount = sales.reduce((acc, s) => acc + (s.discountAmount || 0), 0);
+    const totalTax = sales.reduce((acc, s) => acc + (s.taxAmount || 0), 0);
+
+    // Product-wise sales breakdown
+    const productSalesMap = {};
+    sales.forEach((sale) => {
+      (sale.items || []).forEach((item) => {
+        const name = item.name || "Unknown";
+        if (!productSalesMap[name]) {
+          productSalesMap[name] = { name, qty: 0, revenue: 0 };
+        }
+        productSalesMap[name].qty += item.quantity || 0;
+        productSalesMap[name].revenue += item.total || 0;
+      });
+    });
+    const productSales = Object.values(productSalesMap).sort(
+      (a, b) => b.revenue - a.revenue
+    );
+
+    // Payment method breakdown
+    const paymentMethodBreakdown = {
+      cash: sales.filter((s) => s.paymentMethod === "cash").reduce((a, s) => a + (s.paidAmount || 0), 0),
+      card: sales.filter((s) => s.paymentMethod === "card").reduce((a, s) => a + (s.paidAmount || 0), 0),
+      bank_transfer: sales.filter((s) => s.paymentMethod === "bank_transfer").reduce((a, s) => a + (s.paidAmount || 0), 0),
+      credit: sales.filter((s) => s.paymentMethod === "credit").reduce((a, s) => a + (s.paidAmount || 0), 0),
+    };
+
+    // Daily sales trend
+    const dailySalesMap = {};
+    sales.forEach((sale) => {
+      const day = new Date(sale.createdAt).toLocaleDateString("en-CA");
+      if (!dailySalesMap[day]) dailySalesMap[day] = { date: day, revenue: 0, count: 0 };
+      dailySalesMap[day].revenue += sale.netAmount || sale.totalAmount || 0;
+      dailySalesMap[day].count += 1;
+    });
+    const dailySalesTrend = Object.values(dailySalesMap).sort((a, b) =>
+      a.date.localeCompare(b.date)
+    );
+
+    // --- FINANCIAL SUMMARY ---
+    const incomeTransactions = transactions.filter((t) => t.flow === "income");
+    const expenseTransactions = transactions.filter((t) => t.flow === "expense");
+    const totalIncome = incomeTransactions.reduce((a, t) => a + (t.amount || 0), 0);
+    const totalExpenses = expenseTransactions.reduce((a, t) => a + (t.amount || 0), 0);
+    const netProfit = grossRevenue - totalExpenses;
+
+    // Expense categories
+    const expenseCategoryMap = {};
+    expenseTransactions.forEach((t) => {
+      const cat = t.type || "other";
+      expenseCategoryMap[cat] = (expenseCategoryMap[cat] || 0) + (t.amount || 0);
+    });
+
+    // --- INVENTORY SUMMARY ---
+    const totalProducts = products.length;
+    const totalStockValue = products.reduce(
+      (acc, p) => acc + ((p.stock || 0) * (p.buyingPrice || 0)),
+      0
+    );
+    const totalRetailValue = products.reduce(
+      (acc, p) => acc + ((p.stock || 0) * (p.sellingPrice || 0)),
+      0
+    );
+    const lowStockProducts = products.filter(
+      (p) => (p.stock || 0) <= (p.minStockLevel || 5) && (p.stock || 0) > 0
+    );
+    const outOfStockProducts = products.filter((p) => (p.stock || 0) === 0);
+    const categoryStockMap = {};
+    products.forEach((p) => {
+      const cat = p.category || "Uncategorized";
+      if (!categoryStockMap[cat])
+        categoryStockMap[cat] = { category: cat, items: 0, stockValue: 0 };
+      categoryStockMap[cat].items += 1;
+      categoryStockMap[cat].stockValue += (p.stock || 0) * (p.buyingPrice || 0);
+    });
+
+    // --- RETURNS SUMMARY ---
+    const totalReturns = returnRecords.length;
+    const totalRefundAmount = returnRecords.reduce((a, r) => a + (r.refundAmount || 0), 0);
+
+    // --- DEBT SUMMARY ---
+    const totalOutstandingDebt = debts.reduce(
+      (a, d) => a + (d.remainingAmount || 0),
+      0
+    );
+    const totalDebtCustomers = debts.filter((d) => (d.remainingAmount || 0) > 0).length;
+
+    // --- SUPPLIER PAYABLE SUMMARY ---
+    const totalOutstandingPayable = payables.reduce(
+      (a, p) => a + (p.remainingAmount || 0),
+      0
+    );
+
+    res.status(200).json({
+      period: {
+        from: startDate.toLocaleDateString(),
+        to: endDate.toLocaleDateString(),
+      },
+      sales: {
+        totalSalesCount,
+        grossRevenue,
+        totalPaid,
+        totalCredit,
+        totalDiscount,
+        totalTax,
+        productSales,
+        paymentMethodBreakdown,
+        dailySalesTrend,
+      },
+      financial: {
+        grossRevenue,
+        totalIncome,
+        totalExpenses,
+        netProfit,
+        profitMargin:
+          grossRevenue > 0
+            ? ((netProfit / grossRevenue) * 100).toFixed(2)
+            : "0.00",
+        expenseCategoryBreakdown: expenseCategoryMap,
+      },
+      inventory: {
+        totalProducts,
+        totalStockValue,
+        totalRetailValue,
+        potentialProfit: totalRetailValue - totalStockValue,
+        lowStockProducts: lowStockProducts.map((p) => ({
+          name: p.name,
+          sku: p.sku || "",
+          category: p.category || "Uncategorized",
+          stock: p.stock || 0,
+          minStockLevel: p.minStockLevel || 5,
+        })),
+        outOfStockProducts: outOfStockProducts.map((p) => ({
+          name: p.name,
+          sku: p.sku || "",
+          category: p.category || "Uncategorized",
+        })),
+        categoryBreakdown: Object.values(categoryStockMap),
+      },
+      returns: {
+        totalReturns,
+        totalRefundAmount,
+      },
+      debts: {
+        totalOutstandingDebt,
+        totalDebtCustomers,
+      },
+      suppliers: {
+        totalSuppliers: suppliers.length,
+        totalOutstandingPayable,
+      },
+    });
+  } catch (error) {
+    console.error("getReportData error:", error);
+    res.status(500).json({ message: error.message, stack: error.stack });
+  }
+};
+
 module.exports = {
   getDashboardAnalytics,
   getDailyReport,
   getLowStockProducts,
+  getReportData,
 };

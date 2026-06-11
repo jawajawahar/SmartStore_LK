@@ -4,6 +4,7 @@ import { FaEdit, FaTrash, FaPlus, FaFilter, FaCloudUploadAlt } from "react-icons
 import API from "../../services/api";
 import { toast } from "react-toastify";
 import BulkUpload from "../../components/BulkUpload";
+import Pagination from "../../components/Pagination";
 
 const Products = () => {
   const [products, setProducts] = useState([]);
@@ -11,6 +12,8 @@ const Products = () => {
   const [editingId, setEditingId] = useState(null);
   const [image, setImage] = useState(null);
   const [isBulkOpen, setIsBulkOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   // Product Type
   const [productType, setProductType] = useState("fixed");
@@ -173,6 +176,15 @@ const Products = () => {
     product.sku?.toLowerCase().includes(search.toLowerCase()) ||
     product.category?.toLowerCase().includes(search.toLowerCase())
   );
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
+
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentProducts = filteredProducts.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
 
   return (
     <DashboardLayout>
@@ -341,8 +353,8 @@ const Products = () => {
             </thead>
 
             <tbody className="divide-y divide-border-color/60">
-              {filteredProducts.length > 0 ? (
-                filteredProducts.map((product) => (
+              {currentProducts.length > 0 ? (
+                currentProducts.map((product) => (
                   <tr
                     key={product._id}
                     className="hover:bg-bg-main/30 transition-colors"
@@ -430,6 +442,11 @@ const Products = () => {
             </tbody>
           </table>
         </div>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
       </div>
       <BulkUpload
         isOpen={isBulkOpen}
