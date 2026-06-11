@@ -33,10 +33,10 @@ const createSale = async (req, res) => {
     const remainingAmount = Math.max(0, net - rawPaid);
     const paid = remainingAmount > 0 ? rawPaid : net;
 
-    // Validate credit buyer restrictions
-    if ((paymentMethod === "credit" || paymentMethod === "partial") && !customer) {
+    // Validate outstanding balance restrictions: if there is any unpaid amount, a registered customer is required
+    if (remainingAmount > 0 && !customer) {
       return res.status(400).json({
-        message: "Registered Customer is required for credit/partial payment terms.",
+        message: "Registered Customer is required when there is an outstanding balance / unpaid amount.",
       });
     }
 
@@ -106,11 +106,8 @@ const createSale = async (req, res) => {
       });
     }
 
-    // Create or update Debt if needed (partial or credit payment)
-    if (
-      (paymentMethod === "partial" || paymentMethod === "credit") &&
-      remainingAmount > 0
-    ) {
+    // Create or update Debt if needed (any transaction with remaining balance)
+    if (remainingAmount > 0) {
       // Check if there is an active (pending) debt for this customer
       const existingDebt = await Debt.findOne({
         customer,

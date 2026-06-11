@@ -330,11 +330,10 @@ const POS = () => {
       return;
     }
 
-    // Require Customer for credit or partial sales
-    const checkoutMethod = getPayloadPaymentMethod();
-    const isCreditOrPartial = checkoutMethod === "credit" || checkoutMethod === "partial";
-    if (isCreditOrPartial && !selectedCustomer) {
-      toast.error("A registered customer is required for Store Credit / Debt payments!");
+    // Require Customer if there is any outstanding balance / unpaid amount
+    const hasRemaining = paidVal < netAmount;
+    if (hasRemaining && !selectedCustomer) {
+      toast.error("A registered Customer is required when there is an outstanding balance / unpaid amount!");
       return;
     }
 
