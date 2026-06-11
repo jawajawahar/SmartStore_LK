@@ -564,9 +564,9 @@ const POS = () => {
         </div>
 
         {/* Cart Column */}
-        <div className="border border-border-color rounded-xl p-5 bg-bg-card shadow-sm sticky top-5 h-fit flex flex-col">
+        <div className="border border-border-color rounded-xl p-5 bg-bg-card shadow-sm sticky top-5 h-[calc(100vh-170px)] min-h-[480px] flex flex-col">
           {/* Header */}
-          <div className="flex justify-between items-center mb-4 pb-2 border-b border-border-color/60">
+          <div className="flex-none flex justify-between items-center mb-4 pb-2 border-b border-border-color/60">
             <h2 className="text-base font-bold tracking-tight text-text-main">Active Cart</h2>
             <div className="flex items-center gap-2">
               <span className="text-[10px] text-text-secondary font-bold bg-bg-main px-2 py-0.5 rounded-md border border-border-color">
@@ -584,7 +584,7 @@ const POS = () => {
           </div>
 
           {/* Customer Dropdown */}
-          <div className="mb-4">
+          <div className="flex-none mb-4">
             <div className="flex items-center gap-1 text-[10px] text-text-secondary uppercase font-bold mb-1.5 tracking-wider">
               <FaUserTag /> <span>Select Customer</span>
             </div>
@@ -602,8 +602,8 @@ const POS = () => {
             </select>
           </div>
 
-          {/* Cart Items Area - dedicated scrollable list container */}
-          <div className="space-y-3 max-h-[190px] min-h-[90px] overflow-y-auto pr-1 border border-border-color/30 rounded-xl p-2.5 bg-bg-main/15 scrollbar-thin mb-4">
+          {/* Cart Items Area - scrollable list container */}
+          <div className="flex-1 overflow-y-auto pr-1 border border-border-color/30 rounded-xl p-2.5 bg-bg-main/15 scrollbar-thin mb-4 space-y-3">
             {cart.length > 0 ? (
               cart.map((item) => (
                 <div
@@ -686,7 +686,7 @@ const POS = () => {
           </div>
 
           {/* Cart Summary & Payments */}
-          <div className="border-t border-border-color/60 pt-3.5 space-y-3">
+          <div className="flex-none border-t border-border-color/60 pt-3 space-y-2">
             {/* Subtotal */}
             <div className="flex justify-between text-xs font-semibold text-text-secondary">
               <span>Subtotal</span>
@@ -856,8 +856,8 @@ const POS = () => {
             </div>
           </div>
 
-          {/* Checkout CTA (Fixed at bottom) */}
-          <div className="flex-none pt-3.5 border-t border-border-color/60 mt-3.5">
+          {/* Checkout CTA */}
+          <div className="flex-none pt-3 border-t border-border-color/60 mt-2.5">
             <button
               onClick={handleCheckout}
               disabled={cart.length === 0}
