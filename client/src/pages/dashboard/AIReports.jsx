@@ -195,7 +195,7 @@ const applyInlineMarkdown = (text) => {
     .replace(/\*\*(.*?)\*\*/g, "<strong class='font-bold text-text-main'>$1</strong>")
     .replace(/\*(.*?)\*/g, "<em class='italic'>$1</em>")
     .replace(/`(.*?)`/g, "<code class='bg-bg-main px-1.5 py-0.5 rounded text-indigo-400 font-mono text-xs'>$1</code>")
-    .replace(/Rs\.\s*([\d,.]+)/g, "<span class='font-bold text-emerald-500'>Rs. $1</span>");
+    .replace(/(Rs\.|ரூ\.)\s*([\d,.]+)/g, "<span class='font-bold text-emerald-500'>$1 $2</span>");
 };
 
 // ─── Main Component ───────────────────────────────────────────────────────────
@@ -213,8 +213,18 @@ const AIReports = () => {
   const [error, setError] = useState("");
   const [expandedCategory, setExpandedCategory] = useState("sales");
   const [apiKeyMissing, setApiKeyMissing] = useState(false);
+  const [language, setLanguage] = useState("en");
 
   const reportRef = useRef();
+
+  const handleLanguageChange = (lang) => {
+    setLanguage(lang);
+    if (selectedReport) {
+      generateReport(selectedReport, null, lang);
+    } else if (customPrompt) {
+      generateReport(null, customPrompt, lang);
+    }
+  };
 
   const handlePrint = useReactToPrint({
     contentRef: reportRef,
@@ -246,7 +256,8 @@ const AIReports = () => {
     }
   };
 
-  const generateReport = async (reportType, promptOverride) => {
+  const generateReport = async (reportType, promptOverride, langOverride) => {
+    const activeLang = langOverride || language;
     const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
     if (!apiKey || apiKey === "your_gemini_api_key_here" || apiKey.trim() === "") {
       setApiKeyMissing(true);
@@ -268,7 +279,7 @@ const AIReports = () => {
 
       const prompt = promptOverride || reportType?.prompt || "Generate a comprehensive business summary report.";
       const title = reportType?.label || "Custom Business Report";
-      setReportTitle(title);
+      setReportTitle(activeLang === "ta" ? `${title} (தமிழ்)` : title);
 
       // 2. Build the system context with the real data
       const systemContext = `
@@ -324,10 +335,11 @@ USER REQUEST: ${prompt}
 
 INSTRUCTIONS:
 - Write a professional, detailed report in Markdown format
+- Language constraint: Write the entire report in ${activeLang === 'ta' ? 'Tamil (தமிழ்)' : 'English'}. Translate all headings, sections, explanations, analysis, recommendations, and labels to ${activeLang === 'ta' ? 'Tamil (தமிழ்)' : 'English'}.
 - Start with a clear title (# heading) and period
 - Use tables where appropriate for financial data
 - Include key insights, recommendations, and action items at the end
-- Use Rs. currency format throughout
+- Use Rs. or ரூ. currency format throughout
 - Be specific with numbers from the data provided
 - Use ## for main sections, ### for subsections
 - Provide actionable business insights based on the data
@@ -336,7 +348,7 @@ INSTRUCTIONS:
 
       // 3. Call Gemini API with streaming
       const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-8b" });
+      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
       const result = await model.generateContentStream(systemContext);
 
@@ -508,6 +520,37 @@ INSTRUCTIONS:
                   {p.label}
                 </button>
               ))}
+            </div>
+          </div>
+
+          {/* Report Language Selector */}
+          <div className="bg-bg-card border border-border-color rounded-2xl p-4 space-y-2.5">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">Report Language</p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => handleLanguageChange("en")}
+                disabled={isGenerating}
+                className={`flex-1 text-xs font-bold py-2.5 rounded-xl border transition-all cursor-pointer text-center ${
+                  language === "en"
+                    ? "bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-600/20"
+                    : "border-border-color text-text-secondary hover:border-indigo-500/50 hover:text-indigo-500 hover:bg-indigo-500/5 bg-bg-main"
+                }`}
+              >
+                English
+              </button>
+              <button
+                type="button"
+                onClick={() => handleLanguageChange("ta")}
+                disabled={isGenerating}
+                className={`flex-1 text-xs font-bold py-2.5 rounded-xl border transition-all cursor-pointer text-center ${
+                  language === "ta"
+                    ? "bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-600/20"
+                    : "border-border-color text-text-secondary hover:border-indigo-500/50 hover:text-indigo-500 hover:bg-indigo-500/5 bg-bg-main"
+                }`}
+              >
+                தமிழ் (Tamil)
+              </button>
             </div>
           </div>
 
