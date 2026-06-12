@@ -113,34 +113,18 @@ const createSale = async (req, res) => {
       }
     }
 
-    // Create or update Debt if needed (any transaction with remaining balance)
+    // Create Debt if needed (any transaction with remaining balance)
     if (remainingAmount > 0) {
-      // Check if there is an active (pending) debt for this customer
-      const existingDebt = await Debt.findOne({
+      // Always create a new distinct pending debt record for each sale (not merged)
+      await Debt.create({
         customer,
+        sale: sale._id,
+        description: `POS Invoice Debt — ${items.length} item(s)`,
+        totalAmount: net,
+        paidAmount: paid,
+        remainingAmount,
         status: "pending",
       });
-
-      if (existingDebt) {
-        // Update the existing debt record
-        existingDebt.totalAmount += net;
-        existingDebt.paidAmount += paid;
-        existingDebt.remainingAmount += remainingAmount;
-        existingDebt.description = `${existingDebt.description}, POS Invoice Debt — ${items.length} item(s)`;
-        existingDebt.sale = sale._id;
-        await existingDebt.save();
-      } else {
-        // Create new pending debt record
-        await Debt.create({
-          customer,
-          sale: sale._id,
-          description: `POS Invoice Debt — ${items.length} item(s)`,
-          totalAmount: net,
-          paidAmount: paid,
-          remainingAmount,
-          status: "pending",
-        });
-      }
 
       // Update customer's total debt balance
       if (customer) {

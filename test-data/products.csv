@@ -1,0 +1,10 @@
+name,category,buyingPrice,sellingPrice,bulkPrice,stock,barcode,unit,productType
+Ceylon Keeri Samba Rice 5kg,Groceries,1350,1600,1500,100,4792018102931,pcs,fixed
+Munchee Super Cream Cracker 125g,Biscuits & Snacks,180,210,195,200,4792011124562,pcs,fixed
+Elephant House Ginger Beer 400ml,Beverages,110,140,125,150,4792001509126,pcs,fixed
+Coca-Cola 1.5L,Beverages,280,330,310,120,5449000131805,pcs,fixed
+LED Bulb 9W Pin,Electrical,320,420,380,80,6901234567892,pcs,fixed
+Extension Cord 4-Way 5m,Electrical,1250,1650,1500,30,6909876543217,pcs,fixed
+Loose Sugar (White),Groceries,280,320,300,250,,kg,weighted
+Loose Red Onions,Vegetables,450,550,500,150,,kg,weighted
+Araliya Nadu Rice 5kg,Groceries,1150,1350,1280,200,4792018101231,pcs,fixed
