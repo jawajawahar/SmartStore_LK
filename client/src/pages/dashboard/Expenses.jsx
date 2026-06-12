@@ -11,6 +11,7 @@ const Expenses = () => {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [showForm, setShowForm] = useState(false);
   const itemsPerPage = 10;
 
   const [formData, setFormData] = useState({
@@ -85,6 +86,7 @@ const Expenses = () => {
         date: new Date().toISOString().split("T")[0],
         paymentMethod: "cash",
       });
+      setShowForm(false);
       fetchExpenses();
     } catch (error) {
       console.error("Error creating expense:", error);
@@ -159,6 +161,13 @@ const Expenses = () => {
             Track salaries, rent, utilities, and daily operations costs
           </p>
         </div>
+        <button
+          onClick={() => setShowForm(!showForm)}
+          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 rounded-xl font-semibold text-sm transition-all shadow-lg shadow-indigo-600/15 cursor-pointer active:scale-[0.98]"
+        >
+          <FaPlus className="text-xs" />
+          {showForm ? "Hide Form" : "Record Expense"}
+        </button>
       </div>
 
       {/* Summary Widgets */}
@@ -189,85 +198,105 @@ const Expenses = () => {
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
         {/* Form Container */}
-        <div className="xl:col-span-1 border border-border-color rounded-xl p-6 h-fit bg-bg-card shadow-sm">
-          <h2 className="text-lg font-bold mb-5 tracking-tight text-text-main">Record Store Expense</h2>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-text-secondary text-[10px] font-bold uppercase tracking-wider mb-2">Category</label>
-              <select
-                name="category"
-                value={formData.category}
-                onChange={handleChange}
-                className="w-full border border-border-color px-4 py-2.5 rounded-xl outline-none text-sm bg-bg-main text-text-main focus:border-indigo-500 cursor-pointer"
-              >
-                {categories.map((c) => (
-                  <option key={c.value} value={c.value}>{c.label}</option>
-                ))}
-              </select>
-            </div>
+        {showForm && (
+          <div className="xl:col-span-1 border border-border-color rounded-xl p-6 h-fit bg-bg-card shadow-sm">
+            <h2 className="text-lg font-bold mb-5 tracking-tight text-text-main">Record Store Expense</h2>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-text-secondary text-[10px] font-bold uppercase tracking-wider mb-2">Category</label>
+                <select
+                  name="category"
+                  value={formData.category}
+                  onChange={handleChange}
+                  className="w-full border border-border-color px-4 py-2.5 rounded-xl outline-none text-sm bg-bg-main text-text-main focus:border-indigo-500 cursor-pointer"
+                >
+                  {categories.map((c) => (
+                    <option key={c.value} value={c.value}>{c.label}</option>
+                  ))}
+                </select>
+              </div>
 
-            <div>
-              <label className="block text-text-secondary text-[10px] font-bold uppercase tracking-wider mb-2">Amount (Rs.)</label>
-              <input
-                type="number"
-                name="amount"
-                value={formData.amount}
-                onChange={handleChange}
-                placeholder="0.00"
-                required
-                className="w-full border border-border-color px-4 py-2.5 rounded-xl outline-none text-sm bg-bg-main text-text-main focus:border-indigo-500"
-              />
-            </div>
+              <div>
+                <label className="block text-text-secondary text-[10px] font-bold uppercase tracking-wider mb-2">Amount (Rs.)</label>
+                <input
+                  type="number"
+                  name="amount"
+                  value={formData.amount}
+                  onChange={handleChange}
+                  placeholder="0.00"
+                  required
+                  className="w-full border border-border-color px-4 py-2.5 rounded-xl outline-none text-sm bg-bg-main text-text-main focus:border-indigo-500"
+                />
+              </div>
 
-            <div>
-              <label className="block text-text-secondary text-[10px] font-bold uppercase tracking-wider mb-2">Date</label>
-              <input
-                type="date"
-                name="date"
-                value={formData.date}
-                onChange={handleChange}
-                required
-                className="w-full border border-border-color px-4 py-2.5 rounded-xl outline-none text-sm bg-bg-main text-text-main focus:border-indigo-500"
-              />
-            </div>
+              <div>
+                <label className="block text-text-secondary text-[10px] font-bold uppercase tracking-wider mb-2">Date</label>
+                <input
+                  type="date"
+                  name="date"
+                  value={formData.date}
+                  onChange={handleChange}
+                  required
+                  className="w-full border border-border-color px-4 py-2.5 rounded-xl outline-none text-sm bg-bg-main text-text-main focus:border-indigo-500"
+                />
+              </div>
 
-            <div>
-              <label className="block text-text-secondary text-[10px] font-bold uppercase tracking-wider mb-2">Payment Method</label>
-              <select
-                name="paymentMethod"
-                value={formData.paymentMethod}
-                onChange={handleChange}
-                className="w-full border border-border-color px-4 py-2.5 rounded-xl outline-none text-sm bg-bg-main text-text-main focus:border-indigo-500 cursor-pointer"
-              >
-                <option value="cash">Cash</option>
-                <option value="card">Card</option>
-                <option value="bank_transfer">Bank Transfer</option>
-              </select>
-            </div>
+              <div>
+                <label className="block text-text-secondary text-[10px] font-bold uppercase tracking-wider mb-2">Payment Method</label>
+                <select
+                  name="paymentMethod"
+                  value={formData.paymentMethod}
+                  onChange={handleChange}
+                  className="w-full border border-border-color px-4 py-2.5 rounded-xl outline-none text-sm bg-bg-main text-text-main focus:border-indigo-500 cursor-pointer"
+                >
+                  <option value="cash">Cash</option>
+                  <option value="card">Card</option>
+                  <option value="bank_transfer">Bank Transfer</option>
+                </select>
+              </div>
 
-            <div>
-              <label className="block text-text-secondary text-[10px] font-bold uppercase tracking-wider mb-2">Description</label>
-              <textarea
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                placeholder="What was this expense for?"
-                rows="3"
-                className="w-full border border-border-color px-4 py-2.5 rounded-xl outline-none text-sm bg-bg-main text-text-main focus:border-indigo-500"
-              />
-            </div>
+              <div>
+                <label className="block text-text-secondary text-[10px] font-bold uppercase tracking-wider mb-2">Description</label>
+                <textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  placeholder="What was this expense for?"
+                  rows="3"
+                  className="w-full border border-border-color px-4 py-2.5 rounded-xl outline-none text-sm bg-bg-main text-text-main focus:border-indigo-500"
+                />
+              </div>
 
-            <button
-              type="submit"
-              className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-3 rounded-xl font-semibold text-sm transition-all active:scale-[0.99] flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/10 cursor-pointer"
-            >
-              <FaPlus className="text-xs" /> Record Expense
-            </button>
-          </form>
-        </div>
+              <div className="flex gap-2">
+                <button
+                  type="submit"
+                  className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white py-3 rounded-xl font-semibold text-sm transition-all active:scale-[0.99] flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/10 cursor-pointer"
+                >
+                  <FaPlus className="text-xs" /> Record Expense
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowForm(false);
+                    setFormData({
+                      category: "misc",
+                      amount: "",
+                      description: "",
+                      date: new Date().toISOString().split("T")[0],
+                      paymentMethod: "cash",
+                    });
+                  }}
+                  className="px-4 py-3 border border-border-color hover:bg-bg-main text-text-secondary rounded-xl text-sm font-semibold transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
 
         {/* Expenses List & Category Progress */}
-        <div className="xl:col-span-2 space-y-6">
+        <div className={`${showForm ? "xl:col-span-2" : "xl:col-span-3"} space-y-6`}>
           {/* Category Breakdown list */}
           <div className="border border-border-color rounded-xl p-6 bg-bg-card shadow-sm">
             <h3 className="text-md font-bold mb-4 text-text-main">Category Breakdown</h3>

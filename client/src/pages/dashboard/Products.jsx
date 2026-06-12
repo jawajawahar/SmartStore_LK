@@ -12,6 +12,7 @@ const Products = () => {
   const [editingId, setEditingId] = useState(null);
   const [image, setImage] = useState(null);
   const [isBulkOpen, setIsBulkOpen] = useState(false);
+  const [showForm, setShowForm] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -118,6 +119,7 @@ const Products = () => {
       setUnit("pcs");
       setImage(null);
       setEditingId(null);
+      setShowForm(false);
       fetchProducts();
     } catch (error) {
       console.error(error);
@@ -141,6 +143,7 @@ const Products = () => {
 
     setProductType(product.productType || "fixed");
     setUnit(product.unit || "pcs");
+    setShowForm(true);
 
     window.scrollTo({
       top: 0,
@@ -201,124 +204,173 @@ const Products = () => {
           >
             <FaCloudUploadAlt /> Bulk Import CSV
           </button>
+
+          <button
+            onClick={() => {
+              setShowForm(!showForm);
+              if (editingId) {
+                setEditingId(null);
+                setFormData({
+                  name: "",
+                  category: "",
+                  buyingPrice: "",
+                  sellingPrice: "",
+                  bulkPrice: "",
+                  stock: "",
+                  barcode: "",
+                });
+                setProductType("fixed");
+                setUnit("pcs");
+                setImage(null);
+              }
+            }}
+            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-indigo-600/15 cursor-pointer active:scale-[0.98]"
+          >
+            <FaPlus className="text-xs" />
+            {showForm ? "Hide Form" : "Add Product"}
+          </button>
         </div>
       </div>
 
       {/* Form */}
-      <div className="bg-bg-card border border-border-color rounded-xl p-6 mb-8 shadow-sm">
-        <h2 className="text-lg font-bold text-text-main mb-5 tracking-tight">
-          {editingId ? "Edit Product Details" : "Add New Product"}
-        </h2>
+      {showForm && (
+        <div className="bg-bg-card border border-border-color rounded-xl p-6 mb-8 shadow-sm">
+          <h2 className="text-lg font-bold text-text-main mb-5 tracking-tight">
+            {editingId ? "Edit Product Details" : "Add New Product"}
+          </h2>
 
-        <form
-          onSubmit={handleSubmit}
-          className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5"
-        >
-          <Input
-            label="Product Name"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-          />
+          <form
+            onSubmit={handleSubmit}
+            className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5"
+          >
+            <Input
+              label="Product Name"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+            />
 
-          <Select
-            label="Category"
-            name="category"
-            value={formData.category}
-            onChange={handleChange}
-          />
+            <Select
+              label="Category"
+              name="category"
+              value={formData.category}
+              onChange={handleChange}
+            />
 
-          <Input
-            label="Buying Price (Rs.)"
-            name="buyingPrice"
-            type="number"
-            value={formData.buyingPrice}
-            onChange={handleChange}
-          />
+            <Input
+              label="Buying Price (Rs.)"
+              name="buyingPrice"
+              type="number"
+              value={formData.buyingPrice}
+              onChange={handleChange}
+            />
 
-          <Input
-            label="Selling Price (Rs.)"
-            name="sellingPrice"
-            type="number"
-            value={formData.sellingPrice}
-            onChange={handleChange}
-          />
+            <Input
+              label="Selling Price (Rs.)"
+              name="sellingPrice"
+              type="number"
+              value={formData.sellingPrice}
+              onChange={handleChange}
+            />
 
-          <Input
-            label="Bulk Price (Rs.)"
-            name="bulkPrice"
-            type="number"
-            value={formData.bulkPrice}
-            onChange={handleChange}
-          />
+            <Input
+              label="Bulk Price (Rs.)"
+              name="bulkPrice"
+              type="number"
+              value={formData.bulkPrice}
+              onChange={handleChange}
+            />
 
-          <Input
-            label="Initial Stock"
-            name="stock"
-            type="number"
-            value={formData.stock}
-            onChange={handleChange}
-          />
+            <Input
+              label="Initial Stock"
+              name="stock"
+              type="number"
+              value={formData.stock}
+              onChange={handleChange}
+            />
 
-          <Input
-            label="Barcode / SKU"
-            name="barcode"
-            value={formData.barcode}
-            onChange={handleChange}
-          />
+            <Input
+              label="Barcode / SKU"
+              name="barcode"
+              value={formData.barcode}
+              onChange={handleChange}
+            />
 
-          {/* Product Type */}
-          <div>
-            <label className="block text-text-secondary text-[10px] font-bold uppercase tracking-wider mb-2">Product Type</label>
-            <select
-              value={productType}
-              onChange={(e) => setProductType(e.target.value)}
-              className="w-full bg-bg-main border border-border-color text-text-main px-4 py-2.5 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 transition-all text-sm cursor-pointer"
-            >
-              <option value="fixed">Fixed Product</option>
-              <option value="weighted">Weighted Product</option>
-            </select>
-          </div>
-
-          {/* Unit */}
-          <div>
-            <label className="block text-text-secondary text-[10px] font-bold uppercase tracking-wider mb-2">Unit</label>
-            <select
-              value={unit}
-              onChange={(e) => setUnit(e.target.value)}
-              className="w-full bg-bg-main border border-border-color text-text-main px-4 py-2.5 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 transition-all text-sm cursor-pointer"
-            >
-              <option value="pcs">Pieces (pcs)</option>
-              <option value="kg">Kilograms (kg)</option>
-              <option value="g">Grams (g)</option>
-              <option value="litre">Litres (litre)</option>
-              <option value="ml">Millilitres (ml)</option>
-            </select>
-          </div>
-
-          {/* Image */}
-          {!editingId && (
+            {/* Product Type */}
             <div>
-              <label className="block text-text-secondary text-[10px] font-bold uppercase tracking-wider mb-2">Product Image</label>
-              <input
-                type="file"
-                onChange={(e) => setImage(e.target.files[0])}
-                className="w-full bg-bg-main border border-border-color text-text-secondary rounded-xl px-4 py-1.5 text-xs outline-none cursor-pointer file:mr-4 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-600/15 file:text-indigo-500 hover:file:bg-indigo-600/25"
-              />
+              <label className="block text-text-secondary text-[10px] font-bold uppercase tracking-wider mb-2">Product Type</label>
+              <select
+                value={productType}
+                onChange={(e) => setProductType(e.target.value)}
+                className="w-full bg-bg-main border border-border-color text-text-main px-4 py-2.5 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 transition-all text-sm cursor-pointer"
+              >
+                <option value="fixed">Fixed Product</option>
+                <option value="weighted">Weighted Product</option>
+              </select>
             </div>
-          )}
 
-          {/* Button */}
-          <div className="flex items-end">
-            <button
-              type="submit"
-              className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-2.5 rounded-xl font-semibold text-sm transition-all duration-150 cursor-pointer active:scale-[0.99] shadow-lg shadow-indigo-600/10"
-            >
-              {editingId ? "Update Product" : "Add Product to Inventory"}
-            </button>
-          </div>
-        </form>
-      </div>
+            {/* Unit */}
+            <div>
+              <label className="block text-text-secondary text-[10px] font-bold uppercase tracking-wider mb-2">Unit</label>
+              <select
+                value={unit}
+                onChange={(e) => setUnit(e.target.value)}
+                className="w-full bg-bg-main border border-border-color text-text-main px-4 py-2.5 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 transition-all text-sm cursor-pointer"
+              >
+                <option value="pcs">Pieces (pcs)</option>
+                <option value="kg">Kilograms (kg)</option>
+                <option value="g">Grams (g)</option>
+                <option value="litre">Litres (litre)</option>
+                <option value="ml">Millilitres (ml)</option>
+              </select>
+            </div>
+
+            {/* Image */}
+            {!editingId && (
+              <div>
+                <label className="block text-text-secondary text-[10px] font-bold uppercase tracking-wider mb-2">Product Image</label>
+                <input
+                  type="file"
+                  onChange={(e) => setImage(e.target.files[0])}
+                  className="w-full bg-bg-main border border-border-color text-text-secondary rounded-xl px-4 py-1.5 text-xs outline-none cursor-pointer file:mr-4 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-600/15 file:text-indigo-500 hover:file:bg-indigo-600/25"
+                />
+              </div>
+            )}
+
+            {/* Button */}
+            <div className="xl:col-span-3 flex justify-end gap-3 mt-2">
+              <button
+                type="submit"
+                className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2.5 rounded-xl font-semibold text-sm transition-all duration-150 cursor-pointer active:scale-[0.99] shadow-lg shadow-indigo-600/10"
+              >
+                {editingId ? "Update Product" : "Add Product to Inventory"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowForm(false);
+                  setEditingId(null);
+                  setFormData({
+                    name: "",
+                    category: "",
+                    buyingPrice: "",
+                    sellingPrice: "",
+                    bulkPrice: "",
+                    stock: "",
+                    barcode: "",
+                  });
+                  setProductType("fixed");
+                  setUnit("pcs");
+                  setImage(null);
+                }}
+                className="px-4 py-2.5 border border-border-color hover:bg-bg-main text-text-secondary rounded-xl text-sm font-semibold transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {/* Search Filter */}
       <div className="mb-6 relative">

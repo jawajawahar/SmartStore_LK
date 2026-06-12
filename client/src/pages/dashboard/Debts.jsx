@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { FaEdit, FaTrash } from "react-icons/fa";
+import { FaEdit, FaTrash, FaPlus } from "react-icons/fa";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import API from "../../services/api";
 import { toast } from "react-toastify";
@@ -9,6 +9,7 @@ const Debts = () => {
   const [customers, setCustomers] = useState([]);
   const [debts, setDebts] = useState([]);
   const [editingId, setEditingId] = useState(null);
+  const [showForm, setShowForm] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -103,6 +104,7 @@ const Debts = () => {
       });
 
       setEditingId(null);
+      setShowForm(false);
       fetchDebts();
     } catch (error) {
       console.log(error);
@@ -119,6 +121,7 @@ const Debts = () => {
       totalAmount: debt.totalAmount,
       paidAmount: debt.paidAmount,
     });
+    setShowForm(true);
     window.scrollTo({
       top: 0,
       behavior: "smooth",
@@ -189,112 +192,128 @@ const Debts = () => {
   return (
     <DashboardLayout>
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight text-text-main font-sans">
-          Borrow & Debt Management
-        </h1>
-        <p className="text-text-secondary text-sm mt-1">
-          Track customer outstanding balances, payment schedules, and logs
-        </p>
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-text-main font-sans">
+            Borrow & Debt Management
+          </h1>
+          <p className="text-text-secondary text-sm mt-1">
+            Track customer outstanding balances, payment schedules, and logs
+          </p>
+        </div>
+        <button
+          onClick={() => {
+            setShowForm(!showForm);
+            if (editingId) {
+              setEditingId(null);
+              setFormData({ customer: "", description: "", totalAmount: "", paidAmount: "" });
+            }
+          }}
+          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 rounded-xl font-semibold text-sm transition-all shadow-lg shadow-indigo-600/15 cursor-pointer active:scale-[0.98]"
+        >
+          <FaPlus className="text-xs" />
+          {showForm ? "Hide Form" : "Log Borrowing"}
+        </button>
       </div>
 
       {/* Add Debt Form */}
-      <div className="bg-bg-card border border-border-color rounded-xl p-6 mb-8 shadow-sm">
-        <h2 className="text-lg font-bold text-text-main mb-5 tracking-tight font-sans">
-          {editingId ? "Edit Debt Record" : "Add Borrow Record"}
-        </h2>
+      {showForm && (
+        <div className="bg-bg-card border border-border-color rounded-xl p-6 mb-8 shadow-sm">
+          <h2 className="text-lg font-bold text-text-main mb-5 tracking-tight font-sans">
+            {editingId ? "Edit Debt Record" : "Add Borrow Record"}
+          </h2>
 
-        <form
-          onSubmit={handleSubmit}
-          className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-5"
-        >
-          {/* Customer */}
-          <div>
-            <label className="block text-text-secondary text-[10px] font-bold uppercase tracking-wider mb-2">Customer</label>
-            <select
-              name="customer"
-              value={formData.customer}
-              onChange={handleChange}
-              required
-              className="w-full bg-bg-main border border-border-color text-text-main px-4 py-2.5 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 transition-all text-sm cursor-pointer"
-            >
-              <option value="">Select Customer</option>
-              {customers.map((customer) => (
-                <option key={customer._id} value={customer._id}>
-                  {customer.name} {customer.currentDebt > 0 ? `(Debt: Rs. ${Number(customer.currentDebt).toLocaleString()})` : ""}
-                </option>
-              ))}
-            </select>
-            {formData.customer && (
-              (() => {
-                const selectedCust = customers.find(c => c._id === formData.customer);
-                if (selectedCust && selectedCust.currentDebt > 0) {
+          <form
+            onSubmit={handleSubmit}
+            className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-5"
+          >
+            {/* Customer */}
+            <div>
+              <label className="block text-text-secondary text-[10px] font-bold uppercase tracking-wider mb-2">Customer</label>
+              <select
+                name="customer"
+                value={formData.customer}
+                onChange={handleChange}
+                required
+                className="w-full bg-bg-main border border-border-color text-text-main px-4 py-2.5 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 transition-all text-sm cursor-pointer"
+              >
+                <option value="">Select Customer</option>
+                {customers.map((customer) => (
+                  <option key={customer._id} value={customer._id}>
+                    {customer.name} {customer.currentDebt > 0 ? `(Debt: Rs. ${Number(customer.currentDebt).toLocaleString()})` : ""}
+                  </option>
+                ))}
+              </select>
+              {formData.customer && (
+                (() => {
+                  const selectedCust = customers.find(c => c._id === formData.customer);
+                  if (selectedCust && selectedCust.currentDebt > 0) {
+                    return (
+                      <p className="text-[10px] text-rose-500 font-bold mt-1.5 flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500 inline-block animate-pulse"></span>
+                        Current Debt: Rs. {Number(selectedCust.currentDebt).toLocaleString()}
+                      </p>
+                    );
+                  }
                   return (
-                    <p className="text-[10px] text-rose-500 font-bold mt-1.5 flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-rose-500 inline-block animate-pulse"></span>
-                      Current Debt: Rs. {Number(selectedCust.currentDebt).toLocaleString()}
+                    <p className="text-[10px] text-emerald-500 font-bold mt-1.5 flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
+                      No outstanding debt (Settled)
                     </p>
                   );
-                }
-                return (
-                  <p className="text-[10px] text-emerald-500 font-bold mt-1.5 flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
-                    No outstanding debt (Settled)
-                  </p>
-                );
-              })()
-            )}
-          </div>
+                })()
+              )}
+            </div>
 
-          {/* Description */}
-          <Input
-            label="Description"
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-          />
+            {/* Description */}
+            <Input
+              label="Description"
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+            />
 
-          {/* Total */}
-          <Input
-            label="Total Amount (Rs.)"
-            name="totalAmount"
-            type="number"
-            value={formData.totalAmount}
-            onChange={handleChange}
-          />
+            {/* Total */}
+            <Input
+              label="Total Amount (Rs.)"
+              name="totalAmount"
+              type="number"
+              value={formData.totalAmount}
+              onChange={handleChange}
+            />
 
-          {/* Paid */}
-          <Input
-            label="Paid Amount (Rs.)"
-            name="paidAmount"
-            type="number"
-            value={formData.paidAmount}
-            onChange={handleChange}
-          />
+            {/* Paid */}
+            <Input
+              label="Paid Amount (Rs.)"
+              name="paidAmount"
+              type="number"
+              value={formData.paidAmount}
+              onChange={handleChange}
+            />
 
-          {/* Button */}
-          <div className="flex items-end gap-3">
-            <button
-              type="submit"
-              className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white py-2.5 rounded-xl font-semibold text-sm transition-all duration-150 cursor-pointer active:scale-[0.99] shadow-lg shadow-indigo-600/10"
-            >
-              {editingId ? "Update Debt Entry" : "Log Debt Entry"}
-            </button>
-            {editingId && (
+            {/* Button */}
+            <div className="flex items-end gap-3">
+              <button
+                type="submit"
+                className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white py-2.5 rounded-xl font-semibold text-sm transition-all duration-150 cursor-pointer active:scale-[0.99] shadow-lg shadow-indigo-600/10"
+              >
+                {editingId ? "Update Debt Entry" : "Log Debt Entry"}
+              </button>
               <button
                 type="button"
                 onClick={() => {
                   setEditingId(null);
+                  setShowForm(false);
                   setFormData({ customer: "", description: "", totalAmount: "", paidAmount: "" });
                 }}
                 className="px-4 py-2.5 border border-border-color hover:bg-bg-main text-text-secondary rounded-xl text-sm font-semibold transition-all cursor-pointer"
               >
                 Cancel
               </button>
-            )}
-          </div>
-        </form>
-      </div>
+            </div>
+          </form>
+        </div>
+      )}
 
       {/* Debt Table */}
       <div className="bg-bg-card border border-border-color rounded-xl overflow-hidden shadow-sm">

@@ -11,6 +11,7 @@ const Customers = () => {
   const [search, setSearch] = useState("");
   const [editingId, setEditingId] = useState(null);
   const [isBulkOpen, setIsBulkOpen] = useState(false);
+  const [showForm, setShowForm] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -87,6 +88,7 @@ const Customers = () => {
       });
 
       setEditingId(null);
+      setShowForm(false);
       fetchCustomers();
     } catch (error) {
       console.log(error);
@@ -104,6 +106,8 @@ const Customers = () => {
       address: customer.address || "",
       customerType: customer.customerType || "normal",
     });
+
+    setShowForm(true);
 
     window.scrollTo({
       top: 0,
@@ -165,65 +169,99 @@ const Customers = () => {
           >
             <FaCloudUploadAlt /> Bulk Import CSV
           </button>
+
+          <button
+            onClick={() => {
+              setShowForm(!showForm);
+              if (editingId) {
+                setEditingId(null);
+                setFormData({ name: "", phone: "", address: "", customerType: "normal" });
+              }
+            }}
+            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-indigo-600/15 cursor-pointer active:scale-[0.98]"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
+            </svg>
+            {showForm ? "Hide Form" : "Add Customer"}
+          </button>
         </div>
       </div>
 
       {/* Add/Edit Customer Form */}
-      <div className="bg-bg-card border border-border-color rounded-xl p-6 mb-8 shadow-sm">
-        <h2 className="text-lg font-bold text-text-main mb-5 tracking-tight">
-          {editingId ? "Edit Customer Profile" : "Register New Customer"}
-        </h2>
+      {showForm && (
+        <div className="bg-bg-card border border-border-color rounded-xl p-6 mb-8 shadow-sm">
+          <h2 className="text-lg font-bold text-text-main mb-5 tracking-tight">
+            {editingId ? "Edit Customer Profile" : "Register New Customer"}
+          </h2>
 
-        <form
-          onSubmit={handleSubmit}
-          className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5"
-        >
-          <Input
-            label="Customer Name"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-          />
-
-          <Input
-            label="Phone Number"
-            name="phone"
-            value={formData.phone}
-            onChange={handleChange}
-          />
-
-          <Input
-            label="Address"
-            name="address"
-            value={formData.address}
-            onChange={handleChange}
-          />
-
-          {/* Customer Type */}
-          <div>
-            <label className="block text-text-secondary text-[10px] font-bold uppercase tracking-wider mb-2">Customer Type</label>
-            <select
-              name="customerType"
-              value={formData.customerType}
+          <form
+            onSubmit={handleSubmit}
+            className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5"
+          >
+            <Input
+              label="Customer Name"
+              name="name"
+              value={formData.name}
               onChange={handleChange}
-              className="w-full bg-bg-main border border-border-color text-text-main px-4 py-2.5 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 transition-all text-sm cursor-pointer"
-            >
-              <option value="normal">Normal Customer</option>
-              <option value="bulk">Bulk Buyer</option>
-            </select>
-          </div>
+            />
 
-          {/* Button */}
-          <div className="xl:col-span-4 flex justify-end">
-            <button
-              type="submit"
-              className="bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-2.5 rounded-xl font-semibold text-sm transition-all duration-150 cursor-pointer active:scale-[0.99] shadow-lg shadow-indigo-600/10"
-            >
-              {editingId ? "Update Account Details" : "Register Customer"}
-            </button>
-          </div>
-        </form>
-      </div>
+            <Input
+              label="Phone Number"
+              name="phone"
+              value={formData.phone}
+              onChange={handleChange}
+            />
+
+            <Input
+              label="Address"
+              name="address"
+              value={formData.address}
+              onChange={handleChange}
+            />
+
+            {/* Customer Type */}
+            <div>
+              <label className="block text-text-secondary text-[10px] font-bold uppercase tracking-wider mb-2">Customer Type</label>
+              <select
+                name="customerType"
+                value={formData.customerType}
+                onChange={handleChange}
+                className="w-full bg-bg-main border border-border-color text-text-main px-4 py-2.5 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 transition-all text-sm cursor-pointer"
+              >
+                <option value="normal">Normal Customer</option>
+                <option value="bulk">Bulk Buyer</option>
+              </select>
+            </div>
+
+            {/* Button */}
+            <div className="xl:col-span-4 flex justify-end gap-3">
+              <button
+                type="submit"
+                className="bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-2.5 rounded-xl font-semibold text-sm transition-all duration-150 cursor-pointer active:scale-[0.99] shadow-lg shadow-indigo-600/10"
+              >
+                {editingId ? "Update Account Details" : "Register Customer"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowForm(false);
+                  setEditingId(null);
+                  setFormData({
+                    name: "",
+                    phone: "",
+                    address: "",
+                    customerType: "normal",
+                  });
+                }}
+                className="px-4 py-2.5 border border-border-color hover:bg-bg-main text-text-secondary rounded-xl text-sm font-semibold transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {/* Search */}
       <input
