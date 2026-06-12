@@ -370,6 +370,12 @@ INSTRUCTIONS:
       ) {
         setApiKeyMissing(true);
         setError(`API key error: ${msg}`);
+      } else if (
+        msg.includes("429") ||
+        msg.toLowerCase().includes("quota") ||
+        msg.toLowerCase().includes("limit")
+      ) {
+        setError("Rate limit exceeded (API Error 429). The Gemini API free tier allows a limited number of requests per minute. Please wait 20-30 seconds and try generating the report again.");
       } else {
         setError(`Failed to generate report: ${msg || "Unknown error. Please check console for details."}`);
       }
