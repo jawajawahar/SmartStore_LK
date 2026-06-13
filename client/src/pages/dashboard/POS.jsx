@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   FaTrash,
   FaPause,
@@ -15,6 +15,7 @@ import {
   FaUserTag,
   FaCamera,
   FaQrcode,
+  FaMicrophone,
 } from "react-icons/fa";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import API from "../../services/api";
@@ -22,6 +23,15 @@ import { toast } from "react-toastify";
 import BarcodeScanner from "../../components/BarcodeScanner";
 import QRCodeCanvas from "../../components/QRCodeCanvas";
 import ProductPassportModal from "../../components/ProductPassportModal";
+import {
+  saveProducts,
+  getProducts,
+  saveCustomers,
+  getCustomers,
+  savePendingSale,
+  getPendingSales,
+  deletePendingSale,
+} from "../../services/db";
 
 const POS = () => {
   const [products, setProducts] = useState([]);
@@ -61,6 +71,14 @@ const POS = () => {
   const [showDiscountInput, setShowDiscountInput] = useState(false);
   const [showTaxSelect, setShowTaxSelect] = useState(false);
 
+  // Voice Billing States
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef(null);
+
+  // Offline & Synchronization States
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [isSyncing, setIsSyncing] = useState(false);
+
   // Fetch Products
   const fetchProducts = async () => {
     try {
@@ -71,9 +89,21 @@ const POS = () => {
         },
       });
       setProducts(response.data);
+      await saveProducts(response.data);
     } catch (error) {
       console.error("Error fetching products:", error);
-      toast.error("Failed to load products inventory");
+      try {
+        const cached = await getProducts();
+        if (cached && cached.length > 0) {
+          setProducts(cached);
+          toast.info("Loaded products catalog from offline cache");
+        } else {
+          toast.error("Failed to load products inventory");
+        }
+      } catch (dbErr) {
+        console.error("IndexedDB product load error:", dbErr);
+        toast.error("Failed to load products inventory");
+      }
     }
   };
 
@@ -87,8 +117,17 @@ const POS = () => {
         },
       });
       setCustomers(response.data);
+      await saveCustomers(response.data);
     } catch (error) {
       console.error("Error fetching customers:", error);
+      try {
+        const cached = await getCustomers();
+        if (cached && cached.length > 0) {
+          setCustomers(cached);
+        }
+      } catch (dbErr) {
+        console.error("IndexedDB customer load error:", dbErr);
+      }
     }
   };
 
@@ -151,6 +190,19 @@ const POS = () => {
 
   // Scan Barcode Handlers
   const handleScanBarcode = async (barcode) => {
+    if (!isOnline) {
+      const matched = products.find(
+        (p) => p.barcode === barcode || p.sku?.toLowerCase() === barcode.toLowerCase()
+      );
+      if (matched) {
+        addToCart(matched);
+        toast.success(`Scanned (Offline): ${matched.name}`);
+      } else {
+        toast.error(`Product with barcode "${barcode}" not found in offline catalog.`);
+      }
+      return;
+    }
+
     try {
       const token = localStorage.getItem("token");
       const response = await API.get(`/products?barcode=${encodeURIComponent(barcode)}`, {
@@ -358,24 +410,65 @@ const POS = () => {
       return;
     }
 
+    const checkoutMethod = getPayloadPaymentMethod();
+
+    const saleData = {
+      customer: selectedCustomer || null,
+      items: cart,
+      totalAmount: subtotalAmount,
+      paidAmount: paidVal,
+      paymentMethod: checkoutMethod,
+      discountType: discountType === "none" ? null : discountType,
+      discountValue: discVal,
+      discountAmount,
+      taxRate: taxPercent,
+      taxAmount,
+      netAmount,
+    };
+
+    if (!isOnline) {
+      try {
+        const offlineSaleId = `OFFLINE-${Date.now()}`;
+        const invoiceNo = offlineSaleId.slice(-6).toUpperCase();
+
+        const offlineSale = {
+          ...saleData,
+          _id: offlineSaleId,
+          offline: true,
+          date: new Date(),
+        };
+
+        await savePendingSale(offlineSale);
+
+        setInvoiceData({
+          ...saleData,
+          remaining: Math.max(0, netAmount - paidVal),
+          change: changeAmount,
+          customerName:
+            customers.find((c) => c._id === selectedCustomer)?.name ||
+            "Walk-in Customer",
+          date: new Date(),
+          invoiceNo,
+        });
+
+        setShowInvoice(true);
+        setShowPaymentModal(false);
+        toast.success("Sale completed offline! Queueing for network restoration sync.");
+
+        setCart([]);
+        setSelectedCustomer("");
+        setPaidAmount("");
+        setDiscountValue("");
+        setPaymentMode("cash");
+      } catch (err) {
+        console.error("Offline checkout database save error:", err);
+        toast.error("Failed to save transaction offline.");
+      }
+      return;
+    }
+
     try {
       const token = localStorage.getItem("token");
-
-      const checkoutMethod = getPayloadPaymentMethod();
-
-      const saleData = {
-        customer: selectedCustomer || null,
-        items: cart,
-        totalAmount: subtotalAmount,
-        paidAmount: paidVal,
-        paymentMethod: checkoutMethod,
-        discountType: discountType === "none" ? null : discountType,
-        discountValue: discVal,
-        discountAmount,
-        taxRate: taxPercent,
-        taxAmount,
-        netAmount,
-      };
 
       const res = await API.post("/sales", saleData, {
         headers: {
@@ -449,6 +542,253 @@ Method: ${invoiceData.paymentMethod}
 Status: Verified Purchase`;
   };
 
+  // ─── Voice Commands Dispatcher ──────────────────────────────────────────────
+  const parseVoiceCommand = (transcript) => {
+    const text = transcript.toLowerCase().trim();
+    console.log("Voice Command Recognized:", text);
+
+    // 1. Clear Cart
+    if (text.includes("clear cart") || text.includes("clear bill")) {
+      setCart([]);
+      toast.info("Cart cleared via voice command");
+      return;
+    }
+
+    // 2. Park / Hold
+    if (
+      text.includes("park bill") ||
+      text.includes("hold bill") ||
+      text.includes("park sale") ||
+      text.includes("hold sale")
+    ) {
+      handleHoldSale();
+      return;
+    }
+
+    // 3. Checkout / Pay
+    if (text === "checkout" || text === "complete sale" || text === "pay" || text.includes("complete checkout")) {
+      if (!showPaymentModal) {
+        setShowPaymentModal(true);
+      } else {
+        handleCheckout();
+      }
+      return;
+    }
+
+    // 4. Apply Discount
+    const discountPercentMatch =
+      text.match(/(?:apply\s+)?(\d+)\s*(?:percent|percentage)\s*discount/i) ||
+      text.match(/discount\s+(\d+)\s*(?:percent|percentage)/i);
+    if (discountPercentMatch) {
+      const val = discountPercentMatch[1];
+      setDiscountType("percentage");
+      setDiscountValue(val);
+      setShowDiscountInput(true);
+      toast.success(`Applied ${val}% discount`);
+      return;
+    }
+
+    const discountFixedMatch =
+      text.match(/(?:apply\s+)?(?:flat\s+)?(?:rs\s+)?(\d+)\s*(?:flat|rupees|fixed)?\s*discount/i) ||
+      text.match(/discount\s+(\d+)\s*(?:flat|fixed)/i);
+    if (discountFixedMatch) {
+      const val = discountFixedMatch[1];
+      setDiscountType("fixed");
+      setDiscountValue(val);
+      setShowDiscountInput(true);
+      toast.success(`Applied flat Rs. ${val} discount`);
+      return;
+    }
+
+    // 5. Search Customer
+    const customerMatch = text.match(/(?:search\s+)?customer\s+(.+)/i);
+    if (customerMatch) {
+      const query = customerMatch[1].trim();
+      const match = customers.find((c) => c.name.toLowerCase().includes(query));
+      if (match) {
+        setSelectedCustomer(match._id);
+        toast.success(`Selected customer: ${match.name}`);
+      } else {
+        toast.error(`Customer matching "${query}" not found`);
+      }
+      return;
+    }
+
+    // 6. Add Product
+    const addMatch = text.match(/^add\s+(\d+)?\s*(.+)/i);
+    if (addMatch) {
+      const qty = parseInt(addMatch[1]) || 1;
+      const query = addMatch[2].trim();
+
+      const matchedProduct = products.find(
+        (p) => p.name.toLowerCase().includes(query) || p.sku?.toLowerCase() === query
+      );
+
+      if (matchedProduct) {
+        if (matchedProduct.stock < qty) {
+          toast.warning(`Insufficient stock for ${matchedProduct.name}. Available: ${matchedProduct.stock}`);
+          return;
+        }
+
+        setCart((prevCart) => {
+          const existing = prevCart.find((item) => item.product === matchedProduct._id);
+          if (existing) {
+            const nextQty = existing.quantity + qty;
+            if (nextQty > matchedProduct.stock) {
+              toast.warning(`Cannot exceed available stock of ${matchedProduct.stock}`);
+              return prevCart;
+            }
+            toast.success(`Added ${qty} more ${matchedProduct.name}`);
+            return prevCart.map((item) =>
+              item.product === matchedProduct._id
+                ? { ...item, quantity: nextQty, total: nextQty * item.price }
+                : item
+            );
+          } else {
+            toast.success(`Added ${qty} x ${matchedProduct.name}`);
+            return [
+              ...prevCart,
+              {
+                product: matchedProduct._id,
+                name: matchedProduct.name,
+                quantity: matchedProduct.productType === "weighted" ? 0 : qty,
+                price: matchedProduct.sellingPrice,
+                total: matchedProduct.productType === "weighted" ? 0 : matchedProduct.sellingPrice * qty,
+                productType: matchedProduct.productType,
+                unit: matchedProduct.unit || "pcs",
+              },
+            ];
+          }
+        });
+      } else {
+        toast.error(`Product matching "${query}" not found`);
+      }
+      return;
+    }
+
+    toast.info(`Command not recognized: "${text}"`);
+  };
+
+  const toggleListening = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toast.error("Web Speech API is not supported in this browser. Please use Google Chrome or Microsoft Edge.");
+      return;
+    }
+
+    if (isListening) {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+      setIsListening(false);
+      return;
+    }
+
+    try {
+      const rec = new SpeechRecognition();
+      rec.continuous = false;
+      rec.interimResults = false;
+      rec.lang = "en-US";
+
+      rec.onstart = () => {
+        setIsListening(true);
+        toast.info("Microphone active... Say command");
+      };
+
+      rec.onerror = (e) => {
+        console.error("Speech Recognition Error:", e.error);
+        toast.error(`Speech Recognition Error: ${e.error}`);
+        setIsListening(false);
+      };
+
+      rec.onend = () => {
+        setIsListening(false);
+      };
+
+      rec.onresult = (e) => {
+        const transcript = e.results[0][0].transcript;
+        parseVoiceCommand(transcript);
+      };
+
+      recognitionRef.current = rec;
+      rec.start();
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to start voice recognition module");
+      setIsListening(false);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+    };
+  }, []);
+
+  // Offline Sync helper
+  const syncOfflineSales = async () => {
+    try {
+      const pending = await getPendingSales();
+      if (!pending || pending.length === 0) return;
+
+      setIsSyncing(true);
+      const token = localStorage.getItem("token");
+
+      let syncedCount = 0;
+      for (const sale of pending) {
+        try {
+          const { _id, offline, ...cleanSale } = sale;
+          await API.post("/sales", cleanSale, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          await deletePendingSale(_id);
+          syncedCount++;
+        } catch (err) {
+          console.error("Failed to sync sale:", sale, err);
+        }
+      }
+
+      if (syncedCount > 0) {
+        toast.success(`Successfully synced ${syncedCount} offline transaction(s)!`);
+        fetchProducts();
+      }
+    } catch (err) {
+      console.error("Sync error:", err);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  // Connectivity Listener Effect
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      toast.success("Connection restored! Syncing offline sales...");
+      syncOfflineSales();
+    };
+
+    const handleOffline = () => {
+      setIsOnline(false);
+      toast.warning("You are offline. Transactions will be saved locally.");
+    };
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    if (navigator.onLine) {
+      syncOfflineSales();
+    }
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
+
   return (
     <DashboardLayout>
       {/* Header */}
@@ -458,18 +798,39 @@ Status: Verified Purchase`;
           <p className="text-text-secondary text-sm mt-1">SmartStore LK checkout billing workstation</p>
         </div>
 
-        {/* Held Sales Button */}
-        {heldSales.length > 0 && (
-          <div className="flex items-center gap-2 bg-amber-500/10 px-3 py-1.5 rounded-lg border border-amber-500/20">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+        <div className="flex items-center flex-wrap gap-3">
+          {/* Connection Badge */}
+          {isOnline ? (
+            <span className="flex items-center gap-1.5 bg-emerald-500/10 text-emerald-500 px-3 py-1.5 rounded-lg border border-emerald-500/20 text-xs font-bold uppercase tracking-wider select-none">
+              <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
+              Online
             </span>
-            <span className="text-xs text-amber-500 font-bold uppercase tracking-wider">
-              {heldSales.length} Parked Bill(s)
+          ) : (
+            <span className="flex items-center gap-1.5 bg-rose-500/10 text-rose-500 px-3 py-1.5 rounded-lg border border-rose-500/20 text-xs font-bold uppercase tracking-wider animate-pulse select-none">
+              <span className="h-2 w-2 rounded-full bg-rose-500"></span>
+              Offline Mode
             </span>
-          </div>
-        )}
+          )}
+
+          {isSyncing && (
+            <span className="flex items-center gap-1.5 bg-indigo-500/10 text-indigo-500 px-3 py-1.5 rounded-lg border border-indigo-500/20 text-xs font-bold uppercase tracking-wider animate-pulse select-none">
+              Syncing Sales...
+            </span>
+          )}
+
+          {/* Held Sales Button */}
+          {heldSales.length > 0 && (
+            <div className="flex items-center gap-2 bg-amber-500/10 px-3 py-1.5 rounded-lg border border-amber-500/20 select-none">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+              </span>
+              <span className="text-xs text-amber-500 font-bold uppercase tracking-wider">
+                {heldSales.length} Parked Bill(s)
+              </span>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
@@ -491,10 +852,21 @@ Status: Verified Purchase`;
             </div>
             <button
               onClick={() => setIsScannerOpen(true)}
-              className="flex items-center justify-center bg-indigo-650 bg-indigo-600 hover:bg-indigo-550 hover:bg-indigo-550 text-white rounded-xl transition-all shadow-md active:scale-95 cursor-pointer h-[46px] w-[46px] shrink-0 border border-indigo-650/10"
+              className="flex items-center justify-center bg-indigo-600 hover:bg-indigo-550 text-white rounded-xl transition-all shadow-md active:scale-95 cursor-pointer h-[46px] w-[46px] shrink-0 border border-indigo-650/10"
               title="Scan barcode with camera"
             >
               <FaCamera className="text-sm" />
+            </button>
+            <button
+              onClick={toggleListening}
+              className={`flex items-center justify-center rounded-xl transition-all shadow-md active:scale-95 cursor-pointer h-[46px] w-[46px] shrink-0 border ${
+                isListening
+                  ? "bg-rose-500 hover:bg-rose-600 text-white border-rose-600 animate-pulse shadow-[0_0_15px_rgba(244,63,94,0.5)]"
+                  : "bg-indigo-600 hover:bg-indigo-550 text-white border-indigo-650/10"
+              }`}
+              title={isListening ? "Listening... click to stop" : "Voice-Activated POS Commands"}
+            >
+              <FaMicrophone className="text-sm" />
             </button>
           </div>
 

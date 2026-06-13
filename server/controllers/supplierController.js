@@ -4,7 +4,7 @@ const SupplierPayable = require("../models/SupplierPayable");
 // Add Supplier
 const addSupplier = async (req, res) => {
   try {
-    const { name, company, phone, email, address } = req.body;
+    const { name, company, phone, email, address, notificationPreference } = req.body;
 
     const supplier = new Supplier({
       name,
@@ -12,6 +12,7 @@ const addSupplier = async (req, res) => {
       phone,
       email,
       address,
+      notificationPreference,
     });
 
     await supplier.save();
@@ -69,6 +70,7 @@ const bulkAddSuppliers = async (req, res) => {
           email: row.email ? row.email.trim() : "",
           address: row.address ? row.address.trim() : "",
           payableAmount: row.payableAmount ? Number(row.payableAmount) : 0,
+          notificationPreference: row.notificationPreference ? row.notificationPreference.trim().toLowerCase() : "email",
         });
       }
     });
@@ -108,7 +110,7 @@ const bulkAddSuppliers = async (req, res) => {
 // Update Supplier
 const updateSupplier = async (req, res) => {
   try {
-    const { name, company, phone, email, address } = req.body;
+    const { name, company, phone, email, address, notificationPreference } = req.body;
     const supplier = await Supplier.findById(req.params.id);
 
     if (!supplier) {
@@ -120,6 +122,7 @@ const updateSupplier = async (req, res) => {
     supplier.phone = phone || supplier.phone;
     supplier.email = email !== undefined ? email : supplier.email;
     supplier.address = address !== undefined ? address : supplier.address;
+    supplier.notificationPreference = notificationPreference !== undefined ? notificationPreference : supplier.notificationPreference;
 
     await supplier.save();
     res.status(200).json({ message: "Supplier updated successfully", supplier });

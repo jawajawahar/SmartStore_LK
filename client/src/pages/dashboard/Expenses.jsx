@@ -6,6 +6,9 @@ import { toast } from "react-toastify";
 import Pagination from "../../components/Pagination";
 
 const Expenses = () => {
+  const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+  const hasModifySales = currentUser.role === "admin" || (currentUser.permissions && currentUser.permissions.includes("modify_sales"));
+
   const [expenses, setExpenses] = useState([]);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -355,14 +358,16 @@ const Expenses = () => {
                     <th className="text-left px-5 py-3 text-xs font-bold uppercase tracking-wider text-text-secondary">Description</th>
                     <th className="text-left px-5 py-3 text-xs font-bold uppercase tracking-wider text-text-secondary">Method</th>
                     <th className="text-left px-5 py-3 text-xs font-bold uppercase tracking-wider text-text-secondary">Amount</th>
-                    <th className="text-right px-5 py-3 text-xs font-bold uppercase tracking-wider text-text-secondary">Action</th>
+                    {hasModifySales && (
+                      <th className="text-right px-5 py-3 text-xs font-bold uppercase tracking-wider text-text-secondary">Action</th>
+                    )}
                   </tr>
                 </thead>
 
                 <tbody className="divide-y divide-border-color/60">
                   {loading ? (
                     <tr>
-                      <td colSpan="6" className="text-center py-6 text-text-secondary text-xs">Loading expenses...</td>
+                      <td colSpan={hasModifySales ? 6 : 5} className="text-center py-6 text-text-secondary text-xs">Loading expenses...</td>
                     </tr>
                   ) : currentExpenses.length > 0 ? (
                     currentExpenses.map((exp) => (
@@ -392,19 +397,21 @@ const Expenses = () => {
                         <td className="px-5 py-3 text-rose-500 font-extrabold text-xs">
                           Rs. {exp.amount.toLocaleString()}
                         </td>
-                        <td className="px-5 py-3 text-right">
-                          <button
-                            onClick={() => handleDelete(exp._id)}
-                            className="text-text-secondary hover:text-rose-500 transition-colors p-1.5 rounded-lg hover:bg-rose-500/10 cursor-pointer"
-                          >
-                            <FaTrash className="text-xs" />
-                          </button>
-                        </td>
+                        {hasModifySales && (
+                          <td className="px-5 py-3 text-right">
+                            <button
+                              onClick={() => handleDelete(exp._id)}
+                              className="text-text-secondary hover:text-rose-500 transition-colors p-1.5 rounded-lg hover:bg-rose-500/10 cursor-pointer"
+                            >
+                              <FaTrash className="text-xs" />
+                            </button>
+                          </td>
+                        )}
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="6" className="text-center py-8 text-text-secondary text-xs">No expenses found.</td>
+                      <td colSpan={hasModifySales ? 6 : 5} className="text-center py-8 text-text-secondary text-xs">No expenses found.</td>
                     </tr>
                   )}
                 </tbody>

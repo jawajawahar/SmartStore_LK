@@ -6,9 +6,10 @@ const {
   updateProduct,
   deleteProduct,
   bulkAddProducts,
+  triggerProductRestockAlert,
 } = require("../controllers/productController");
 
-const { protect } = require("../middleware/authMiddleware");
+const { protect, checkPermission } = require("../middleware/authMiddleware");
 
 const multer = require("multer");
 
@@ -28,14 +29,16 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // Routes
-router.post("/bulk", protect, bulkAddProducts);
+router.post("/bulk", protect, checkPermission("edit_products"), bulkAddProducts);
 
-router.post("/", protect, upload.single("image"), addProduct);
+router.post("/", protect, checkPermission("edit_products"), upload.single("image"), addProduct);
 
 router.get("/", protect, getProducts);
 
-router.put("/:id", protect, updateProduct);
+router.put("/:id", protect, checkPermission("edit_products"), updateProduct);
 
-router.delete("/:id", protect, deleteProduct);
+router.delete("/:id", protect, checkPermission("edit_products"), deleteProduct);
+
+router.post("/:id/alert", protect, triggerProductRestockAlert);
 
 module.exports = router;

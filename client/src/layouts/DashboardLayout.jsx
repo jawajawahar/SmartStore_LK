@@ -19,6 +19,7 @@ import {
   FaChevronLeft,
   FaChevronRight,
   FaRobot,
+  FaCog,
 } from "react-icons/fa";
 
 import { useNavigate, useLocation, Link } from "react-router-dom";
@@ -88,6 +89,12 @@ const DashboardLayout = ({ children }) => {
 
           {/* Menu */}
           <div className="space-y-1.5 overflow-y-auto max-h-[72vh] pr-1">
+            {/* Group 1: General */}
+            {!collapsed && (
+              <p className="text-[10px] font-bold text-text-secondary/50 uppercase tracking-widest px-4 pt-2 pb-1 select-none">
+                General
+              </p>
+            )}
             <SidebarItem
               icon={<FaHome />}
               text="Dashboard"
@@ -95,39 +102,6 @@ const DashboardLayout = ({ children }) => {
               active={location.pathname === "/dashboard"}
               collapsed={collapsed}
             />
-
-            <SidebarItem
-              icon={<FaBox />}
-              text="Products"
-              to="/products"
-              active={location.pathname === "/products"}
-              collapsed={collapsed}
-            />
-
-            <SidebarItem
-              icon={<FaUsers />}
-              text="Customers"
-              to="/customers"
-              active={location.pathname === "/customers"}
-              collapsed={collapsed}
-            />
-
-            <SidebarItem
-              icon={<FaMoneyBillWave />}
-              text="Debts"
-              to="/debts"
-              active={location.pathname === "/debts"}
-              collapsed={collapsed}
-            />
-
-            <SidebarItem
-              icon={<FaTruck />}
-              text="Suppliers"
-              to="/suppliers"
-              active={location.pathname === "/suppliers"}
-              collapsed={collapsed}
-            />
-
             <SidebarItem
               icon={<FaClipboardList />}
               text="POS Billing"
@@ -136,6 +110,61 @@ const DashboardLayout = ({ children }) => {
               collapsed={collapsed}
             />
 
+            {/* Group 2: Registry */}
+            {!collapsed && (
+              <p className="text-[10px] font-bold text-text-secondary/50 uppercase tracking-widest px-4 pt-3 pb-1 select-none">
+                Registry
+              </p>
+            )}
+            <SidebarItem
+              icon={<FaBox />}
+              text="Products"
+              to="/products"
+              active={location.pathname === "/products"}
+              collapsed={collapsed}
+            />
+            <SidebarItem
+              icon={<FaUsers />}
+              text="Customers"
+              to="/customers"
+              active={location.pathname === "/customers"}
+              collapsed={collapsed}
+            />
+            <SidebarItem
+              icon={<FaTruck />}
+              text="Suppliers"
+              to="/suppliers"
+              active={location.pathname === "/suppliers"}
+              collapsed={collapsed}
+            />
+
+            {/* Group 3: Financials */}
+            {!collapsed && (
+              <p className="text-[10px] font-bold text-text-secondary/50 uppercase tracking-widest px-4 pt-3 pb-1 select-none">
+                Financials
+              </p>
+            )}
+            <SidebarItem
+              icon={<FaExchangeAlt />}
+              text="Transactions"
+              to="/transactions"
+              active={location.pathname === "/transactions"}
+              collapsed={collapsed}
+            />
+            <SidebarItem
+              icon={<FaCoins />}
+              text="Expenses"
+              to="/expenses"
+              active={location.pathname === "/expenses"}
+              collapsed={collapsed}
+            />
+            <SidebarItem
+              icon={<FaMoneyBillWave />}
+              text="Debts"
+              to="/debts"
+              active={location.pathname === "/debts"}
+              collapsed={collapsed}
+            />
             <SidebarItem
               icon={<FaFileInvoiceDollar />}
               text="Supplier Payables"
@@ -144,14 +173,12 @@ const DashboardLayout = ({ children }) => {
               collapsed={collapsed}
             />
 
-            <SidebarItem
-              icon={<FaChartBar />}
-              text="Analytics"
-              to="/analytics"
-              active={location.pathname === "/analytics"}
-              collapsed={collapsed}
-            />
-
+            {/* Group 4: Sales & History */}
+            {!collapsed && (
+              <p className="text-[10px] font-bold text-text-secondary/50 uppercase tracking-widest px-4 pt-3 pb-1 select-none">
+                Sales & History
+              </p>
+            )}
             <SidebarItem
               icon={<FaHistory />}
               text="Sales History"
@@ -159,23 +186,6 @@ const DashboardLayout = ({ children }) => {
               active={location.pathname === "/sales-history"}
               collapsed={collapsed}
             />
-
-            <SidebarItem
-              icon={<FaExchangeAlt />}
-              text="Transactions"
-              to="/transactions"
-              active={location.pathname === "/transactions"}
-              collapsed={collapsed}
-            />
-
-            <SidebarItem
-              icon={<FaCoins />}
-              text="Expenses"
-              to="/expenses"
-              active={location.pathname === "/expenses"}
-              collapsed={collapsed}
-            />
-
             <SidebarItem
               icon={<FaUndo />}
               text="Returns"
@@ -184,11 +194,31 @@ const DashboardLayout = ({ children }) => {
               collapsed={collapsed}
             />
 
+            {/* Group 5: Reports & Config */}
+            {!collapsed && (
+              <p className="text-[10px] font-bold text-text-secondary/50 uppercase tracking-widest px-4 pt-3 pb-1 select-none">
+                Reports & Config
+              </p>
+            )}
+            <SidebarItem
+              icon={<FaChartBar />}
+              text="Analytics"
+              to="/analytics"
+              active={location.pathname === "/analytics"}
+              collapsed={collapsed}
+            />
             <SidebarItem
               icon={<FaRobot />}
               text="AI Reports"
               to="/daily-report"
               active={location.pathname === "/daily-report"}
+              collapsed={collapsed}
+            />
+            <SidebarItem
+              icon={<FaCog />}
+              text="Settings"
+              to="/settings"
+              active={location.pathname === "/settings"}
               collapsed={collapsed}
             />
           </div>

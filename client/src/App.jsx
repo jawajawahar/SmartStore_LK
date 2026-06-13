@@ -15,12 +15,14 @@ import Transactions from "./pages/dashboard/Transactions";
 import Expenses from "./pages/dashboard/Expenses";
 import Returns from "./pages/dashboard/Returns";
 import AIReports from "./pages/dashboard/AIReports";
+import Settings from "./pages/dashboard/Settings";
 
 function App() {
   return (
     <Routes>
       {/* Login */}
       <Route path="/" element={<Login />} />
+
 
       {/* Dashboard */}
       <Route
@@ -138,6 +140,15 @@ function App() {
         element={
           <ProtectedRoute>
             <AIReports />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute>
+            <Settings />
           </ProtectedRoute>
         }
       />

@@ -55,8 +55,9 @@ const createSale = async (req, res) => {
 
     // Fetch customer name for transaction logging
     let customerName = "Walk-in Customer";
+    let customerDoc = null;
     if (customer) {
-      const customerDoc = await Customer.findById(customer);
+      customerDoc = await Customer.findById(customer);
       if (customerDoc) {
         customerName = customerDoc.name;
       }
@@ -105,7 +106,7 @@ const createSale = async (req, res) => {
           $inc: { stock: -item.quantity },
         },
         { new: true }
-      );
+      ).populate("supplier");
 
       // Check and send restock warning if inventory falls below safety limit
       if (updatedProduct) {
@@ -142,6 +143,14 @@ const createSale = async (req, res) => {
           },
         });
       }
+    }
+
+    // Send automatic WhatsApp receipt with QR code if customer has phone registered
+    if (customerDoc && customerDoc.phone) {
+      const { sendCustomerReceipt } = require("../utils/receiptSender");
+      sendCustomerReceipt(sale, customerDoc).catch((err) => {
+        console.error("Failed to send customer receipt WhatsApp message:", err);
+      });
     }
 
     res.status(201).json({

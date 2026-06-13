@@ -19,12 +19,21 @@ const registerUser = async (req, res) => {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Set default permissions based on role
+    let permissions = [];
+    if (role === "manager") {
+      permissions = ["modify_sales", "view_purchase_prices", "edit_products"];
+    } else if (role === "cashier") {
+      permissions = ["view_purchase_prices"];
+    }
+
     // Create new user
     const newUser = new User({
       name,
       email,
       password: hashedPassword,
       role,
+      permissions,
     });
 
     await newUser.save();
@@ -82,6 +91,7 @@ const loginUser = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        permissions: user.permissions || [],
       },
     });
   } catch (error) {

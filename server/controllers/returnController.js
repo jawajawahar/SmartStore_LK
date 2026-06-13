@@ -101,6 +101,20 @@ const createReturn = async (req, res) => {
 
     const savedReturn = await newReturn.save();
 
+    const { logAudit } = require("../utils/auditLogger");
+    await logAudit({
+      req,
+      action: "status_change",
+      entity: "Sale",
+      entityId: sale._id,
+      description: `Invoice Return/Cancellation processed for Sale #${sale._id.toString().slice(-6)}. Reason: "${reason || 'Customer satisfaction return'}". Refund: Rs. ${refundAmount}. Items: ${processedItems.map(i => `${i.quantity}x ${i.name}`).join(", ")}`,
+      changes: {
+        refundAmount,
+        reason,
+        itemsCount: processedItems.length
+      }
+    });
+
     // Create corresponding Transaction for the refund payout
     if (Number(refundAmount) > 0) {
       let customerName = "Walk-in Customer";

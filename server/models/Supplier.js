@@ -31,6 +31,12 @@ const supplierSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+
+    notificationPreference: {
+      type: String,
+      enum: ["email", "sms", "whatsapp", "all", "none"],
+      default: "email",
+    },
   },
   { timestamps: true },
 );

@@ -59,6 +59,16 @@ const deleteTransaction = async (req, res) => {
 
     await transaction.deleteOne();
 
+    const { logAudit } = require("../utils/auditLogger");
+    await logAudit({
+      req,
+      action: "delete",
+      entity: "Transaction",
+      entityId: transaction._id,
+      description: `Transaction deleted: type: "${transaction.type}", title: "${transaction.title}", person: "${transaction.personName}", amount: Rs. ${transaction.amount}, flow: "${transaction.flow}".`,
+      changes: transaction.toObject(),
+    });
+
     res.status(200).json({
       message: "Transaction deleted",
     });

@@ -21,6 +21,7 @@ const Suppliers = () => {
     phone: "",
     email: "",
     address: "",
+    notificationPreference: "email",
   });
 
   // Fetch Suppliers
@@ -65,7 +66,7 @@ const Suppliers = () => {
         toast.success("Supplier registered successfully");
       }
 
-      setFormData({ name: "", company: "", phone: "", email: "", address: "" });
+      setFormData({ name: "", company: "", phone: "", email: "", address: "", notificationPreference: "email" });
       setShowForm(false);
       setEditingId(null);
       fetchSuppliers();
@@ -84,6 +85,7 @@ const Suppliers = () => {
       phone: supplier.phone,
       email: supplier.email || "",
       address: supplier.address || "",
+      notificationPreference: supplier.notificationPreference || "email",
     });
     setShowForm(true);
     window.scrollTo({
@@ -108,7 +110,7 @@ const Suppliers = () => {
       if (editingId === id) {
         setEditingId(null);
         setShowForm(false);
-        setFormData({ name: "", company: "", phone: "", email: "", address: "" });
+        setFormData({ name: "", company: "", phone: "", email: "", address: "", notificationPreference: "email" });
       }
     } catch (error) {
       console.error(error);
@@ -176,14 +178,29 @@ const Suppliers = () => {
         <div className="border border-border-color bg-bg-card rounded-xl p-6 mb-8 shadow-sm">
           <h2 className="text-lg font-bold text-text-main mb-5 tracking-tight">Register New Supplier</h2>
 
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-5">
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-5">
             <FormInput label="Supplier Name" name="name" value={formData.name} onChange={handleChange} />
             <FormInput label="Company Name" name="company" value={formData.company} onChange={handleChange} />
             <FormInput label="Phone Number" name="phone" value={formData.phone} onChange={handleChange} />
             <FormInput label="Email Address" name="email" value={formData.email} onChange={handleChange} type="email" />
             <FormInput label="Address" name="address" value={formData.address} onChange={handleChange} />
+            <div>
+              <label className="block text-text-secondary text-[10px] font-bold uppercase tracking-wider mb-2">Notification Alert</label>
+              <select
+                name="notificationPreference"
+                value={formData.notificationPreference}
+                onChange={handleChange}
+                className="w-full bg-bg-main border border-border-color text-text-main px-4 py-2.5 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 transition-all text-sm cursor-pointer"
+              >
+                <option value="email">Email Only</option>
+                <option value="sms">SMS Only</option>
+                <option value="whatsapp">WhatsApp Only</option>
+                <option value="all">All Channels</option>
+                <option value="none">None (Disabled)</option>
+              </select>
+            </div>
 
-            <div className="xl:col-span-5 flex justify-end gap-3">
+            <div className="xl:col-span-6 flex justify-end gap-3">
               <button
                 type="submit"
                 className="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-all cursor-pointer shadow-lg shadow-indigo-600/10"
@@ -196,7 +213,7 @@ const Suppliers = () => {
                   onClick={() => {
                     setEditingId(null);
                     setShowForm(false);
-                    setFormData({ name: "", company: "", phone: "", address: "" });
+                    setFormData({ name: "", company: "", phone: "", address: "", email: "", notificationPreference: "email" });
                   }}
                   className="px-4 py-2.5 border border-border-color hover:bg-bg-main text-text-secondary rounded-xl text-sm font-semibold transition-all cursor-pointer"
                 >
@@ -229,7 +246,7 @@ const Suppliers = () => {
           <table className="w-full">
             <thead className="bg-bg-main border-b border-border-color">
               <tr>
-                {["Supplier Name", "Company", "Phone", "Email", "Address", "Payable Balance", "Actions"].map((th) => (
+                {["Supplier Name", "Company", "Phone", "Email", "Address", "Preferred Alert", "Payable Balance", "Actions"].map((th) => (
                   <th key={th} className="text-left px-5 py-3.5 text-[10px] font-bold uppercase tracking-wider text-text-secondary">
                     {th}
                   </th>
@@ -253,6 +270,21 @@ const Suppliers = () => {
                     <td className="px-5 py-3.5 text-text-secondary text-sm font-mono">{supplier.phone || "—"}</td>
                     <td className="px-5 py-3.5 text-text-secondary text-sm font-mono">{supplier.email || "—"}</td>
                     <td className="px-5 py-3.5 text-text-secondary text-sm max-w-[180px] truncate">{supplier.address || "—"}</td>
+                    <td className="px-5 py-3.5">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-extrabold border uppercase tracking-wider ${
+                        supplier.notificationPreference === "whatsapp"
+                          ? "bg-emerald-550/10 bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+                          : supplier.notificationPreference === "sms"
+                          ? "bg-blue-500/10 text-blue-500 border-blue-500/20"
+                          : supplier.notificationPreference === "all"
+                          ? "bg-purple-500/10 text-purple-500 border-purple-500/20"
+                          : supplier.notificationPreference === "none"
+                          ? "bg-rose-500/10 text-rose-500 border-rose-500/20"
+                          : "bg-indigo-500/10 text-indigo-500 border-indigo-500/20"
+                      }`}>
+                        {supplier.notificationPreference || "email"}
+                      </span>
+                    </td>
                     <td className="px-5 py-3.5">
                       {Number(supplier.payableAmount || 0) > 0 ? (
                         <span className="text-rose-500 font-bold text-sm">

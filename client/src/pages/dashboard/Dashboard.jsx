@@ -8,12 +8,16 @@ import {
   FaCartShopping,
   FaWhatsapp,
   FaEnvelope,
+  FaPaperPlane,
 } from "react-icons/fa6";
 
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import API from "../../services/api";
+import { toast } from "react-toastify";
+import AnimatedNumber from "../../components/AnimatedNumber";
+import { DashboardSkeleton } from "../../components/SkeletonLoader";
 
 const Dashboard = () => {
   const [dashboard, setDashboard] = useState(null);
@@ -53,6 +57,27 @@ const Dashboard = () => {
     }
   };
 
+  const handleTriggerAlert = async (product) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await API.post(`/products/${product._id}/alert`, {}, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const channels = response.data.channels || [];
+      if (channels.length > 0) {
+        toast.success(`Restock alert dispatched via ${channels.join(", ").toUpperCase()}`);
+      } else {
+        toast.info("Restock alert triggered (no active channels or preference is set to none)");
+      }
+      fetchLowStockCount();
+    } catch (error) {
+      console.error("Failed to send restock alert:", error);
+      toast.error(error.response?.data?.message || "Failed to trigger restock alert");
+    }
+  };
+
   useEffect(() => {
     fetchDashboard();
     fetchLowStockCount();
@@ -61,44 +86,51 @@ const Dashboard = () => {
   if (!dashboard) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center min-h-[300px]">
-          <div className="text-text-secondary font-medium animate-pulse">Loading dashboard metrics...</div>
-        </div>
+        <DashboardSkeleton />
       </DashboardLayout>
     );
   }
 
   const formatWhatsAppLink = (product) => {
     if (!product.supplier || !product.supplier.phone) return "#";
-    const phone = product.supplier.phone.replace(/[^0-9]/g, ""); // clean non-digits
+    let phone = product.supplier.phone.replace(/[^0-9]/g, "");
+    if (phone.startsWith("0") && phone.length === 10) {
+      phone = "94" + phone.substring(1);
+    }
     const company = product.supplier.company || product.supplier.name;
     const message = `Hi ${company}, we need a restock of ${product.name} (SKU: ${product.sku || "N/A"}). Current stock: ${product.stock} ${product.unit || "pcs"} (Safety Threshold: ${product.minStockLevel || 5} ${product.unit || "pcs"}). Please arrange for a batch delivery. Thank you!`;
-    return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+    
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    if (isMobile) {
+      return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+    } else {
+      return `https://web.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(message)}`;
+    }
   };
 
   // KPI Cards
   const cards = [
     {
       title: "Revenue",
-      value: `Rs. ${Number(dashboard.totalRevenue).toLocaleString()}`,
+      value: <AnimatedNumber value={dashboard.totalRevenue} prefix="Rs. " isCurrency />,
       icon: <FaMoneyBillWave />,
       iconBg: "bg-emerald-500/10 text-emerald-500",
     },
     {
       title: "Sales",
-      value: dashboard.totalSales,
+      value: <AnimatedNumber value={dashboard.totalSales} />,
       icon: <FaCartShopping />,
       iconBg: "bg-indigo-500/10 text-indigo-500",
     },
     {
       title: "Pending Amount",
-      value: `Rs. ${Number(dashboard.pendingAmount).toLocaleString()}`,
+      value: <AnimatedNumber value={dashboard.pendingAmount} prefix="Rs. " isCurrency />,
       icon: <FaClipboardList />,
       iconBg: "bg-amber-500/10 text-amber-500",
     },
     {
       title: "Products",
-      value: dashboard.totalProducts,
+      value: <AnimatedNumber value={dashboard.totalProducts} />,
       icon: <FaBox />,
       iconBg: "bg-purple-500/10 text-purple-500",
     },
@@ -230,14 +262,14 @@ const Dashboard = () => {
             </h2>
 
             <div className="space-y-3">
-              <InfoCard title="Active Customers" value={dashboard.totalCustomers} />
+              <InfoCard title="Active Customers" value={<AnimatedNumber value={dashboard.totalCustomers} />} />
               <InfoCard
                 title="Expenses Ledger"
-                value={`Rs. ${Number(dashboard.totalExpenses || 0).toLocaleString()}`}
+                value={<AnimatedNumber value={dashboard.totalExpenses || 0} prefix="Rs. " isCurrency />}
               />
               <InfoCard
                 title="Supplier Payables"
-                value={`Rs. ${Number(dashboard.totalPayables || 0).toLocaleString()}`}
+                value={<AnimatedNumber value={dashboard.totalPayables || 0} prefix="Rs. " isCurrency />}
               />
             </div>
           </div>
@@ -263,7 +295,9 @@ const Dashboard = () => {
                       <h3 className="text-text-main text-xs font-semibold">Low Stock Products</h3>
                       <p className="text-text-secondary text-[10px] mt-0.5 font-medium">Reorder needed</p>
                     </div>
-                    <div className="text-amber-550 text-amber-500 font-bold text-sm">{lowStockProducts.length} items</div>
+                    <div className="text-amber-550 text-amber-500 font-bold text-sm">
+                      <AnimatedNumber value={lowStockProducts.length} suffix=" items" />
+                    </div>
                   </div>
 
                   {/* Scrollable Low Stock Products List */}
@@ -292,9 +326,15 @@ const Dashboard = () => {
                         {/* Supplier Info & Email Alert status */}
                         <div className="flex flex-col gap-1 text-[10px] text-text-secondary font-medium">
                           {product.supplier ? (
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-text-main font-semibold">Supplier:</span>{" "}
-                              {product.supplier.company || product.supplier.name}
+                            <div className="flex flex-col gap-0.5">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-text-main font-semibold">Supplier:</span>{" "}
+                                {product.supplier.company || product.supplier.name}
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-text-main font-semibold">Alert Pref:</span>{" "}
+                                <span className="uppercase font-bold text-indigo-500">{product.supplier.notificationPreference || "email"}</span>
+                              </div>
                             </div>
                           ) : (
                             <div className="text-rose-500 font-semibold flex items-center gap-1">
@@ -305,27 +345,39 @@ const Dashboard = () => {
                           {product.lastRestockAlertSent ? (
                             <div className="flex items-center gap-1.5 text-emerald-500/90 font-semibold">
                               <FaEnvelope className="text-[9px]" />
-                              <span>Email alert: {new Date(product.lastRestockAlertSent).toLocaleDateString()}</span>
+                              <span>Last alert: {new Date(product.lastRestockAlertSent).toLocaleDateString()}</span>
                             </div>
                           ) : (
                             <div className="flex items-center gap-1.5 text-text-secondary/70">
                               <FaEnvelope className="text-[9px]" />
-                              <span>No email sent yet</span>
+                              <span>No automated alert sent yet</span>
                             </div>
                           )}
                         </div>
 
-                        {/* WhatsApp order trigger */}
-                        {product.supplier && product.supplier.phone && (
-                          <a
-                            href={formatWhatsAppLink(product)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 text-[10px] font-extrabold tracking-wide uppercase transition-all duration-200 border border-emerald-500/10 hover:border-emerald-500/30"
-                          >
-                            <FaWhatsapp className="text-xs" />
-                            Reorder via WhatsApp
-                          </a>
+                        {/* Order triggers */}
+                        {product.supplier && (
+                          <div className="flex flex-col gap-1.5 mt-1">
+                            <button
+                              onClick={() => handleTriggerAlert(product)}
+                              className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-600 hover:text-white text-indigo-500 text-[10px] font-extrabold tracking-wide uppercase transition-all duration-200 border border-indigo-500/10 cursor-pointer"
+                            >
+                              <FaPaperPlane className="text-xs" />
+                              Trigger Alert ({product.supplier.notificationPreference || "email"})
+                            </button>
+
+                            {product.supplier.phone && (
+                              <a
+                                href={formatWhatsAppLink(product)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-550/10 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 text-[10px] font-extrabold tracking-wide uppercase transition-all duration-200 border border-emerald-550/10 border-emerald-500/10 hover:border-emerald-500/30"
+                              >
+                                <FaWhatsapp className="text-xs" />
+                                Reorder via WhatsApp
+                              </a>
+                            )}
+                          </div>
                         )}
                       </div>
                     ))}
@@ -334,11 +386,11 @@ const Dashboard = () => {
               )}
               <AlertCard
                 title="Pending Debts Collection"
-                value={`Rs. ${Number(dashboard.pendingAmount || 0).toLocaleString()}`}
+                value={<AnimatedNumber value={dashboard.pendingAmount || 0} prefix="Rs. " isCurrency />}
               />
               <AlertCard
                 title="Supplier Payables"
-                value={`Rs. ${Number(dashboard.totalPayables || 0).toLocaleString()}`}
+                value={<AnimatedNumber value={dashboard.totalPayables || 0} prefix="Rs. " isCurrency />}
               />
             </div>
           </div>

@@ -6,6 +6,9 @@ import { toast } from "react-toastify";
 import Pagination from "../../components/Pagination";
 
 const Returns = () => {
+  const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+  const hasModifySales = currentUser.role === "admin" || (currentUser.permissions && currentUser.permissions.includes("modify_sales"));
+
   const [returns, setReturns] = useState([]);
   const [sales, setSales] = useState([]);
   const [searchSale, setSearchSale] = useState("");
@@ -171,10 +174,12 @@ const Returns = () => {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 mb-8">
         {/* Step 1: Find Sale & Process Return Form */}
         <div className="xl:col-span-2 border border-border-color rounded-xl p-6 bg-bg-card shadow-sm">
-          <h2 className="text-lg font-bold text-text-main mb-4 tracking-tight flex items-center gap-2">
-            <span className="w-6 h-6 rounded-md bg-indigo-500/10 text-indigo-500 flex items-center justify-center text-xs font-black">1</span>
-            Select Original Invoice / Sale
-          </h2>
+          {hasModifySales ? (
+            <>
+              <h2 className="text-lg font-bold text-text-main mb-4 tracking-tight flex items-center gap-2">
+                <span className="w-6 h-6 rounded-md bg-indigo-500/10 text-indigo-500 flex items-center justify-center text-xs font-black">1</span>
+                Select Original Invoice / Sale
+              </h2>
 
           {/* Search bar */}
           <div className="relative mb-6">
@@ -330,6 +335,16 @@ const Returns = () => {
           ) : (
             <div className="p-10 border border-dashed rounded-xl border-border-color text-center text-text-secondary text-xs font-semibold bg-bg-main/10">
               Search and select an active sale above to list its items and start returns.
+            </div>
+          )}
+            </>
+          ) : (
+            <div className="flex flex-col items-center justify-center text-center py-16 px-4 h-full">
+              <div className="w-16 h-16 rounded-full bg-rose-500/10 text-rose-500 flex items-center justify-center text-2xl font-bold mb-4">✗</div>
+              <h3 className="text-lg font-bold text-text-main">Access Denied</h3>
+              <p className="text-text-secondary text-xs mt-2 max-w-sm">
+                You do not have the required permissions to modify sales history or process invoice returns and refunds. Contact your store administrator.
+              </p>
             </div>
           )}
         </div>

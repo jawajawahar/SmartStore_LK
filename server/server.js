@@ -15,6 +15,8 @@ const transactionRoutes = require("./routes/transactionRoutes");
 const invoiceRoutes = require("./routes/invoiceRoutes");
 const expenseRoutes = require("./routes/expenseRoutes");
 const returnRoutes = require("./routes/returnRoutes");
+const auditRoutes = require("./routes/auditRoutes");
+const purchaseOrderRoutes = require("./routes/purchaseOrderRoutes");
 dotenv.config();
 
 const app = express();
@@ -42,6 +44,8 @@ app.get("/", (req, res) => {
 app.use("/api/transactions", transactionRoutes);
 app.use("/api/expenses", expenseRoutes);
 app.use("/api/returns", returnRoutes);
+app.use("/api/audit-logs", auditRoutes);
+app.use("/api/purchase-orders", purchaseOrderRoutes);
 
 // MongoDB Connection
 mongoose

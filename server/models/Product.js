@@ -111,8 +111,28 @@ const productSchema = new mongoose.Schema(
 // Pre-save hook to auto-generate SKU
 productSchema.pre("save", async function () {
   if (!this.sku) {
-    const count = await mongoose.model("Product").countDocuments();
-    this.sku = `SKU-${String(count + 1).padStart(6, "0")}`;
+    const lastProduct = await mongoose
+      .model("Product")
+      .findOne({ sku: /^SKU-\d+$/ })
+      .sort({ sku: -1 });
+
+    let nextNum = 1;
+    if (lastProduct && lastProduct.sku) {
+      const match = lastProduct.sku.match(/^SKU-(\d+)$/);
+      if (match) {
+        nextNum = parseInt(match[1], 10) + 1;
+      }
+    }
+
+    let skuCandidate = `SKU-${String(nextNum).padStart(6, "0")}`;
+    let exists = await mongoose.model("Product").findOne({ sku: skuCandidate });
+    while (exists) {
+      nextNum++;
+      skuCandidate = `SKU-${String(nextNum).padStart(6, "0")}`;
+      exists = await mongoose.model("Product").findOne({ sku: skuCandidate });
+    }
+
+    this.sku = skuCandidate;
   }
 });
 

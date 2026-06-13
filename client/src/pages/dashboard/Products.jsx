@@ -1,13 +1,19 @@
 import { useEffect, useState } from "react";
 import DashboardLayout from "../../layouts/DashboardLayout";
-import { FaEdit, FaTrash, FaPlus, FaFilter, FaCloudUploadAlt } from "react-icons/fa";
+import { FaEdit, FaTrash, FaPlus, FaFilter, FaCloudUploadAlt, FaWhatsapp, FaPaperPlane } from "react-icons/fa";
 import API from "../../services/api";
 import { toast } from "react-toastify";
 import BulkUpload from "../../components/BulkUpload";
 import Pagination from "../../components/Pagination";
+import { TableSkeleton } from "../../components/SkeletonLoader";
 
 const Products = () => {
+  const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+  const hasPurchasePrice = currentUser.role === "admin" || (currentUser.permissions && currentUser.permissions.includes("view_purchase_prices"));
+  const hasEditProducts = currentUser.role === "admin" || (currentUser.permissions && currentUser.permissions.includes("edit_products"));
+
   const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [editingId, setEditingId] = useState(null);
   const [image, setImage] = useState(null);
@@ -15,6 +21,44 @@ const Products = () => {
   const [showForm, setShowForm] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+
+  const formatWhatsAppLink = (product) => {
+    if (!product.supplier || !product.supplier.phone) return "#";
+    let phone = product.supplier.phone.replace(/[^0-9]/g, "");
+    if (phone.startsWith("0") && phone.length === 10) {
+      phone = "94" + phone.substring(1);
+    }
+    const company = product.supplier.company || product.supplier.name;
+    const message = `Hi ${company}, we need a restock of ${product.name} (SKU: ${product.sku || "N/A"}). Current stock: ${product.stock} ${product.unit || "pcs"} (Safety Threshold: ${product.minStockLevel || 5} ${product.unit || "pcs"}). Please arrange for a batch delivery. Thank you!`;
+    
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    if (isMobile) {
+      return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+    } else {
+      return `https://web.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(message)}`;
+    }
+  };
+
+  const handleTriggerAlert = async (product) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await API.post(`/products/${product._id}/alert`, {}, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const channels = response.data.channels || [];
+      if (channels.length > 0) {
+        toast.success(`Restock alert dispatched via ${channels.join(", ").toUpperCase()}`);
+      } else {
+        toast.info("Restock alert triggered (no active channels or preference is set to none)");
+      }
+      fetchProducts();
+    } catch (error) {
+      console.error("Failed to send restock alert:", error);
+      toast.error(error.response?.data?.message || "Failed to trigger restock alert");
+    }
+  };
 
   // Product Type
   const [productType, setProductType] = useState("fixed");
@@ -54,6 +98,7 @@ const Products = () => {
 
   // Fetch Products
   const fetchProducts = async () => {
+    setLoading(true);
     try {
       const token = localStorage.getItem("token");
 
@@ -67,6 +112,8 @@ const Products = () => {
     } catch (error) {
       console.log(error);
       toast.error("Failed to load products registry");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -220,43 +267,45 @@ const Products = () => {
           <h1 className="text-3xl font-bold tracking-tight text-text-main">Products</h1>
           <p className="text-text-secondary text-sm mt-1">Smart inventory management and catalog control</p>
         </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setIsBulkOpen(true)}
-            className="flex items-center gap-2 bg-indigo-600/10 hover:bg-indigo-600/15 border border-indigo-600/20 text-indigo-500 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer"
-          >
-            <FaCloudUploadAlt /> Bulk Import CSV
-          </button>
+        {hasEditProducts && (
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsBulkOpen(true)}
+              className="flex items-center gap-2 bg-indigo-600/10 hover:bg-indigo-600/15 border border-indigo-600/20 text-indigo-500 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer"
+            >
+              <FaCloudUploadAlt /> Bulk Import CSV
+            </button>
 
-          <button
-            onClick={() => {
-              setShowForm(!showForm);
-              if (editingId) {
-                setEditingId(null);
-                setFormData({
-                  name: "",
-                  category: "",
-                  buyingPrice: "",
-                  sellingPrice: "",
-                  bulkPrice: "",
-                  stock: "",
-                  barcode: "",
-                });
-                setProductType("fixed");
-                setUnit("pcs");
-                setImage(null);
-              }
-            }}
-            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-indigo-600/15 cursor-pointer active:scale-[0.98]"
-          >
-            <FaPlus className="text-xs" />
-            {showForm ? "Hide Form" : "Add Product"}
-          </button>
-        </div>
+            <button
+              onClick={() => {
+                setShowForm(!showForm);
+                if (editingId) {
+                  setEditingId(null);
+                  setFormData({
+                    name: "",
+                    category: "",
+                    buyingPrice: "",
+                    sellingPrice: "",
+                    bulkPrice: "",
+                    stock: "",
+                    barcode: "",
+                  });
+                  setProductType("fixed");
+                  setUnit("pcs");
+                  setImage(null);
+                }
+              }}
+              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-indigo-600/15 cursor-pointer active:scale-[0.98]"
+            >
+              <FaPlus className="text-xs" />
+              {showForm ? "Hide Form" : "Add Product"}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Form */}
-      {showForm && (
+      {hasEditProducts && showForm && (
         <div className="bg-bg-card border border-border-color rounded-xl p-6 mb-8 shadow-sm">
           <h2 className="text-lg font-bold text-text-main mb-5 tracking-tight">
             {editingId ? "Edit Product Details" : "Add New Product"}
@@ -280,13 +329,15 @@ const Products = () => {
               onChange={handleChange}
             />
 
-            <Input
-              label="Buying Price (Rs.)"
-              name="buyingPrice"
-              type="number"
-              value={formData.buyingPrice}
-              onChange={handleChange}
-            />
+            {hasPurchasePrice && (
+              <Input
+                label="Buying Price (Rs.)"
+                name="buyingPrice"
+                type="number"
+                value={formData.buyingPrice}
+                onChange={handleChange}
+              />
+            )}
 
             <Input
               label="Selling Price (Rs.)"
@@ -437,125 +488,166 @@ const Products = () => {
       </div>
 
       {/* Table */}
-      <div className="bg-bg-card border border-border-color rounded-xl overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-bg-main/60 border-b border-border-color">
-              <tr>
-                <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Image</th>
-                <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Name</th>
-                <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Category</th>
-                <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Buying (Rs.)</th>
-                <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Selling (Rs.)</th>
-                <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Stock</th>
-                <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Type</th>
-                <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Unit</th>
-                <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Actions</th>
-              </tr>
-            </thead>
-
-            <tbody className="divide-y divide-border-color/60">
-              {currentProducts.length > 0 ? (
-                currentProducts.map((product) => (
-                  <tr
-                    key={product._id}
-                    className="hover:bg-bg-main/30 transition-colors"
-                  >
-                    {/* Image */}
-                    <td className="px-5 py-3.5">
-                      <img
-                        src={`http://localhost:5000/${product.image}`}
-                        alt={product.name}
-                        className="w-11 h-11 rounded-lg object-cover bg-bg-main border border-border-color/60"
-                        onError={(e) => {
-                          e.target.src = "https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=120&auto=format&fit=crop";
-                        }}
-                      />
-                    </td>
-
-                    <td className="px-5 py-3.5 font-bold text-text-main text-xs">
-                      {product.name}
-                      {product.supplier && (
-                        <span className="text-[9px] text-text-secondary font-semibold uppercase mt-1 block">
-                          Supplier: {product.supplier.company || product.supplier.name}
-                        </span>
-                      )}
-                    </td>
-
-                    {/* Category */}
-                    <td className="px-5 py-3.5 text-text-secondary text-xs">{product.category || "General"}</td>
-
-                    {/* Buying */}
-                    <td className="px-5 py-3.5 text-text-secondary text-xs">Rs. {Number(product.buyingPrice).toLocaleString()}</td>
-
-                    {/* Selling */}
-                    <td className="px-5 py-3.5 text-indigo-500 font-extrabold text-xs">Rs. {Number(product.sellingPrice).toLocaleString()}</td>
-
-                    {/* Stock */}
-                    <td className="px-5 py-3.5 text-xs">
-                      <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold border ${
-                          product.stock <= product.minStockLevel
-                            ? "bg-rose-500/10 text-rose-500 border-rose-500/20"
-                            : "bg-emerald-550/10 bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
-                        }`}
-                      >
-                        {product.stock} {product.unit}
-                      </span>
-                    </td>
-
-                    {/* Type */}
-                    <td className="px-5 py-3.5 text-xs">
-                      <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold border ${
-                          product.productType === "weighted"
-                            ? "bg-amber-500/10 text-amber-500 border-amber-500/20"
-                            : "bg-indigo-500/10 text-indigo-500 border-indigo-500/20"
-                        }`}
-                      >
-                        {product.productType}
-                      </span>
-                    </td>
-
-                    {/* Unit */}
-                    <td className="px-5 py-3.5 uppercase text-text-secondary text-[10px] font-bold">{product.unit}</td>
-
-                    {/* Actions */}
-                    <td className="px-5 py-3.5 text-xs">
-                      <div className="flex items-center gap-2">
-                        {/* Edit */}
-                        <button
-                          onClick={() => handleEdit(product)}
-                          className="w-8 h-8 rounded-lg bg-indigo-500/10 hover:bg-indigo-650 hover:bg-indigo-600 text-indigo-500 hover:text-white flex items-center justify-center transition-all duration-150 cursor-pointer"
-                        >
-                          <FaEdit className="text-[10px]" />
-                        </button>
-
-                        {/* Delete */}
-                        <button
-                          onClick={() => handleDelete(product._id)}
-                          className="w-8 h-8 rounded-lg bg-rose-500/10 hover:bg-rose-650 hover:bg-rose-600 text-rose-500 hover:text-white flex items-center justify-center transition-all duration-150 cursor-pointer"
-                        >
-                          <FaTrash className="text-[10px]" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              ) : (
+      {loading ? (
+        <TableSkeleton cols={9 - (hasPurchasePrice ? 0 : 1) - (hasEditProducts ? 0 : 1)} rows={6} />
+      ) : (
+        <div className="bg-bg-card border border-border-color rounded-xl overflow-hidden shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-bg-main/60 border-b border-border-color">
                 <tr>
-                  <td colSpan="9" className="text-center py-8 text-text-secondary text-xs">No products matched search parameters.</td>
+                  <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Image</th>
+                  <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Name</th>
+                  <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Category</th>
+                  {hasPurchasePrice && (
+                    <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Buying (Rs.)</th>
+                  )}
+                  <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Selling (Rs.)</th>
+                  <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Stock</th>
+                  <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Type</th>
+                  <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Unit</th>
+                  {hasEditProducts && (
+                    <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Actions</th>
+                  )}
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+
+              <tbody className="divide-y divide-border-color/60">
+                {currentProducts.length > 0 ? (
+                  currentProducts.map((product) => (
+                    <tr
+                      key={product._id}
+                      className="hover:bg-bg-main/30 transition-colors"
+                    >
+                      {/* Image */}
+                      <td className="px-5 py-3.5">
+                        <img
+                          src={`http://localhost:5000/${product.image}`}
+                          alt={product.name}
+                          className="w-11 h-11 rounded-lg object-cover bg-bg-main border border-border-color/60"
+                          onError={(e) => {
+                            e.target.src = "https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=120&auto=format&fit=crop";
+                          }}
+                        />
+                      </td>
+
+                      <td className="px-5 py-3.5 font-bold text-text-main text-xs">
+                        <div className="flex flex-col">
+                          <span>{product.name}</span>
+                          {product.supplier && (
+                            <div className="mt-1 flex flex-col gap-1">
+                              <span className="text-[9px] text-text-secondary font-semibold uppercase">
+                                Supplier: {product.supplier.company || product.supplier.name}
+                              </span>
+                              
+                              {/* Alert triggers if stock is low */}
+                              {product.stock <= product.minStockLevel && (
+                                <div className="flex items-center gap-1.5 mt-0.5">
+                                  <button
+                                    onClick={() => handleTriggerAlert(product)}
+                                    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-indigo-500/10 hover:bg-indigo-600 hover:text-white text-indigo-500 text-[8px] font-black uppercase transition-all border border-indigo-500/10 cursor-pointer"
+                                    title={`Trigger automated alert (${product.supplier.notificationPreference || "email"})`}
+                                  >
+                                    <FaPaperPlane className="text-[7px]" /> Trigger Alert ({product.supplier.notificationPreference || "email"})
+                                  </button>
+
+                                  {product.supplier.phone && (
+                                    <a
+                                      href={formatWhatsAppLink(product)}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-500/10 hover:bg-emerald-600 hover:text-white text-emerald-500 text-[8px] font-black uppercase transition-all border border-emerald-500/20"
+                                      title="Open WhatsApp chat with prefilled order"
+                                    >
+                                      <FaWhatsapp className="text-[8px]" /> WhatsApp
+                                    </a>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Category */}
+                      <td className="px-5 py-3.5 text-text-secondary text-xs">{product.category || "General"}</td>
+
+                      {/* Buying */}
+                      {hasPurchasePrice && (
+                        <td className="px-5 py-3.5 text-text-secondary text-xs">Rs. {Number(product.buyingPrice).toLocaleString()}</td>
+                      )}
+
+                      {/* Selling */}
+                      <td className="px-5 py-3.5 text-indigo-500 font-extrabold text-xs">Rs. {Number(product.sellingPrice).toLocaleString()}</td>
+
+                      {/* Stock */}
+                      <td className="px-5 py-3.5 text-xs">
+                        <span
+                          className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold border ${
+                            product.stock <= product.minStockLevel
+                              ? "bg-rose-500/10 text-rose-500 border-rose-500/20"
+                              : "bg-emerald-550/10 bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+                          }`}
+                        >
+                          {product.stock} {product.unit}
+                        </span>
+                      </td>
+
+                      {/* Type */}
+                      <td className="px-5 py-3.5 text-xs">
+                        <span
+                          className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold border ${
+                            product.productType === "weighted"
+                              ? "bg-amber-500/10 text-amber-500 border-amber-500/20"
+                              : "bg-indigo-500/10 text-indigo-500 border-indigo-500/20"
+                          }`}
+                        >
+                          {product.productType}
+                        </span>
+                      </td>
+
+                      {/* Unit */}
+                      <td className="px-5 py-3.5 uppercase text-text-secondary text-[10px] font-bold">{product.unit}</td>
+
+                      {/* Actions */}
+                      {hasEditProducts && (
+                        <td className="px-5 py-3.5 text-xs">
+                          <div className="flex items-center gap-2">
+                            {/* Edit */}
+                            <button
+                              onClick={() => handleEdit(product)}
+                              className="w-8 h-8 rounded-lg bg-indigo-500/10 hover:bg-indigo-650 hover:bg-indigo-600 text-indigo-500 hover:text-white flex items-center justify-center transition-all duration-150 cursor-pointer"
+                            >
+                              <FaEdit className="text-[10px]" />
+                            </button>
+
+                            {/* Delete */}
+                            <button
+                              onClick={() => handleDelete(product._id)}
+                              className="w-8 h-8 rounded-lg bg-rose-500/10 hover:bg-rose-650 hover:bg-rose-600 text-rose-500 hover:text-white flex items-center justify-center transition-all duration-150 cursor-pointer"
+                            >
+                              <FaTrash className="text-[10px]" />
+                            </button>
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={9 - (hasPurchasePrice ? 0 : 1) - (hasEditProducts ? 0 : 1)} className="text-center py-8 text-text-secondary text-xs">No products matched search parameters.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
         </div>
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={setCurrentPage}
-        />
-      </div>
+      )}
       <BulkUpload
         isOpen={isBulkOpen}
         onClose={() => setIsBulkOpen(false)}

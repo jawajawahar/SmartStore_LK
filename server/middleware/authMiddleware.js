@@ -39,6 +39,8 @@ const protect = async (req, res, next) => {
         role: user.role,
         permissions: user.permissions,
         isActive: user.isActive,
+        phone: user.phone || "",
+        avatar: user.avatar || "",
       };
 
       next();
@@ -56,4 +58,26 @@ const protect = async (req, res, next) => {
   }
 };
 
-module.exports = { protect };
+const checkPermission = (permission) => {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({ message: "Not authorized, no user context" });
+    }
+
+    // Admins bypass all granular permissions
+    if (req.user.role === "admin") {
+      return next();
+    }
+
+    // Check if the user has the required permission
+    if (req.user.permissions && req.user.permissions.includes(permission)) {
+      return next();
+    }
+
+    return res.status(403).json({
+      message: `Access denied. You do not have the required permission: ${permission}`,
+    });
+  };
+};
+
+module.exports = { protect, checkPermission };

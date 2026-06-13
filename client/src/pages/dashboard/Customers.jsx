@@ -5,9 +5,11 @@ import API from "../../services/api";
 import { toast } from "react-toastify";
 import BulkUpload from "../../components/BulkUpload";
 import Pagination from "../../components/Pagination";
+import { TableSkeleton } from "../../components/SkeletonLoader";
 
 const Customers = () => {
   const [customers, setCustomers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [editingId, setEditingId] = useState(null);
   const [isBulkOpen, setIsBulkOpen] = useState(false);
@@ -24,6 +26,7 @@ const Customers = () => {
 
   // Fetch Customers
   const fetchCustomers = async () => {
+    setLoading(true);
     try {
       const token = localStorage.getItem("token");
 
@@ -37,6 +40,8 @@ const Customers = () => {
     } catch (error) {
       console.log(error);
       toast.error("Failed to load customer accounts registry");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -273,85 +278,89 @@ const Customers = () => {
       />
 
       {/* Customer Table */}
-      <div className="bg-bg-card border border-border-color rounded-xl overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-bg-main/60 border-b border-border-color">
-              <tr>
-                <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Name</th>
-                <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Phone</th>
-                <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Address</th>
-                <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Type</th>
-                <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Current Debt</th>
-                <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Actions</th>
-              </tr>
-            </thead>
-
-            <tbody className="divide-y divide-border-color/60">
-              {currentCustomers.length > 0 ? (
-                currentCustomers.map((customer) => (
-                  <tr
-                    key={customer._id}
-                    className="hover:bg-bg-main/30 transition-colors"
-                  >
-                    <td className="px-5 py-3.5 font-bold text-text-main text-xs">{customer.name}</td>
-                    <td className="px-5 py-3.5 text-text-secondary text-xs">{customer.phone}</td>
-                    <td className="px-5 py-3.5 text-text-secondary text-xs text-slate-500">{customer.address || "—"}</td>
-
-                    {/* Type Badge */}
-                    <td className="px-5 py-3.5 text-xs">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-[10px] font-bold border uppercase ${
-                          customer.customerType === "bulk"
-                            ? "bg-purple-500/10 text-purple-500 border-purple-500/20"
-                            : "bg-blue-500/10 text-blue-500 border-blue-500/20"
-                        }`}
-                      >
-                        {customer.customerType}
-                      </span>
-                    </td>
-
-                    {/* Debt */}
-                    <td className="px-5 py-3.5 text-rose-500 font-extrabold text-xs">
-                      Rs. {Number(customer.currentDebt || 0).toLocaleString()}
-                    </td>
-
-                    {/* Actions */}
-                    <td className="px-5 py-3.5 text-xs">
-                      <div className="flex items-center gap-2">
-                        {/* Edit */}
-                        <button
-                          onClick={() => handleEdit(customer)}
-                          className="w-8 h-8 rounded-lg bg-indigo-500/10 hover:bg-indigo-650 hover:bg-indigo-600 text-indigo-500 hover:text-white flex items-center justify-center transition-all duration-150 cursor-pointer"
-                        >
-                          <FaEdit className="text-[10px]" />
-                        </button>
-
-                        {/* Delete */}
-                        <button
-                          onClick={() => handleDelete(customer._id)}
-                          className="w-8 h-8 rounded-lg bg-rose-500/10 hover:bg-rose-650 hover:bg-rose-600 text-rose-500 hover:text-white flex items-center justify-center transition-all duration-150 cursor-pointer"
-                        >
-                          <FaTrash className="text-[10px]" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              ) : (
+      {loading ? (
+        <TableSkeleton cols={6} rows={6} />
+      ) : (
+        <div className="bg-bg-card border border-border-color rounded-xl overflow-hidden shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-bg-main/60 border-b border-border-color">
                 <tr>
-                  <td colSpan="6" className="text-center py-8 text-text-secondary text-xs">No customers matched search parameters.</td>
+                  <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Name</th>
+                  <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Phone</th>
+                  <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Address</th>
+                  <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Type</th>
+                  <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Current Debt</th>
+                  <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Actions</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+
+              <tbody className="divide-y divide-border-color/60">
+                {currentCustomers.length > 0 ? (
+                  currentCustomers.map((customer) => (
+                    <tr
+                      key={customer._id}
+                      className="hover:bg-bg-main/30 transition-colors"
+                    >
+                      <td className="px-5 py-3.5 font-bold text-text-main text-xs">{customer.name}</td>
+                      <td className="px-5 py-3.5 text-text-secondary text-xs">{customer.phone}</td>
+                      <td className="px-5 py-3.5 text-text-secondary text-xs text-slate-500">{customer.address || "—"}</td>
+
+                      {/* Type Badge */}
+                      <td className="px-5 py-3.5 text-xs">
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-[10px] font-bold border uppercase ${
+                            customer.customerType === "bulk"
+                              ? "bg-purple-500/10 text-purple-500 border-purple-500/20"
+                              : "bg-blue-500/10 text-blue-500 border-blue-500/20"
+                          }`}
+                        >
+                          {customer.customerType}
+                        </span>
+                      </td>
+
+                      {/* Debt */}
+                      <td className="px-5 py-3.5 text-rose-500 font-extrabold text-xs">
+                        Rs. {Number(customer.currentDebt || 0).toLocaleString()}
+                      </td>
+
+                      {/* Actions */}
+                      <td className="px-5 py-3.5 text-xs">
+                        <div className="flex items-center gap-2">
+                          {/* Edit */}
+                          <button
+                            onClick={() => handleEdit(customer)}
+                            className="w-8 h-8 rounded-lg bg-indigo-500/10 hover:bg-indigo-650 hover:bg-indigo-600 text-indigo-500 hover:text-white flex items-center justify-center transition-all duration-150 cursor-pointer"
+                          >
+                            <FaEdit className="text-[10px]" />
+                          </button>
+
+                          {/* Delete */}
+                          <button
+                            onClick={() => handleDelete(customer._id)}
+                            className="w-8 h-8 rounded-lg bg-rose-500/10 hover:bg-rose-650 hover:bg-rose-600 text-rose-500 hover:text-white flex items-center justify-center transition-all duration-150 cursor-pointer"
+                          >
+                            <FaTrash className="text-[10px]" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="6" className="text-center py-8 text-text-secondary text-xs">No customers matched search parameters.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
         </div>
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={setCurrentPage}
-        />
-      </div>
+      )}
       <BulkUpload
         isOpen={isBulkOpen}
         onClose={() => setIsBulkOpen(false)}
