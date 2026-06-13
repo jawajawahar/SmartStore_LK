@@ -4,12 +4,13 @@ const SupplierPayable = require("../models/SupplierPayable");
 // Add Supplier
 const addSupplier = async (req, res) => {
   try {
-    const { name, company, phone, address } = req.body;
+    const { name, company, phone, email, address } = req.body;
 
     const supplier = new Supplier({
       name,
       company,
       phone,
+      email,
       address,
     });
 
@@ -65,6 +66,7 @@ const bulkAddSuppliers = async (req, res) => {
           name: row.name.trim(),
           company: row.company ? row.company.trim() : "",
           phone: String(row.phone).trim(),
+          email: row.email ? row.email.trim() : "",
           address: row.address ? row.address.trim() : "",
           payableAmount: row.payableAmount ? Number(row.payableAmount) : 0,
         });
@@ -106,7 +108,7 @@ const bulkAddSuppliers = async (req, res) => {
 // Update Supplier
 const updateSupplier = async (req, res) => {
   try {
-    const { name, company, phone, address } = req.body;
+    const { name, company, phone, email, address } = req.body;
     const supplier = await Supplier.findById(req.params.id);
 
     if (!supplier) {
@@ -116,6 +118,7 @@ const updateSupplier = async (req, res) => {
     supplier.name = name || supplier.name;
     supplier.company = company !== undefined ? company : supplier.company;
     supplier.phone = phone || supplier.phone;
+    supplier.email = email !== undefined ? email : supplier.email;
     supplier.address = address !== undefined ? address : supplier.address;
 
     await supplier.save();

@@ -107,6 +107,14 @@ const createSale = async (req, res) => {
         { new: true }
       );
 
+      // Check and send restock warning if inventory falls below safety limit
+      if (updatedProduct) {
+        const { checkAndNotifyRestock } = require("../utils/restockNotifier");
+        checkAndNotifyRestock(updatedProduct).catch(err => {
+          console.error("Restock alert background trigger error:", err);
+        });
+      }
+
       if (updatedProduct && updatedProduct.stock <= 0) {
         await Product.findByIdAndDelete(item.product);
         console.log(`Product "${updatedProduct.name}" automatically removed because stock reached 0.`);

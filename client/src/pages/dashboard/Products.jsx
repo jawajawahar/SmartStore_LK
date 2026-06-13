@@ -31,7 +31,26 @@ const Products = () => {
     bulkPrice: "",
     stock: "",
     barcode: "",
+    supplier: "",
+    minStockLevel: "5",
   });
+
+  const [suppliers, setSuppliers] = useState([]);
+
+  // Fetch Suppliers
+  const fetchSuppliers = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await API.get("/suppliers", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setSuppliers(response.data);
+    } catch (error) {
+      console.log("Error loading suppliers:", error);
+    }
+  };
 
   // Fetch Products
   const fetchProducts = async () => {
@@ -53,6 +72,7 @@ const Products = () => {
 
   useEffect(() => {
     fetchProducts();
+    fetchSuppliers();
   }, []);
 
   // Handle Input
@@ -104,7 +124,6 @@ const Products = () => {
         toast.success("Product added successfully");
       }
 
-      // Reset
       setFormData({
         name: "",
         category: "",
@@ -113,6 +132,8 @@ const Products = () => {
         bulkPrice: "",
         stock: "",
         barcode: "",
+        supplier: "",
+        minStockLevel: "5",
       });
 
       setProductType("fixed");
@@ -139,6 +160,8 @@ const Products = () => {
       bulkPrice: product.bulkPrice || "",
       stock: product.stock,
       barcode: product.barcode || "",
+      supplier: product.supplier?._id || product.supplier || "",
+      minStockLevel: product.minStockLevel !== undefined ? product.minStockLevel : "5",
     });
 
     setProductType(product.productType || "fixed");
@@ -296,6 +319,31 @@ const Products = () => {
               onChange={handleChange}
             />
 
+            <Input
+              label="Min Stock Level (Safety Threshold)"
+              name="minStockLevel"
+              type="number"
+              value={formData.minStockLevel}
+              onChange={handleChange}
+            />
+
+            <div>
+              <label className="block text-text-secondary text-[10px] font-bold uppercase tracking-wider mb-2">Designated Supplier</label>
+              <select
+                name="supplier"
+                value={formData.supplier}
+                onChange={handleChange}
+                className="w-full bg-bg-main border border-border-color text-text-main px-4 py-2.5 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 transition-all text-sm cursor-pointer"
+              >
+                <option value="">Select Supplier (Restocking)</option>
+                {suppliers.map((s) => (
+                  <option key={s._id} value={s._id}>
+                    {s.company || s.name} ({s.name})
+                  </option>
+                ))}
+              </select>
+            </div>
+
             {/* Product Type */}
             <div>
               <label className="block text-text-secondary text-[10px] font-bold uppercase tracking-wider mb-2">Product Type</label>
@@ -358,6 +406,8 @@ const Products = () => {
                     bulkPrice: "",
                     stock: "",
                     barcode: "",
+                    supplier: "",
+                    minStockLevel: "5",
                   });
                   setProductType("fixed");
                   setUnit("pcs");
@@ -423,8 +473,14 @@ const Products = () => {
                       />
                     </td>
 
-                    {/* Name */}
-                    <td className="px-5 py-3.5 font-bold text-text-main text-xs">{product.name}</td>
+                    <td className="px-5 py-3.5 font-bold text-text-main text-xs">
+                      {product.name}
+                      {product.supplier && (
+                        <span className="text-[9px] text-text-secondary font-semibold uppercase mt-1 block">
+                          Supplier: {product.supplier.company || product.supplier.name}
+                        </span>
+                      )}
+                    </td>
 
                     {/* Category */}
                     <td className="px-5 py-3.5 text-text-secondary text-xs">{product.category || "General"}</td>

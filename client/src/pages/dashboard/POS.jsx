@@ -14,11 +14,14 @@ import {
   FaUniversity,
   FaUserTag,
   FaCamera,
+  FaQrcode,
 } from "react-icons/fa";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import API from "../../services/api";
 import { toast } from "react-toastify";
 import BarcodeScanner from "../../components/BarcodeScanner";
+import QRCodeCanvas from "../../components/QRCodeCanvas";
+import ProductPassportModal from "../../components/ProductPassportModal";
 
 const POS = () => {
   const [products, setProducts] = useState([]);
@@ -46,6 +49,10 @@ const POS = () => {
   // Invoice Receipt State
   const [invoiceData, setInvoiceData] = useState(null);
   const [showInvoice, setShowInvoice] = useState(false);
+
+  // Product Passport State
+  const [passportProduct, setPassportProduct] = useState(null);
+  const [showPassportModal, setShowPassportModal] = useState(false);
 
   // Payment Checkout Modal State
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -420,6 +427,27 @@ const POS = () => {
 
     return matchesSearch && matchesCategory;
   });
+
+  const getInvoiceQrText = () => {
+    if (!invoiceData) return "";
+    const itemsText = invoiceData.items
+      .map((item, index) => 
+        `${index + 1}. ${item.name} - ${item.quantity} x Rs. ${Number(item.price).toLocaleString()} = Rs. ${Number(item.total).toLocaleString()}`
+      )
+      .join("\n");
+
+    return `SmartStore LK Receipt
+Invoice: #INV-${invoiceData.invoiceNo}
+Date: ${invoiceData.date.toLocaleString()}
+Customer: ${invoiceData.customerName}
+--------------------------
+${itemsText}
+--------------------------
+Total Paid: Rs. ${Number(invoiceData.paidAmount).toLocaleString()}
+Remaining: Rs. ${Number(invoiceData.remaining).toLocaleString()}
+Method: ${invoiceData.paymentMethod}
+Status: Verified Purchase`;
+  };
 
   return (
     <DashboardLayout>
@@ -1103,20 +1131,46 @@ const POS = () => {
                 </div>
 
                 <div className="divide-y divide-slate-100 mt-1">
-                  {invoiceData.items.map((item, index) => (
-                    <div key={index} className="py-2 flex justify-between items-center text-[10px]">
-                      <div className="w-1/2">
-                        <p className="font-bold text-slate-900 leading-tight truncate">{item.name}</p>
-                        <p className="text-[9px] text-slate-400 mt-0.5">Rs. {Number(item.price).toLocaleString()} / {item.unit}</p>
+                  {invoiceData.items.map((item, index) => {
+                    const matchedProduct = products.find((p) => p._id === item.product);
+                    const skuCode = matchedProduct?.sku || matchedProduct?.barcode || "N/A";
+                    return (
+                      <div key={index} className="py-2 flex justify-between items-center text-[10px]">
+                        <div className="w-1/2 flex items-center gap-1.5 min-w-0">
+                          <button
+                            type="button"
+                            title="Generate Product Passport QR"
+                            onClick={() => {
+                              setPassportProduct({
+                                name: item.name,
+                                sku: skuCode,
+                                price: item.price,
+                                quantity: item.quantity,
+                                unit: item.unit || "pcs",
+                                invoiceNo: invoiceData.invoiceNo,
+                                date: invoiceData.date,
+                                customerName: invoiceData.customerName,
+                              });
+                              setShowPassportModal(true);
+                            }}
+                            className="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 p-1.5 rounded-lg border border-indigo-100/50 transition-colors flex items-center justify-center shrink-0 cursor-pointer"
+                          >
+                            <FaQrcode className="text-[10px]" />
+                          </button>
+                          <div className="truncate">
+                            <p className="font-bold text-slate-900 leading-tight truncate" title={item.name}>{item.name}</p>
+                            <p className="text-[9px] text-slate-400 mt-0.5">Rs. {Number(item.price).toLocaleString()} / {item.unit}</p>
+                          </div>
+                        </div>
+                        <span className="w-1/6 text-center text-slate-700">
+                          {item.quantity}
+                        </span>
+                        <span className="w-1/3 text-right font-bold text-slate-950">
+                          Rs. {Number(item.total).toLocaleString()}
+                        </span>
                       </div>
-                      <span className="w-1/6 text-center text-slate-700">
-                        {item.quantity}
-                      </span>
-                      <span className="w-1/3 text-right font-bold text-slate-950">
-                        Rs. {Number(item.total).toLocaleString()}
-                      </span>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
@@ -1186,6 +1240,12 @@ const POS = () => {
                 </div>
               </div>
 
+              {/* QR Code Verification */}
+              <div className="mt-6 flex flex-col items-center justify-center border-t border-dashed border-slate-300 pt-4">
+                <p className="text-[9px] uppercase tracking-wider text-slate-400 font-bold mb-2">Scan to Verify Receipt</p>
+                <QRCodeCanvas text={getInvoiceQrText()} size={110} showDownload={false} />
+              </div>
+
               {/* Footer */}
               <div className="mt-6 text-center border-t border-dashed border-slate-300 pt-4">
                 <p className="text-slate-400 font-semibold uppercase text-[9px] tracking-widest">Thank You For Your Business</p>
@@ -1216,6 +1276,14 @@ const POS = () => {
         isOpen={isScannerOpen}
         onClose={() => setIsScannerOpen(false)}
         onScan={handleScanBarcode}
+      />
+      <ProductPassportModal
+        isOpen={showPassportModal}
+        onClose={() => {
+          setShowPassportModal(false);
+          setPassportProduct(null);
+        }}
+        productData={passportProduct}
       />
     </DashboardLayout>
   );

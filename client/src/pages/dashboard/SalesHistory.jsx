@@ -7,12 +7,15 @@ import {
   FaMoneyBillWave,
   FaClock,
   FaBoxOpen,
+  FaQrcode,
 } from "react-icons/fa";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import PrintableInvoice from "../../components/PrintableInvoice";
 import API from "../../services/api";
 import { toast } from "react-toastify";
 import Pagination from "../../components/Pagination";
+import QRCodeCanvas from "../../components/QRCodeCanvas";
+import ProductPassportModal from "../../components/ProductPassportModal";
 
 const SalesHistory = () => {
   const [sales, setSales] = useState([]);
@@ -20,6 +23,10 @@ const SalesHistory = () => {
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+
+  // Product Passport States
+  const [passportProduct, setPassportProduct] = useState(null);
+  const [showPassportModal, setShowPassportModal] = useState(false);
   const itemsPerPage = 10;
 
   const printRef = useRef();
@@ -85,6 +92,31 @@ const SalesHistory = () => {
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentSales = filteredSales.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(filteredSales.length / itemsPerPage);
+
+  const getSalesHistoryInvoiceQrText = () => {
+    if (!selectedInvoice) return "";
+    const invoiceNo = selectedInvoice.sale._id ? selectedInvoice.sale._id.toString().slice(-6).toUpperCase() : "TEMP";
+    const dateStr = new Date(selectedInvoice.sale.createdAt).toLocaleString();
+    const customerName = selectedInvoice.sale.customer?.name || "Walk-in Customer";
+    
+    const itemsText = selectedInvoice.sale.items
+      .map((item, index) => 
+        `${index + 1}. ${item.name} - ${item.quantity} x Rs. ${Number(item.price).toLocaleString()} = Rs. ${Number(item.total).toLocaleString()}`
+      )
+      .join("\n");
+
+    return `SmartStore LK Receipt
+Invoice: #INV-${invoiceNo}
+Date: ${dateStr}
+Customer: ${customerName}
+--------------------------
+${itemsText}
+--------------------------
+Total Paid: Rs. ${Number(selectedInvoice.sale.paidAmount).toLocaleString()}
+Remaining: Rs. ${Number(selectedInvoice.sale.remainingAmount).toLocaleString()}
+Method: ${selectedInvoice.sale.paymentMethod}
+Status: Verified Purchase`;
+  };
 
   return (
     <DashboardLayout>
@@ -283,24 +315,50 @@ const SalesHistory = () => {
                 </div>
 
                 <div className="space-y-3">
-                  {selectedInvoice.sale.items.map((item, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between bg-bg-main/50 border border-border-color/40 rounded-xl p-4 text-xs font-semibold"
-                    >
-                      <div>
-                        <h4 className="text-text-main font-bold text-xs">{item.name}</h4>
-                        <p className="text-text-secondary text-[10px] mt-0.5 font-medium">
-                          Quantity: {item.quantity}
-                        </p>
-                      </div>
+                  {selectedInvoice.sale.items.map((item, index) => {
+                    const skuCode = item.product?.sku || item.product?.barcode || "N/A";
+                    return (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between bg-bg-main/50 border border-border-color/40 rounded-xl p-4 text-xs font-semibold"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <button
+                            type="button"
+                            title="Generate Product Passport QR"
+                            onClick={() => {
+                              const invoiceNo = selectedInvoice.sale._id ? selectedInvoice.sale._id.toString().slice(-6).toUpperCase() : "TEMP";
+                              setPassportProduct({
+                                name: item.name,
+                                sku: skuCode,
+                                price: item.price,
+                                quantity: item.quantity,
+                                unit: item.unit || "pcs",
+                                invoiceNo: invoiceNo,
+                                date: selectedInvoice.sale.createdAt,
+                                customerName: selectedInvoice.sale.customer?.name || "Walk-in Customer",
+                              });
+                              setShowPassportModal(true);
+                            }}
+                            className="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 p-2 rounded-lg border border-indigo-100/50 transition-colors flex items-center justify-center shrink-0 cursor-pointer"
+                          >
+                            <FaQrcode className="text-[11px]" />
+                          </button>
+                          <div className="truncate">
+                            <h4 className="text-text-main font-bold text-xs truncate" title={item.name}>{item.name}</h4>
+                            <p className="text-text-secondary text-[10px] mt-0.5 font-medium">
+                              Quantity: {item.quantity}
+                            </p>
+                          </div>
+                        </div>
 
-                      <div className="text-right">
-                        <p className="text-text-secondary text-[9px] font-bold uppercase">Price</p>
-                        <h4 className="font-extrabold text-indigo-500 text-xs">Rs. {Number(item.price).toLocaleString()}</h4>
+                        <div className="text-right">
+                          <p className="text-text-secondary text-[9px] font-bold uppercase">Price</p>
+                          <h4 className="font-extrabold text-indigo-500 text-xs">Rs. {Number(item.price).toLocaleString()}</h4>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
@@ -339,6 +397,12 @@ const SalesHistory = () => {
                   )}
                 </div>
               </div>
+
+              {/* QR Code Verification Section */}
+              <div className="bg-bg-main/20 border border-border-color/85 rounded-xl p-5 mt-6 flex flex-col items-center justify-center text-center">
+                <p className="text-text-secondary text-[10px] font-bold uppercase tracking-wider mb-2">Scan to Verify Invoice Receipt</p>
+                <QRCodeCanvas text={getSalesHistoryInvoiceQrText()} size={120} showDownload={true} filename={`invoice-${selectedInvoice.sale._id}`} />
+              </div>
             </div>
           </div>
         </div>
@@ -350,6 +414,15 @@ const SalesHistory = () => {
           <PrintableInvoice ref={printRef} invoice={selectedInvoice} />
         )}
       </div>
+
+      <ProductPassportModal
+        isOpen={showPassportModal}
+        onClose={() => {
+          setShowPassportModal(false);
+          setPassportProduct(null);
+        }}
+        productData={passportProduct}
+      />
     </DashboardLayout>
   );
 };

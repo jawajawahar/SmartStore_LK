@@ -19,6 +19,7 @@ const Suppliers = () => {
     name: "",
     company: "",
     phone: "",
+    email: "",
     address: "",
   });
 
@@ -64,7 +65,7 @@ const Suppliers = () => {
         toast.success("Supplier registered successfully");
       }
 
-      setFormData({ name: "", company: "", phone: "", address: "" });
+      setFormData({ name: "", company: "", phone: "", email: "", address: "" });
       setShowForm(false);
       setEditingId(null);
       fetchSuppliers();
@@ -81,6 +82,7 @@ const Suppliers = () => {
       name: supplier.name,
       company: supplier.company || "",
       phone: supplier.phone,
+      email: supplier.email || "",
       address: supplier.address || "",
     });
     setShowForm(true);
@@ -106,7 +108,7 @@ const Suppliers = () => {
       if (editingId === id) {
         setEditingId(null);
         setShowForm(false);
-        setFormData({ name: "", company: "", phone: "", address: "" });
+        setFormData({ name: "", company: "", phone: "", email: "", address: "" });
       }
     } catch (error) {
       console.error(error);
@@ -174,13 +176,14 @@ const Suppliers = () => {
         <div className="border border-border-color bg-bg-card rounded-xl p-6 mb-8 shadow-sm">
           <h2 className="text-lg font-bold text-text-main mb-5 tracking-tight">Register New Supplier</h2>
 
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-5">
             <FormInput label="Supplier Name" name="name" value={formData.name} onChange={handleChange} />
             <FormInput label="Company Name" name="company" value={formData.company} onChange={handleChange} />
             <FormInput label="Phone Number" name="phone" value={formData.phone} onChange={handleChange} />
+            <FormInput label="Email Address" name="email" value={formData.email} onChange={handleChange} type="email" />
             <FormInput label="Address" name="address" value={formData.address} onChange={handleChange} />
 
-            <div className="xl:col-span-4 flex justify-end gap-3">
+            <div className="xl:col-span-5 flex justify-end gap-3">
               <button
                 type="submit"
                 className="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-all cursor-pointer shadow-lg shadow-indigo-600/10"
@@ -226,7 +229,7 @@ const Suppliers = () => {
           <table className="w-full">
             <thead className="bg-bg-main border-b border-border-color">
               <tr>
-                {["Supplier Name", "Company", "Phone", "Address", "Payable Balance", "Actions"].map((th) => (
+                {["Supplier Name", "Company", "Phone", "Email", "Address", "Payable Balance", "Actions"].map((th) => (
                   <th key={th} className="text-left px-5 py-3.5 text-[10px] font-bold uppercase tracking-wider text-text-secondary">
                     {th}
                   </th>
@@ -248,6 +251,7 @@ const Suppliers = () => {
                     </td>
                     <td className="px-5 py-3.5 text-text-secondary text-sm">{supplier.company || "—"}</td>
                     <td className="px-5 py-3.5 text-text-secondary text-sm font-mono">{supplier.phone || "—"}</td>
+                    <td className="px-5 py-3.5 text-text-secondary text-sm font-mono">{supplier.email || "—"}</td>
                     <td className="px-5 py-3.5 text-text-secondary text-sm max-w-[180px] truncate">{supplier.address || "—"}</td>
                     <td className="px-5 py-3.5">
                       {Number(supplier.payableAmount || 0) > 0 ? (

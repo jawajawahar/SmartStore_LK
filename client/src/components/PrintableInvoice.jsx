@@ -1,6 +1,30 @@
 import React from "react";
+import QRCodeCanvas from "./QRCodeCanvas";
 
 const PrintableInvoice = React.forwardRef(({ invoice }, ref) => {
+  const invoiceNo = invoice.sale._id ? invoice.sale._id.toString().slice(-6).toUpperCase() : "TEMP";
+  const dateStr = new Date(invoice.sale.createdAt).toLocaleString();
+  const customerName = invoice.sale.customer?.name || "Walk-in Customer";
+  
+  // Format items text for the QR verification payload
+  const itemsText = invoice.sale.items
+    .map((item, index) => 
+      `${index + 1}. ${item.name} - ${item.quantity} x Rs. ${Number(item.price).toLocaleString()} = Rs. ${Number(item.total).toLocaleString()}`
+    )
+    .join("\n");
+
+  const qrText = `SmartStore LK Receipt
+Invoice: #INV-${invoiceNo}
+Date: ${dateStr}
+Customer: ${customerName}
+--------------------------
+${itemsText}
+--------------------------
+Total Paid: Rs. ${Number(invoice.sale.paidAmount).toLocaleString()}
+Remaining: Rs. ${Number(invoice.sale.remainingAmount).toLocaleString()}
+Method: ${invoice.sale.paymentMethod}
+Status: Verified Purchase`;
+
   return (
     <div ref={ref} className="bg-white text-black p-8 w-full font-mono text-xs">
       {/* Header */}
@@ -9,7 +33,7 @@ const PrintableInvoice = React.forwardRef(({ invoice }, ref) => {
         <p className="text-[10px] text-gray-600 mt-1 uppercase font-semibold">Grocery & Cosmetic Supermarket</p>
         <p className="text-[9px] text-gray-500 mt-0.5">Colombo, Sri Lanka</p>
         <p className="text-[9px] text-gray-500 mt-4">
-          Date/Time: {new Date(invoice.sale.createdAt).toLocaleString()}
+          Date/Time: {dateStr}
         </p>
       </div>
 
@@ -18,7 +42,13 @@ const PrintableInvoice = React.forwardRef(({ invoice }, ref) => {
         <div className="flex justify-between">
           <span className="text-gray-500 uppercase font-semibold text-[10px]">Customer:</span>
           <span className="font-bold text-slate-900 uppercase">
-            {invoice.sale.customer?.name || "Walk-in Customer"}
+            {customerName}
+          </span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-gray-500 uppercase font-semibold text-[10px]">Invoice No:</span>
+          <span className="font-bold text-slate-900 uppercase">
+            #INV-{invoiceNo}
           </span>
         </div>
         <div className="flex justify-between">
@@ -107,8 +137,14 @@ const PrintableInvoice = React.forwardRef(({ invoice }, ref) => {
         </div>
       )}
 
+      {/* QR Code Verification Section */}
+      <div className="mt-8 flex flex-col items-center justify-center border-t border-dashed border-slate-400 pt-5">
+        <p className="text-[9px] uppercase tracking-wider text-gray-500 font-bold mb-2">Scan to Verify Receipt</p>
+        <QRCodeCanvas text={qrText} size={110} showDownload={false} />
+      </div>
+
       {/* Footer message */}
-      <div className="mt-10 border-t border-dashed border-slate-400 pt-5 text-center">
+      <div className="mt-8 border-t border-dashed border-slate-400 pt-5 text-center">
         <h3 className="text-xs font-bold uppercase tracking-wider">Thank You ❤️</h3>
         <p className="text-[10px] text-gray-600 mt-1">SmartStore LK POS platform receipt</p>
       </div>
@@ -116,5 +152,6 @@ const PrintableInvoice = React.forwardRef(({ invoice }, ref) => {
   );
 });
 
-export default PrintableInvoice;
+PrintableInvoice.displayName = "PrintableInvoice";
 
+export default PrintableInvoice;

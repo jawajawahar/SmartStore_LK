@@ -91,6 +91,17 @@ const productSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+
+    supplier: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Supplier",
+      default: null,
+    },
+
+    lastRestockAlertSent: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
@@ -110,5 +121,6 @@ productSchema.index({ barcode: 1 });
 productSchema.index({ sku: 1 });
 productSchema.index({ category: 1 });
 productSchema.index({ brand: 1 });
+productSchema.index({ supplier: 1 });
 
 module.exports = mongoose.model("Product", productSchema);

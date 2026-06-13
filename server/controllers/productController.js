@@ -11,10 +11,10 @@ const addProduct = async (req, res) => {
       bulkPrice,
       stock,
       barcode,
-
-      // NEW
       productType,
       unit,
+      supplier,
+      minStockLevel,
     } = req.body;
 
     const image = req.file ? req.file.path : "";
@@ -28,10 +28,10 @@ const addProduct = async (req, res) => {
       stock,
       barcode,
       image,
-
-      // NEW
       productType,
       unit,
+      supplier: supplier || null,
+      minStockLevel: minStockLevel ? Number(minStockLevel) : undefined,
     });
 
     await product.save();
@@ -115,7 +115,7 @@ const getProducts = async (req, res) => {
     const { barcode } = req.query;
     const filter = barcode ? { barcode: barcode.trim() } : {};
     
-    const products = await Product.find(filter).sort({
+    const products = await Product.find(filter).populate("supplier").sort({
       createdAt: -1,
     });
 
@@ -138,10 +138,10 @@ const updateProduct = async (req, res) => {
       bulkPrice,
       stock,
       barcode,
-
-      // NEW
       productType,
       unit,
+      supplier,
+      minStockLevel,
     } = req.body;
 
     const updatedProduct = await Product.findByIdAndUpdate(
@@ -154,10 +154,10 @@ const updateProduct = async (req, res) => {
         bulkPrice,
         stock,
         barcode,
-
-        // NEW
         productType,
         unit,
+        supplier: supplier || null,
+        minStockLevel: minStockLevel ? Number(minStockLevel) : undefined,
       },
       {
         new: true,

@@ -17,6 +17,11 @@ const supplierSchema = new mongoose.Schema(
       required: true,
     },
 
+    email: {
+      type: String,
+      default: "",
+    },
+
     address: {
       type: String,
       default: "",

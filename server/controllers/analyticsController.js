@@ -222,7 +222,7 @@ const getLowStockProducts = async (req, res) => {
   try {
     const lowStock = await Product.find({
       $expr: { $lte: ["$stock", "$minStockLevel"] },
-    }).populate("brand", "name");
+    }).populate("brand", "name").populate("supplier");
 
     res.status(200).json(lowStock);
   } catch (error) {

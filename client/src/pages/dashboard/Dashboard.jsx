@@ -6,6 +6,8 @@ import {
   FaUsers,
   FaPlus,
   FaCartShopping,
+  FaWhatsapp,
+  FaEnvelope,
 } from "react-icons/fa6";
 
 import { useEffect, useState } from "react";
@@ -15,7 +17,7 @@ import API from "../../services/api";
 
 const Dashboard = () => {
   const [dashboard, setDashboard] = useState(null);
-  const [lowStockCount, setLowStockCount] = useState(0);
+  const [lowStockProducts, setLowStockProducts] = useState([]);
 
   // Fetch Dashboard Analytics
   const fetchDashboard = async () => {
@@ -34,7 +36,7 @@ const Dashboard = () => {
     }
   };
 
-  // Fetch Low Stock Count
+  // Fetch Low Stock Products
   const fetchLowStockCount = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -45,9 +47,9 @@ const Dashboard = () => {
         },
       });
 
-      setLowStockCount(response.data.length);
+      setLowStockProducts(response.data);
     } catch (error) {
-      console.log("Error fetching low stock count:", error);
+      console.log("Error fetching low stock products:", error);
     }
   };
 
@@ -65,6 +67,14 @@ const Dashboard = () => {
       </DashboardLayout>
     );
   }
+
+  const formatWhatsAppLink = (product) => {
+    if (!product.supplier || !product.supplier.phone) return "#";
+    const phone = product.supplier.phone.replace(/[^0-9]/g, ""); // clean non-digits
+    const company = product.supplier.company || product.supplier.name;
+    const message = `Hi ${company}, we need a restock of ${product.name} (SKU: ${product.sku || "N/A"}). Current stock: ${product.stock} ${product.unit || "pcs"} (Safety Threshold: ${product.minStockLevel || 5} ${product.unit || "pcs"}). Please arrange for a batch delivery. Thank you!`;
+    return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+  };
 
   // KPI Cards
   const cards = [
@@ -246,16 +256,81 @@ const Dashboard = () => {
             </div>
 
             <div className="space-y-3">
-              {lowStockCount > 0 && (
-                <Link to="/products" className="block">
-                  <div className="bg-amber-550/5 bg-amber-500/5 hover:bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-3.5 flex items-center justify-between transition-all cursor-pointer">
+              {lowStockProducts.length > 0 && (
+                <div className="space-y-3 mb-4">
+                  <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl px-4 py-3 flex items-center justify-between">
                     <div>
                       <h3 className="text-text-main text-xs font-semibold">Low Stock Products</h3>
                       <p className="text-text-secondary text-[10px] mt-0.5 font-medium">Reorder needed</p>
                     </div>
-                    <div className="text-amber-550 text-amber-500 font-bold text-sm">{lowStockCount} items</div>
+                    <div className="text-amber-550 text-amber-500 font-bold text-sm">{lowStockProducts.length} items</div>
                   </div>
-                </Link>
+
+                  {/* Scrollable Low Stock Products List */}
+                  <div className="max-h-72 overflow-y-auto space-y-2.5 pr-1 scrollbar-thin">
+                    {lowStockProducts.map((product) => (
+                      <div
+                        key={product._id}
+                        className="bg-bg-main/40 border border-border-color/60 hover:border-amber-500/20 rounded-xl p-3 flex flex-col gap-2 transition-all duration-200"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <h4 className="text-text-main text-xs font-bold tracking-tight">
+                              {product.name}
+                            </h4>
+                            <p className="text-text-secondary text-[10px] font-medium mt-0.5">
+                              SKU: {product.sku || "N/A"}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-500/10 text-amber-500">
+                              {product.stock} / {product.minStockLevel} {product.unit || "pcs"}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Supplier Info & Email Alert status */}
+                        <div className="flex flex-col gap-1 text-[10px] text-text-secondary font-medium">
+                          {product.supplier ? (
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-text-main font-semibold">Supplier:</span>{" "}
+                              {product.supplier.company || product.supplier.name}
+                            </div>
+                          ) : (
+                            <div className="text-rose-500 font-semibold flex items-center gap-1">
+                              <span>No supplier linked</span>
+                            </div>
+                          )}
+
+                          {product.lastRestockAlertSent ? (
+                            <div className="flex items-center gap-1.5 text-emerald-500/90 font-semibold">
+                              <FaEnvelope className="text-[9px]" />
+                              <span>Email alert: {new Date(product.lastRestockAlertSent).toLocaleDateString()}</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1.5 text-text-secondary/70">
+                              <FaEnvelope className="text-[9px]" />
+                              <span>No email sent yet</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* WhatsApp order trigger */}
+                        {product.supplier && product.supplier.phone && (
+                          <a
+                            href={formatWhatsAppLink(product)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 text-[10px] font-extrabold tracking-wide uppercase transition-all duration-200 border border-emerald-500/10 hover:border-emerald-500/30"
+                          >
+                            <FaWhatsapp className="text-xs" />
+                            Reorder via WhatsApp
+                          </a>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
               )}
               <AlertCard
                 title="Pending Debts Collection"
