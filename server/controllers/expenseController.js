@@ -6,7 +6,7 @@ const Transaction = require("../models/Transaction");
 // @access  Private
 const getExpenses = async (req, res) => {
   try {
-    const expenses = await Expense.find().sort({ date: -1 });
+    const expenses = await Expense.find().populate("user", "name email role").sort({ date: -1 });
     res.status(200).json(expenses);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -30,6 +30,7 @@ const createExpense = async (req, res) => {
       description,
       date: date || new Date(),
       paymentMethod,
+      user: req.user.id,
     });
 
     const savedExpense = await expense.save();
@@ -45,6 +46,7 @@ const createExpense = async (req, res) => {
       category,
       description: description || `Expense for ${category}`,
       expense: savedExpense._id,
+      user: req.user.id,
     });
 
     await transaction.save();

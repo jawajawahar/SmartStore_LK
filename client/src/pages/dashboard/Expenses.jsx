@@ -357,6 +357,7 @@ const Expenses = () => {
                     <th className="text-left px-5 py-3 text-xs font-bold uppercase tracking-wider text-text-secondary">Category</th>
                     <th className="text-left px-5 py-3 text-xs font-bold uppercase tracking-wider text-text-secondary">Description</th>
                     <th className="text-left px-5 py-3 text-xs font-bold uppercase tracking-wider text-text-secondary">Method</th>
+                    <th className="text-left px-5 py-3 text-xs font-bold uppercase tracking-wider text-text-secondary">Created By</th>
                     <th className="text-left px-5 py-3 text-xs font-bold uppercase tracking-wider text-text-secondary">Amount</th>
                     {hasModifySales && (
                       <th className="text-right px-5 py-3 text-xs font-bold uppercase tracking-wider text-text-secondary">Action</th>
@@ -367,7 +368,7 @@ const Expenses = () => {
                 <tbody className="divide-y divide-border-color/60">
                   {loading ? (
                     <tr>
-                      <td colSpan={hasModifySales ? 6 : 5} className="text-center py-6 text-text-secondary text-xs">Loading expenses...</td>
+                      <td colSpan={hasModifySales ? 7 : 6} className="text-center py-6 text-text-secondary text-xs">Loading expenses...</td>
                     </tr>
                   ) : currentExpenses.length > 0 ? (
                     currentExpenses.map((exp) => (
@@ -394,6 +395,9 @@ const Expenses = () => {
                         <td className="px-5 py-3 text-text-secondary text-xs uppercase font-semibold">
                           {exp.paymentMethod}
                         </td>
+                        <td className="px-5 py-3 text-text-secondary text-xs font-semibold">
+                          {exp.user?.name || "System"}
+                        </td>
                         <td className="px-5 py-3 text-rose-500 font-extrabold text-xs">
                           Rs. {exp.amount.toLocaleString()}
                         </td>
@@ -411,7 +415,7 @@ const Expenses = () => {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={hasModifySales ? 6 : 5} className="text-center py-8 text-text-secondary text-xs">No expenses found.</td>
+                      <td colSpan={hasModifySales ? 7 : 6} className="text-center py-8 text-text-secondary text-xs">No expenses found.</td>
                     </tr>
                   )}
                 </tbody>

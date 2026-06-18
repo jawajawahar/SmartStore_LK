@@ -151,6 +151,7 @@ Status: Verified Purchase`;
                 <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Paid</th>
                 <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Remaining</th>
                 <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Payment</th>
+                <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Cashier</th>
                 <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Date</th>
                 <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Action</th>
               </tr>
@@ -195,6 +196,11 @@ Status: Verified Purchase`;
                       </span>
                     </td>
 
+                    {/* Cashier */}
+                    <td className="px-5 py-3.5 text-text-secondary text-xs font-semibold">
+                      {sale.user?.name || "System"}
+                    </td>
+
                     {/* Date */}
                     <td className="px-5 py-3.5 text-text-secondary text-xs font-medium">
                       {new Date(sale.createdAt).toLocaleDateString()}
@@ -213,7 +219,7 @@ Status: Verified Purchase`;
                 )})
               ) : (
                 <tr>
-                  <td colSpan="8" className="text-center py-8 text-text-secondary text-xs">No invoice records matched search query.</td>
+                  <td colSpan="9" className="text-center py-8 text-text-secondary text-xs">No invoice records matched search query.</td>
                 </tr>
               )}
             </tbody>

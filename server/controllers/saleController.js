@@ -77,6 +77,7 @@ const createSale = async (req, res) => {
       taxRate: Number(taxRate) || 0,
       taxAmount: tax,
       netAmount: net,
+      user: req.user.id,
     });
 
     await sale.save();
@@ -95,6 +96,7 @@ const createSale = async (req, res) => {
         paymentMethod: txPaymentMethod,
         description: `POS billing payment — ${items.length} item(s)`,
         sale: sale._id,
+        user: req.user.id,
       });
     }
 
@@ -171,6 +173,7 @@ const getSales = async (req, res) => {
     const sales = await Sale.find()
       .populate("customer")
       .populate("items.product")
+      .populate("user", "name email role")
       .sort({ createdAt: -1 });
 
     res.status(200).json(sales);
@@ -186,7 +189,8 @@ const getSaleById = async (req, res) => {
   try {
     const sale = await Sale.findById(req.params.id)
       .populate("customer")
-      .populate("items.product");
+      .populate("items.product")
+      .populate("user", "name email role");
 
     if (!sale) {
       return res.status(404).json({ message: "Sale not found" });

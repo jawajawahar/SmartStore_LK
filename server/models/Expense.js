@@ -25,6 +25,11 @@ const expenseSchema = new mongoose.Schema(
       enum: ["cash", "card", "bank_transfer"],
       default: "cash",
     },
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: false,
+    },
   },
   { timestamps: true }
 );

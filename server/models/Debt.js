@@ -38,6 +38,11 @@ const debtSchema = new mongoose.Schema(
       enum: ["pending", "paid"],
       default: "pending",
     },
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: false,
+    },
   },
   { timestamps: true },
 );

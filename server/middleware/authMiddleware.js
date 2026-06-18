@@ -80,4 +80,18 @@ const checkPermission = (permission) => {
   };
 };
 
-module.exports = { protect, checkPermission };
+const requireRoles = (roles) => {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({ message: "Not authorized, no user context" });
+    }
+    if (roles.includes(req.user.role)) {
+      return next();
+    }
+    return res.status(403).json({
+      message: `Access denied. Your role (${req.user.role}) is not authorized to access this resource.`,
+    });
+  };
+};
+
+module.exports = { protect, checkPermission, requireRoles };

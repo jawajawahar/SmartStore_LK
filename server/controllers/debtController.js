@@ -20,6 +20,7 @@ const addDebt = async (req, res) => {
       remainingAmount: remainingAmount > 0 ? remainingAmount : 0,
       sale: sale || null,
       status: remainingAmount > 0 ? "pending" : "paid",
+      user: req.user.id,
     });
     await debt.save();
 
@@ -54,6 +55,7 @@ const addDebt = async (req, res) => {
         paymentMethod: "cash",
         description: `Upfront payment for: ${description}`,
         sale: sale || null,
+        user: req.user.id,
       });
     }
 
@@ -148,6 +150,7 @@ const payDebt = async (req, res) => {
       paymentMethod: "cash",
       description: `Debt settlement: ${debt.description}`,
       sale: debt.sale,
+      user: req.user.id,
     });
 
     // Update customer debt

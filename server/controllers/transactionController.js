@@ -3,7 +3,7 @@ const Transaction = require("../models/Transaction");
 // Get Transactions
 const getTransactions = async (req, res) => {
   try {
-    const transactions = await Transaction.find().sort({
+    const transactions = await Transaction.find().populate("user", "name email role").sort({
       createdAt: -1,
     });
 
@@ -33,6 +33,7 @@ const addTransaction = async (req, res) => {
       paymentMethod: paymentMethod || "cash",
       category: category || "general",
       description,
+      user: req.user.id,
     });
 
     res.status(201).json({

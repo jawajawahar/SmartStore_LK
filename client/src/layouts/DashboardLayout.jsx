@@ -95,13 +95,15 @@ const DashboardLayout = ({ children }) => {
                 General
               </p>
             )}
-            <SidebarItem
-              icon={<FaHome />}
-              text="Dashboard"
-              to="/dashboard"
-              active={location.pathname === "/dashboard"}
-              collapsed={collapsed}
-            />
+            {user?.role !== "cashier" && (
+              <SidebarItem
+                icon={<FaHome />}
+                text="Dashboard"
+                to="/dashboard"
+                active={location.pathname === "/dashboard"}
+                collapsed={collapsed}
+              />
+            )}
             <SidebarItem
               icon={<FaClipboardList />}
               text="POS Billing"
@@ -111,18 +113,20 @@ const DashboardLayout = ({ children }) => {
             />
 
             {/* Group 2: Registry */}
-            {!collapsed && (
+            {(!collapsed && (user?.role !== "cashier" || location.pathname === "/customers")) && (
               <p className="text-[10px] font-bold text-text-secondary/50 uppercase tracking-widest px-4 pt-3 pb-1 select-none">
                 Registry
               </p>
             )}
-            <SidebarItem
-              icon={<FaBox />}
-              text="Products"
-              to="/products"
-              active={location.pathname === "/products"}
-              collapsed={collapsed}
-            />
+            {user?.role !== "cashier" && (
+              <SidebarItem
+                icon={<FaBox />}
+                text="Products"
+                to="/products"
+                active={location.pathname === "/products"}
+                collapsed={collapsed}
+              />
+            )}
             <SidebarItem
               icon={<FaUsers />}
               text="Customers"
@@ -130,48 +134,54 @@ const DashboardLayout = ({ children }) => {
               active={location.pathname === "/customers"}
               collapsed={collapsed}
             />
-            <SidebarItem
-              icon={<FaTruck />}
-              text="Suppliers"
-              to="/suppliers"
-              active={location.pathname === "/suppliers"}
-              collapsed={collapsed}
-            />
+            {user?.role !== "cashier" && (
+              <SidebarItem
+                icon={<FaTruck />}
+                text="Suppliers"
+                to="/suppliers"
+                active={location.pathname === "/suppliers"}
+                collapsed={collapsed}
+              />
+            )}
 
             {/* Group 3: Financials */}
-            {!collapsed && (
-              <p className="text-[10px] font-bold text-text-secondary/50 uppercase tracking-widest px-4 pt-3 pb-1 select-none">
-                Financials
-              </p>
+            {user?.role !== "cashier" && (
+              <>
+                {!collapsed && (
+                  <p className="text-[10px] font-bold text-text-secondary/50 uppercase tracking-widest px-4 pt-3 pb-1 select-none">
+                    Financials
+                  </p>
+                )}
+                <SidebarItem
+                  icon={<FaExchangeAlt />}
+                  text="Transactions"
+                  to="/transactions"
+                  active={location.pathname === "/transactions"}
+                  collapsed={collapsed}
+                />
+                <SidebarItem
+                  icon={<FaCoins />}
+                  text="Expenses"
+                  to="/expenses"
+                  active={location.pathname === "/expenses"}
+                  collapsed={collapsed}
+                />
+                <SidebarItem
+                  icon={<FaMoneyBillWave />}
+                  text="Debts"
+                  to="/debts"
+                  active={location.pathname === "/debts"}
+                  collapsed={collapsed}
+                />
+                <SidebarItem
+                  icon={<FaFileInvoiceDollar />}
+                  text="Supplier Payables"
+                  to="/supplier-payables"
+                  active={location.pathname === "/supplier-payables"}
+                  collapsed={collapsed}
+                />
+              </>
             )}
-            <SidebarItem
-              icon={<FaExchangeAlt />}
-              text="Transactions"
-              to="/transactions"
-              active={location.pathname === "/transactions"}
-              collapsed={collapsed}
-            />
-            <SidebarItem
-              icon={<FaCoins />}
-              text="Expenses"
-              to="/expenses"
-              active={location.pathname === "/expenses"}
-              collapsed={collapsed}
-            />
-            <SidebarItem
-              icon={<FaMoneyBillWave />}
-              text="Debts"
-              to="/debts"
-              active={location.pathname === "/debts"}
-              collapsed={collapsed}
-            />
-            <SidebarItem
-              icon={<FaFileInvoiceDollar />}
-              text="Supplier Payables"
-              to="/supplier-payables"
-              active={location.pathname === "/supplier-payables"}
-              collapsed={collapsed}
-            />
 
             {/* Group 4: Sales & History */}
             {!collapsed && (
@@ -195,25 +205,29 @@ const DashboardLayout = ({ children }) => {
             />
 
             {/* Group 5: Reports & Config */}
-            {!collapsed && (
+            {(!collapsed && (user?.role !== "cashier" || location.pathname === "/settings")) && (
               <p className="text-[10px] font-bold text-text-secondary/50 uppercase tracking-widest px-4 pt-3 pb-1 select-none">
                 Reports & Config
               </p>
             )}
-            <SidebarItem
-              icon={<FaChartBar />}
-              text="Analytics"
-              to="/analytics"
-              active={location.pathname === "/analytics"}
-              collapsed={collapsed}
-            />
-            <SidebarItem
-              icon={<FaRobot />}
-              text="AI Reports"
-              to="/daily-report"
-              active={location.pathname === "/daily-report"}
-              collapsed={collapsed}
-            />
+            {user?.role !== "cashier" && (
+              <SidebarItem
+                icon={<FaChartBar />}
+                text="Analytics"
+                to="/analytics"
+                active={location.pathname === "/analytics"}
+                collapsed={collapsed}
+              />
+            )}
+            {user?.role !== "cashier" && (
+              <SidebarItem
+                icon={<FaRobot />}
+                text="AI Reports"
+                to="/daily-report"
+                active={location.pathname === "/daily-report"}
+                collapsed={collapsed}
+              />
+            )}
             <SidebarItem
               icon={<FaCog />}
               text="Settings"

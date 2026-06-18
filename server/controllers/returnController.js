@@ -14,6 +14,7 @@ const getReturns = async (req, res) => {
         path: "originalSale",
         populate: { path: "customer", select: "name" },
       })
+      .populate("user", "name email role")
       .sort({ createdAt: -1 });
 
     res.status(200).json(returns);
@@ -97,6 +98,7 @@ const createReturn = async (req, res) => {
       reason: reason || "Customer satisfaction return",
       refundAmount: Number(refundAmount) || 0,
       status: "completed",
+      user: req.user.id,
     });
 
     const savedReturn = await newReturn.save();
@@ -131,6 +133,7 @@ const createReturn = async (req, res) => {
         paymentMethod: "cash", // default to cash refund
         description: reason || `Refund for return of ${processedItems.length} item(s)`,
         sale: sale._id,
+        user: req.user.id,
       });
 
       await transaction.save();

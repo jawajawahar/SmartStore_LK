@@ -7,14 +7,14 @@ const {
   getReportData,
 } = require("../controllers/analyticsController");
 
-const { protect } = require("../middleware/authMiddleware");
+const { protect, requireRoles } = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
 // Routes
-router.get("/dashboard", protect, getDashboardAnalytics);
-router.get("/daily-report", protect, getDailyReport);
-router.get("/low-stock", protect, getLowStockProducts);
-router.get("/report-data", protect, getReportData);
+router.get("/dashboard", protect, requireRoles(["admin", "manager"]), getDashboardAnalytics);
+router.get("/daily-report", protect, requireRoles(["admin", "manager"]), getDailyReport);
+router.get("/low-stock", protect, requireRoles(["admin", "manager"]), getLowStockProducts);
+router.get("/report-data", protect, requireRoles(["admin", "manager"]), getReportData);
 
 module.exports = router;

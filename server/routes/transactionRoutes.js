@@ -6,14 +6,14 @@ const {
   deleteTransaction,
 } = require("../controllers/transactionController");
 
-const { protect, checkPermission } = require("../middleware/authMiddleware");
+const { protect, checkPermission, requireRoles } = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
-router.get("/", protect, getTransactions);
+router.get("/", protect, requireRoles(["admin", "manager"]), getTransactions);
 
-router.post("/", protect, addTransaction);
+router.post("/", protect, requireRoles(["admin", "manager"]), addTransaction);
 
-router.delete("/:id", protect, checkPermission("modify_sales"), deleteTransaction);
+router.delete("/:id", protect, requireRoles(["admin", "manager"]), checkPermission("modify_sales"), deleteTransaction);
 
 module.exports = router;

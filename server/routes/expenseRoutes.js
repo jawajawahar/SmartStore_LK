@@ -5,10 +5,10 @@ const {
   createExpense,
   deleteExpense,
 } = require("../controllers/expenseController");
-const { protect } = require("../middleware/authMiddleware");
+const { protect, requireRoles } = require("../middleware/authMiddleware");
 
-// All routes are protected
-router.route("/").get(protect, getExpenses).post(protect, createExpense);
-router.route("/:id").delete(protect, deleteExpense);
+// All routes are protected and restricted to admin/manager
+router.route("/").get(protect, requireRoles(["admin", "manager"]), getExpenses).post(protect, requireRoles(["admin", "manager"]), createExpense);
+router.route("/:id").delete(protect, requireRoles(["admin", "manager"]), deleteExpense);
 
 module.exports = router;

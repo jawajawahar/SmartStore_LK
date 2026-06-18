@@ -176,7 +176,7 @@ const Transactions = () => {
           <table className="w-full">
             <thead className="bg-bg-main border-b border-border-color">
               <tr>
-                {["Type", "Person", "Description", "Amount", "Flow", "Payment", "Date"].map((th) => (
+                {["Type", "Person", "Description", "Amount", "Flow", "Payment", "Created By", "Date"].map((th) => (
                   <th key={th} className="text-left px-5 py-3.5 text-[10px] font-bold uppercase tracking-wider text-text-secondary">
                     {th}
                   </th>
@@ -234,6 +234,11 @@ const Transactions = () => {
                       </span>
                     </td>
 
+                    {/* Created By */}
+                    <td className="px-5 py-3.5 text-text-secondary text-xs">
+                      {transaction.user?.name || "System"}
+                    </td>
+
                     {/* Date */}
                     <td className="px-5 py-3.5 text-text-secondary text-xs whitespace-nowrap">
                       {new Date(transaction.createdAt).toLocaleString()}
@@ -242,7 +247,7 @@ const Transactions = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="7" className="text-center py-12 text-text-secondary text-sm">
+                  <td colSpan="8" className="text-center py-12 text-text-secondary text-sm">
                     No transaction entries found matching your query.
                   </td>
                 </tr>

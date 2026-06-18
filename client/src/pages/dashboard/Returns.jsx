@@ -389,6 +389,13 @@ const Returns = () => {
                       <p className="font-black text-rose-500 mt-0.5">Rs. {ret.refundAmount.toLocaleString()}</p>
                     </div>
 
+                    {ret.user && (
+                      <div>
+                        <p className="text-[9px] text-text-secondary uppercase font-bold">Processed By</p>
+                        <p className="font-semibold text-text-main text-[11px] mt-0.5">{ret.user.name}</p>
+                      </div>
+                    )}
+
                     {ret.reason && (
                       <div className="p-2.5 rounded-lg bg-bg-card border border-border-color text-text-secondary">
                         <span className="font-bold text-[8px] uppercase block mb-0.5">REASON:</span>

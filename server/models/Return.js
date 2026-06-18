@@ -36,6 +36,11 @@ const returnSchema = new mongoose.Schema(
       enum: ["completed", "pending"],
       default: "completed",
     },
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: false,
+    },
   },
   { timestamps: true }
 );
