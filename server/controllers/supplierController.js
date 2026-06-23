@@ -1,5 +1,6 @@
 const Supplier = require("../models/Supplier");
 const SupplierPayable = require("../models/SupplierPayable");
+const Product = require("../models/Product");
 
 // Add Supplier
 const addSupplier = async (req, res) => {
@@ -147,10 +148,57 @@ const deleteSupplier = async (req, res) => {
   }
 };
 
+// Bulk Delete Suppliers
+const bulkDeleteSuppliers = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ message: "No supplier IDs provided for deletion" });
+    }
+
+    const suppliersToDelete = await Supplier.find({ _id: { $in: ids } });
+    if (suppliersToDelete.length === 0) {
+      return res.status(404).json({ message: "No suppliers found to delete" });
+    }
+
+    const deletedCount = suppliersToDelete.length;
+    await Supplier.deleteMany({ _id: { $in: ids } });
+
+    const { logAudit } = require("../utils/auditLogger");
+    await logAudit({
+      req,
+      action: "delete",
+      entity: "Supplier",
+      description: `Bulk deleted ${deletedCount} supplier(s). Names: [${suppliersToDelete.map(s => s.name).join(", ")}]`,
+    });
+
+    res.status(200).json({
+      message: `${deletedCount} supplier(s) deleted successfully`,
+      deletedCount,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Get Supplier Products
+const getSupplierProducts = async (req, res) => {
+  try {
+    const products = await Product.find({ supplier: req.params.id })
+      .select("name sku stock buyingPrice sellingPrice unit")
+      .sort({ createdAt: -1 });
+    res.status(200).json(products);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   addSupplier,
   getSuppliers,
   bulkAddSuppliers,
   updateSupplier,
   deleteSupplier,
+  bulkDeleteSuppliers,
+  getSupplierProducts,
 };

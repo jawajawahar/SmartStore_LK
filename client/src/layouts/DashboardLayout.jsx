@@ -20,6 +20,8 @@ import {
   FaChevronRight,
   FaRobot,
   FaCog,
+  FaFileInvoice,
+  FaShieldAlt,
 } from "react-icons/fa";
 
 import { useNavigate, useLocation, Link } from "react-router-dom";
@@ -225,6 +227,24 @@ const DashboardLayout = ({ children }) => {
                 text="AI Reports"
                 to="/daily-report"
                 active={location.pathname === "/daily-report"}
+                collapsed={collapsed}
+              />
+            )}
+            {user?.role !== "cashier" && (
+              <SidebarItem
+                icon={<FaFileInvoice />}
+                text="Purchase Orders"
+                to="/purchase-orders"
+                active={location.pathname === "/purchase-orders"}
+                collapsed={collapsed}
+              />
+            )}
+            {user?.role !== "cashier" && (
+              <SidebarItem
+                icon={<FaShieldAlt />}
+                text="Audit Logs"
+                to="/audit-logs"
+                active={location.pathname === "/audit-logs"}
                 collapsed={collapsed}
               />
             )}

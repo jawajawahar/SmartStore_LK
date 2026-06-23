@@ -94,6 +94,19 @@ const loginUser = async (req, res) => {
         permissions: user.permissions || [],
       },
     });
+
+    // Audit log the login event (req.user isn't populated yet, so log directly)
+    const AuditLog = require("../models/AuditLog");
+    new AuditLog({
+      user: user._id,
+      userName: user.name,
+      userRole: user.role,
+      action: "login",
+      entity: "Session",
+      description: `User "${user.name}" (${user.role}) logged in.`,
+      ipAddress: req.headers["x-forwarded-for"] || req.socket.remoteAddress || "",
+      userAgent: req.headers["user-agent"] || "",
+    }).save().catch(err => console.error("Login audit failed:", err));
   } catch (error) {
     res.status(500).json({
       message: error.message,

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { FaTruck, FaSearch, FaPlus, FaCloudUploadAlt, FaEdit, FaTrash } from "react-icons/fa";
+import { FaTruck, FaSearch, FaPlus, FaCloudUploadAlt, FaEdit, FaTrash, FaBoxOpen, FaTimes } from "react-icons/fa";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import API from "../../services/api";
 import { toast } from "react-toastify";
@@ -12,8 +12,15 @@ const Suppliers = () => {
   const [showForm, setShowForm] = useState(false);
   const [isBulkOpen, setIsBulkOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+
+  // Products Modal State
+  const [viewingSupplier, setViewingSupplier] = useState(null);
+  const [supplierProducts, setSupplierProducts] = useState([]);
+  const [isProductsModalOpen, setIsProductsModalOpen] = useState(false);
+  const [loadingProducts, setLoadingProducts] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -118,6 +125,59 @@ const Suppliers = () => {
     }
   };
 
+  // View Products for Supplier
+  const handleViewProducts = async (supplier) => {
+    try {
+      setLoadingProducts(true);
+      const token = localStorage.getItem("token");
+      const response = await API.get(`/suppliers/${supplier._id}/products`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setSupplierProducts(response.data);
+      setViewingSupplier(supplier);
+      setIsProductsModalOpen(true);
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to fetch supplier products");
+    } finally {
+      setLoadingProducts(false);
+    }
+  };
+
+  // Handle Selectione Suppliers
+  const handleBulkDelete = async () => {
+    try {
+      const confirmDelete = window.confirm(`Are you sure you want to delete ${selectedIds.length} selected suppliers?`);
+      if (!confirmDelete) return;
+
+      const token = localStorage.getItem("token");
+      await API.post(`/suppliers/bulk-delete`, { ids: selectedIds }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      toast.success(`${selectedIds.length} suppliers deleted successfully`);
+      setSelectedIds([]);
+      fetchSuppliers();
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to bulk delete suppliers");
+    }
+  };
+
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      setSelectedIds(filteredSuppliers.map(s => s._id));
+    } else {
+      setSelectedIds([]);
+    }
+  };
+
+  const handleSelect = (id) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
+
   const filteredSuppliers = suppliers.filter((s) =>
     s.name.toLowerCase().includes(search.toLowerCase()) ||
     s.company?.toLowerCase().includes(search.toLowerCase())
@@ -145,15 +205,25 @@ const Suppliers = () => {
 
         <div className="flex items-center gap-3">
           {/* Search */}
-          <div className="relative">
-            <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-[10px]" />
-            <input
-              type="text"
-              placeholder="Search suppliers..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="border border-border-color bg-bg-card text-text-main placeholder:text-text-secondary/50 pl-9 pr-4 py-2.5 rounded-xl outline-none focus:border-indigo-500 text-sm w-full md:w-[240px] transition-all"
-            />
+          <div className="relative flex items-center gap-2">
+            <div className="relative">
+              <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-[10px]" />
+              <input
+                type="text"
+                placeholder="Search suppliers..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="border border-border-color bg-bg-card text-text-main placeholder:text-text-secondary/50 pl-9 pr-4 py-2.5 rounded-xl outline-none focus:border-indigo-500 text-sm w-full md:w-[240px] transition-all"
+              />
+            </div>
+            {selectedIds.length > 0 && (
+              <button
+                onClick={handleBulkDelete}
+                className="flex items-center gap-2 bg-red-600/10 hover:bg-red-600/20 border border-red-600/20 text-red-500 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer whitespace-nowrap"
+              >
+                <FaTrash className="text-xs" /> Delete ({selectedIds.length})
+              </button>
+            )}
           </div>
 
           <button
@@ -246,6 +316,14 @@ const Suppliers = () => {
           <table className="w-full">
             <thead className="bg-bg-main border-b border-border-color">
               <tr>
+                <th className="px-5 py-3.5 w-12 text-left">
+                  <input
+                    type="checkbox"
+                    checked={filteredSuppliers.length > 0 && selectedIds.length === filteredSuppliers.length}
+                    onChange={handleSelectAll}
+                    className="w-4 h-4 rounded border-border-color bg-bg-card text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                  />
+                </th>
                 {["Supplier Name", "Company", "Phone", "Email", "Address", "Preferred Alert", "Payable Balance", "Actions"].map((th) => (
                   <th key={th} className="text-left px-5 py-3.5 text-[10px] font-bold uppercase tracking-wider text-text-secondary">
                     {th}
@@ -258,6 +336,14 @@ const Suppliers = () => {
               {currentSuppliers.length > 0 ? (
                 currentSuppliers.map((supplier) => (
                   <tr key={supplier._id} className="hover:bg-bg-main/50 transition-colors">
+                    <td className="px-5 py-3.5">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(supplier._id)}
+                        onChange={() => handleSelect(supplier._id)}
+                        className="w-4 h-4 rounded border-border-color bg-bg-card text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                      />
+                    </td>
                     <td className="px-5 py-3.5 text-sm">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-indigo-500/10 text-indigo-500 flex items-center justify-center text-xs font-black uppercase">
@@ -299,6 +385,13 @@ const Suppliers = () => {
                     <td className="px-5 py-3.5 text-sm">
                       <div className="flex items-center gap-2">
                         <button
+                          onClick={() => handleViewProducts(supplier)}
+                          className="w-7 h-7 rounded-lg bg-emerald-500/10 hover:bg-emerald-600 text-emerald-500 hover:text-white flex items-center justify-center transition-all cursor-pointer"
+                          title="View Supplied Products"
+                        >
+                          <FaBoxOpen className="text-[10px]" />
+                        </button>
+                        <button
                           onClick={() => handleEdit(supplier)}
                           className="w-7 h-7 rounded-lg bg-indigo-500/10 hover:bg-indigo-600 text-indigo-500 hover:text-white flex items-center justify-center transition-all cursor-pointer"
                           title="Edit Supplier"
@@ -339,6 +432,76 @@ const Suppliers = () => {
         type="suppliers"
         onSuccess={fetchSuppliers}
       />
+
+      {/* Supplier Products Modal */}
+      {isProductsModalOpen && viewingSupplier && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-bg-card border border-border-color rounded-2xl w-full max-w-3xl overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between p-5 border-b border-border-color bg-bg-main/50">
+              <div>
+                <h3 className="text-lg font-bold text-text-main flex items-center gap-2">
+                  <span className="w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center shrink-0">
+                    <FaBoxOpen className="text-sm" />
+                  </span>
+                  Products Supplied by {viewingSupplier.company || viewingSupplier.name}
+                </h3>
+                <p className="text-xs text-text-secondary mt-1">
+                  Contact: {viewingSupplier.name} ({viewingSupplier.phone})
+                </p>
+              </div>
+              <button
+                onClick={() => setIsProductsModalOpen(false)}
+                className="w-8 h-8 rounded-xl bg-bg-main hover:bg-rose-500/10 text-text-secondary hover:text-rose-500 flex items-center justify-center transition-all cursor-pointer"
+              >
+                <FaTimes />
+              </button>
+            </div>
+            
+            <div className="p-6 max-h-[60vh] overflow-y-auto custom-scrollbar">
+              {loadingProducts ? (
+                <div className="flex flex-col items-center justify-center py-10 space-y-3">
+                  <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                  <p className="text-text-secondary text-sm">Loading products...</p>
+                </div>
+              ) : supplierProducts.length === 0 ? (
+                <div className="text-center py-10">
+                  <FaBoxOpen className="text-4xl text-text-secondary/20 mx-auto mb-3" />
+                  <p className="text-text-secondary text-sm">This supplier does not supply any products currently.</p>
+                </div>
+              ) : (
+                <div className="overflow-hidden border border-border-color rounded-xl">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-bg-main border-b border-border-color">
+                      <tr>
+                        <th className="px-4 py-3 font-bold uppercase tracking-wider text-text-secondary">Product Name</th>
+                        <th className="px-4 py-3 font-bold uppercase tracking-wider text-text-secondary">SKU</th>
+                        <th className="px-4 py-3 font-bold uppercase tracking-wider text-text-secondary">Stock</th>
+                        <th className="px-4 py-3 font-bold uppercase tracking-wider text-text-secondary text-right">Buying Price</th>
+                        <th className="px-4 py-3 font-bold uppercase tracking-wider text-text-secondary text-right">Selling Price</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border-color/50">
+                      {supplierProducts.map(p => (
+                        <tr key={p._id} className="hover:bg-bg-main/30 transition-colors">
+                          <td className="px-4 py-3 font-semibold text-text-main">{p.name}</td>
+                          <td className="px-4 py-3 text-text-secondary font-mono">{p.sku || 'N/A'}</td>
+                          <td className="px-4 py-3">
+                            <span className={`font-bold ${p.stock <= 5 ? 'text-rose-500' : 'text-emerald-500'}`}>
+                              {p.stock} {p.unit}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 font-mono text-right text-text-main">Rs. {p.buyingPrice.toLocaleString()}</td>
+                          <td className="px-4 py-3 font-mono text-right text-text-main">Rs. {p.sellingPrice.toLocaleString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 };

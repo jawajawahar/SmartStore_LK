@@ -19,6 +19,7 @@ const Products = () => {
   const [image, setImage] = useState(null);
   const [isBulkOpen, setIsBulkOpen] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [selectedIds, setSelectedIds] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -241,6 +242,40 @@ const Products = () => {
       console.log(error);
       toast.error("Failed to delete product");
     }
+  };
+
+  // Bulk Delete Products
+  const handleBulkDelete = async () => {
+    try {
+      const confirmDelete = window.confirm(`Are you sure you want to delete ${selectedIds.length} selected products?`);
+      if (!confirmDelete) return;
+
+      const token = localStorage.getItem("token");
+      await API.post(`/products/bulk-delete`, { ids: selectedIds }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      toast.success(`${selectedIds.length} products deleted successfully`);
+      setSelectedIds([]);
+      fetchProducts();
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to bulk delete products");
+    }
+  };
+
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      setSelectedIds(filteredProducts.map(p => p._id));
+    } else {
+      setSelectedIds([]);
+    }
+  };
+
+  const handleSelect = (id) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
   };
 
   // Filter
@@ -474,17 +509,27 @@ const Products = () => {
       )}
 
       {/* Search Filter */}
-      <div className="mb-6 relative">
-        <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-text-secondary">
-          <FaFilter className="text-xs" />
-        </span>
-        <input
-          type="text"
-          placeholder="Filter products catalog by name, category or SKU..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full bg-bg-card border border-border-color text-text-main pl-9 pr-5 py-3 rounded-xl outline-none focus:border-indigo-500 transition-colors text-xs placeholder-text-secondary/40 shadow-xs"
-        />
+      <div className="mb-6 relative flex items-center gap-3">
+        <div className="relative flex-1">
+          <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-text-secondary">
+            <FaFilter className="text-xs" />
+          </span>
+          <input
+            type="text"
+            placeholder="Filter products catalog by name, category or SKU..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full bg-bg-card border border-border-color text-text-main pl-9 pr-5 py-3 rounded-xl outline-none focus:border-indigo-500 transition-colors text-xs placeholder-text-secondary/40 shadow-xs"
+          />
+        </div>
+        {selectedIds.length > 0 && hasEditProducts && (
+          <button
+            onClick={handleBulkDelete}
+            className="flex items-center gap-2 bg-red-600/10 hover:bg-red-600/20 border border-red-600/20 text-red-500 px-4 py-3 rounded-xl text-sm font-semibold transition-all cursor-pointer whitespace-nowrap"
+          >
+            <FaTrash className="text-xs" /> Delete Selected ({selectedIds.length})
+          </button>
+        )}
       </div>
 
       {/* Table */}
@@ -496,6 +541,16 @@ const Products = () => {
             <table className="w-full">
               <thead className="bg-bg-main/60 border-b border-border-color">
                 <tr>
+                  {hasEditProducts && (
+                    <th className="px-5 py-3.5 w-12">
+                      <input
+                        type="checkbox"
+                        checked={filteredProducts.length > 0 && selectedIds.length === filteredProducts.length}
+                        onChange={handleSelectAll}
+                        className="w-4 h-4 rounded border-border-color bg-bg-card text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                      />
+                    </th>
+                  )}
                   <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Image</th>
                   <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Name</th>
                   <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Category</th>
@@ -517,9 +572,18 @@ const Products = () => {
                   currentProducts.map((product) => (
                     <tr
                       key={product._id}
-                      className="hover:bg-bg-main/30 transition-colors"
+                      className="border-b border-border-color/50 hover:bg-bg-main/30 transition-colors group"
                     >
-                      {/* Image */}
+                      {hasEditProducts && (
+                        <td className="px-5 py-3">
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.includes(product._id)}
+                            onChange={() => handleSelect(product._id)}
+                            className="w-4 h-4 rounded border-border-color bg-bg-card text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                          />
+                        </td>
+                      )}
                       <td className="px-5 py-3.5">
                         <img
                           src={`http://localhost:5000/${product.image}`}

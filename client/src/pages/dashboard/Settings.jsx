@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { FaUser, FaLock, FaEnvelope, FaPhone, FaSave, FaShieldAlt } from "react-icons/fa";
+import { FaUser, FaLock, FaEnvelope, FaPhone, FaSave, FaShieldAlt, FaUserPlus, FaChevronDown, FaChevronUp, FaEye, FaEyeSlash } from "react-icons/fa";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import API from "../../services/api";
 import { toast } from "react-toastify";
@@ -22,59 +22,7 @@ const Settings = () => {
   const [loadingPassword, setLoadingPassword] = useState(false);
 
   const [activeTab, setActiveTab] = useState("profile");
-  const [auditLogs, setAuditLogs] = useState([]);
-  const [loadingAudit, setLoadingAudit] = useState(false);
-
-  const fetchAuditLogs = async () => {
-    setLoadingAudit(true);
-    try {
-      const token = localStorage.getItem("token");
-      const response = await API.get("/audit-logs", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      setAuditLogs(response.data);
-    } catch (error) {
-      console.error("Failed to load audit logs:", error);
-      toast.error("Failed to load audit logs");
-    } finally {
-      setLoadingAudit(false);
-    }
-  };
-
-  useEffect(() => {
-    if (activeTab === "audit") {
-      fetchAuditLogs();
-    }
-  }, [activeTab]);
-
-  const [purchaseOrders, setPurchaseOrders] = useState([]);
-  const [loadingOrders, setLoadingOrders] = useState(false);
-
-  const fetchPurchaseOrders = async () => {
-    setLoadingOrders(true);
-    try {
-      const token = localStorage.getItem("token");
-      const response = await API.get("/purchase-orders", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      setPurchaseOrders(response.data);
-    } catch (error) {
-      console.error("Failed to load purchase orders:", error);
-      toast.error("Failed to load purchase orders");
-    } finally {
-      setLoadingOrders(false);
-    }
-  };
-
-  useEffect(() => {
-    if (activeTab === "po") {
-      fetchPurchaseOrders();
-    }
-  }, [activeTab]);
+  const [theme, setTheme] = useState(localStorage.getItem("smartstore_theme_color") || "indigo");
 
   // RBAC User Permission management states & handlers
   const [usersList, setUsersList] = useState([]);
@@ -83,6 +31,40 @@ const Settings = () => {
   const [editRole, setEditRole] = useState("");
   const [editPermissions, setEditPermissions] = useState([]);
   const [savingPermissions, setSavingPermissions] = useState(false);
+
+  // Create New User states
+  const [showCreateUser, setShowCreateUser] = useState(false);
+  const [creatingUser, setCreatingUser] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [newUserData, setNewUserData] = useState({
+    name: "",
+    email: "",
+    password: "",
+    role: "cashier",
+  });
+
+  const handleNewUserChange = (e) => {
+    setNewUserData({ ...newUserData, [e.target.name]: e.target.value });
+  };
+
+  const handleCreateUser = async (e) => {
+    e.preventDefault();
+    if (newUserData.password.length < 6) {
+      return toast.error("Password must be at least 6 characters");
+    }
+    setCreatingUser(true);
+    try {
+      await API.post("/auth/register", newUserData);
+      toast.success(`${newUserData.role.charAt(0).toUpperCase() + newUserData.role.slice(1)} account created successfully!`);
+      setNewUserData({ name: "", email: "", password: "", role: "cashier" });
+      setShowCreateUser(false);
+      fetchUsers(); // refresh the list
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to create user");
+    } finally {
+      setCreatingUser(false);
+    }
+  };
 
   const fetchUsers = async () => {
     setLoadingUsers(true);
@@ -192,6 +174,13 @@ const Settings = () => {
   useEffect(() => {
     fetchProfile();
   }, []);
+
+  const handleThemeChange = (selectedTheme) => {
+    setTheme(selectedTheme);
+    localStorage.setItem("smartstore_theme_color", selectedTheme);
+    document.documentElement.setAttribute("data-theme", selectedTheme);
+    toast.success(`Color theme updated to ${selectedTheme}`);
+  };
 
   // Handle Input Changes
   const handleProfileChange = (e) => {
@@ -383,54 +372,80 @@ const Settings = () => {
         {/* Right Side: Configuration Forms */}
         <div className="lg:col-span-8 space-y-6">
           {/* Tab Selector */}
-          {(profileData.role === "admin" || profileData.role === "manager") && (
-            <div className="flex border-b border-border-color/60 gap-6 mb-4">
+          <div className="flex border-b border-border-color/60 gap-6 mb-4 overflow-x-auto no-scrollbar">
+            <button
+              onClick={() => setActiveTab("profile")}
+              className={`pb-2.5 text-xs font-bold uppercase tracking-wider transition-all border-b-2 cursor-pointer whitespace-nowrap ${
+                activeTab === "profile"
+                  ? "border-indigo-500 text-indigo-500"
+                  : "border-transparent text-text-secondary hover:text-text-main"
+              }`}
+            >
+              Profile & Security
+            </button>
+            <button
+              onClick={() => setActiveTab("appearance")}
+              className={`pb-2.5 text-xs font-bold uppercase tracking-wider transition-all border-b-2 cursor-pointer whitespace-nowrap ${
+                activeTab === "appearance"
+                  ? "border-indigo-500 text-indigo-500"
+                  : "border-transparent text-text-secondary hover:text-text-main"
+              }`}
+            >
+              Appearance & Theme
+            </button>
+            {(profileData.role === "admin" || profileData.role === "manager") && (
               <button
-                onClick={() => setActiveTab("profile")}
-                className={`pb-2.5 text-xs font-bold uppercase tracking-wider transition-all border-b-2 cursor-pointer ${
-                  activeTab === "profile"
+                onClick={() => setActiveTab("users")}
+                className={`pb-2.5 text-xs font-bold uppercase tracking-wider transition-all border-b-2 cursor-pointer whitespace-nowrap ${
+                  activeTab === "users"
                     ? "border-indigo-500 text-indigo-500"
                     : "border-transparent text-text-secondary hover:text-text-main"
                 }`}
               >
-                Profile & Security
+                Users & RBAC Settings
               </button>
-              <button
-                onClick={() => setActiveTab("po")}
-                className={`pb-2.5 text-xs font-bold uppercase tracking-wider transition-all border-b-2 cursor-pointer ${
-                  activeTab === "po"
-                    ? "border-indigo-500 text-indigo-500"
-                    : "border-transparent text-text-secondary hover:text-text-main"
-                }`}
-              >
-                Purchase Orders
-              </button>
-              <button
-                onClick={() => setActiveTab("audit")}
-                className={`pb-2.5 text-xs font-bold uppercase tracking-wider transition-all border-b-2 cursor-pointer ${
-                  activeTab === "audit"
-                    ? "border-indigo-500 text-indigo-500"
-                    : "border-transparent text-text-secondary hover:text-text-main"
-                }`}
-              >
-                Action Audit Logs
-              </button>
-              {profileData.role === "admin" && (
-                <button
-                  onClick={() => setActiveTab("users")}
-                  className={`pb-2.5 text-xs font-bold uppercase tracking-wider transition-all border-b-2 cursor-pointer ${
-                    activeTab === "users"
-                      ? "border-indigo-500 text-indigo-500"
-                      : "border-transparent text-text-secondary hover:text-text-main"
-                  }`}
-                >
-                  Users & RBAC Settings
-                </button>
-              )}
+            )}
+          </div>
+
+          {activeTab === "appearance" && (
+            <div className="space-y-8">
+              <div className="bg-bg-card border border-border-color rounded-2xl p-6 shadow-sm">
+                <h2 className="text-lg font-bold text-text-main mb-1 tracking-tight flex items-center gap-2">
+                  <span className="w-8 h-8 rounded-full bg-indigo-500/10 text-indigo-500 flex items-center justify-center shrink-0">🎨</span>
+                  Color Theme Selection
+                </h2>
+                <p className="text-text-secondary text-xs mb-6">Personalize your dashboard experience with a custom primary color.</p>
+                
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-4">
+                  {[
+                    { id: "indigo", name: "Indigo", colorClass: "bg-[#4f46e5]" },
+                    { id: "emerald", name: "Emerald", colorClass: "bg-[#10b981]" },
+                    { id: "rose", name: "Rose", colorClass: "bg-[#f43f5e]" },
+                    { id: "amber", name: "Amber", colorClass: "bg-[#f59e0b]" },
+                    { id: "purple", name: "Purple", colorClass: "bg-[#8b5cf6]" },
+                    { id: "cyan", name: "Cyan", colorClass: "bg-[#06b6d4]" },
+                  ].map((t) => (
+                    <button
+                      key={t.id}
+                      onClick={() => handleThemeChange(t.id)}
+                      className={`flex flex-col items-center gap-2 p-3 rounded-xl border transition-all cursor-pointer ${
+                        theme === t.id 
+                          ? "border-indigo-500 bg-indigo-500/5 shadow-md scale-105" 
+                          : "border-border-color hover:border-indigo-500/50 hover:bg-bg-main"
+                      }`}
+                    >
+                      <div className={`w-8 h-8 rounded-full shadow-inner ${t.colorClass} ${theme === t.id ? "ring-2 ring-offset-2 ring-offset-bg-card ring-indigo-500" : ""}`} />
+                      <span className={`text-[10px] font-bold uppercase tracking-wider ${theme === t.id ? "text-indigo-600" : "text-text-secondary"}`}>
+                        {t.name}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
 
-          {activeTab === "profile" ? (
+          {activeTab === "profile" && (
             <div className="space-y-8">
               {/* Profile Details Form */}
               <div className="bg-bg-card border border-border-color rounded-2xl p-6 shadow-sm">
@@ -547,111 +562,115 @@ const Settings = () => {
                 </form>
               </div>
             </div>
-          ) : activeTab === "po" ? (
-            /* Purchase Orders Panel */
-            <div className="bg-bg-card border border-border-color rounded-2xl p-6 shadow-sm">
-              <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
-                <div>
-                  <h2 className="text-lg font-bold text-text-main tracking-tight flex items-center gap-2">
-                    <FaEnvelope className="text-indigo-500 text-sm" /> Automated Purchase Orders (POs)
-                  </h2>
-                  <p className="text-text-secondary text-xs mt-1">
-                    Trace automated low-stock reorder loops, email delivery status, and supplier confirmation arrivals.
-                  </p>
-                </div>
+          )}
+
+          {activeTab === "users" && (profileData.role === "admin" || profileData.role === "manager") && (        /* Users & RBAC Settings Panel */
+            <div className="space-y-6">
+              {/* Create New User Card */}
+              <div className="bg-bg-card border border-border-color rounded-2xl shadow-sm overflow-hidden">
                 <button
-                  onClick={fetchPurchaseOrders}
-                  disabled={loadingOrders}
-                  className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition-all cursor-pointer select-none active:scale-95 shadow-md shadow-indigo-600/10"
+                  onClick={() => setShowCreateUser(!showCreateUser)}
+                  className="w-full flex items-center justify-between p-5 cursor-pointer hover:bg-bg-main/30 transition-colors"
                 >
-                  {loadingOrders ? "Refreshing..." : "Refresh Orders"}
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500/15 to-teal-500/10 border border-emerald-500/20 flex items-center justify-center">
+                      <FaUserPlus className="text-emerald-500 text-sm" />
+                    </div>
+                    <div className="text-left">
+                      <h3 className="text-sm font-bold text-text-main">Create New Staff Account</h3>
+                      <p className="text-[11px] text-text-secondary mt-0.5">Register a new cashier or manager for the store</p>
+                    </div>
+                  </div>
+                  {showCreateUser ? (
+                    <FaChevronUp className="text-text-secondary text-xs" />
+                  ) : (
+                    <FaChevronDown className="text-text-secondary text-xs" />
+                  )}
                 </button>
+
+                {showCreateUser && (
+                  <div className="px-5 pb-5 border-t border-border-color/50">
+                    <form onSubmit={handleCreateUser} className="pt-5 space-y-5">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <Input
+                          label="Full Name"
+                          name="name"
+                          value={newUserData.name}
+                          onChange={handleNewUserChange}
+                          placeholder="Staff member name"
+                        />
+                        <Input
+                          label="Email Address"
+                          name="email"
+                          type="email"
+                          value={newUserData.email}
+                          onChange={handleNewUserChange}
+                          placeholder="staff@store.com"
+                        />
+                        <div>
+                          <label className="block text-text-secondary text-[10px] font-bold uppercase tracking-wider mb-2">Password</label>
+                          <div className="relative">
+                            <input
+                              type={showNewPassword ? "text" : "password"}
+                              name="password"
+                              value={newUserData.password}
+                              onChange={handleNewUserChange}
+                              required
+                              placeholder="Minimum 6 characters"
+                              className="w-full bg-bg-main border border-border-color text-text-main placeholder-text-secondary/40 px-4 py-2.5 pr-11 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 transition-all text-sm"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowNewPassword(!showNewPassword)}
+                              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-main transition-colors cursor-pointer"
+                            >
+                              {showNewPassword ? <FaEyeSlash className="text-xs" /> : <FaEye className="text-xs" />}
+                            </button>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-text-secondary text-[10px] font-bold uppercase tracking-wider mb-2">Role</label>
+                          <select
+                            name="role"
+                            value={newUserData.role}
+                            onChange={handleNewUserChange}
+                            className="w-full border border-border-color bg-bg-main text-text-main px-4 py-2.5 rounded-xl outline-none text-sm cursor-pointer focus:border-indigo-500 transition-all"
+                          >
+                            <option value="cashier">Cashier</option>
+                            <option value="manager">Manager</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Role info hint */}
+                      <div className={`rounded-xl border p-3.5 text-[11px] leading-relaxed ${
+                        newUserData.role === "manager"
+                          ? "bg-amber-500/5 border-amber-500/15 text-amber-500/90"
+                          : "bg-blue-500/5 border-blue-500/15 text-blue-500/90"
+                      }`}>
+                        {newUserData.role === "manager" ? (
+                          <><strong>Manager</strong> — Gets full permissions by default: modify sales history, view purchase prices, and edit product registry. You can customise these after creation.</>
+                        ) : (
+                          <><strong>Cashier</strong> — Gets minimal permissions by default: view purchase prices only. They can access POS billing and sales history. Permissions can be expanded later.</>
+                        )}
+                      </div>
+
+                      <div className="flex justify-end">
+                        <button
+                          type="submit"
+                          disabled={creatingUser}
+                          className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 disabled:bg-emerald-600/50 text-white px-6 py-2.5 rounded-xl font-semibold text-sm transition-all duration-150 cursor-pointer active:scale-[0.98] shadow-lg shadow-emerald-600/10"
+                        >
+                          <FaUserPlus className="text-xs" />
+                          {creatingUser ? "Creating Account..." : "Create Staff Account"}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                )}
               </div>
 
-              {loadingOrders ? (
-                <div className="space-y-3 py-6">
-                  <div className="h-6 bg-border-color/20 animate-pulse rounded" />
-                  <div className="h-20 bg-border-color/10 animate-pulse rounded" />
-                  <div className="h-20 bg-border-color/10 animate-pulse rounded" />
-                </div>
-              ) : purchaseOrders.length === 0 ? (
-                <div className="text-center py-12 text-text-secondary text-sm">
-                  No purchase orders dispatched yet.
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs border-collapse">
-                    <thead>
-                      <tr className="border-b border-border-color text-text-secondary font-semibold">
-                        <th className="py-3 pr-4 uppercase tracking-wider">PO Ref</th>
-                        <th className="py-3 pr-4 uppercase tracking-wider">Product Name</th>
-                        <th className="py-3 pr-4 uppercase tracking-wider">Qty Order</th>
-                        <th className="py-3 pr-4 uppercase tracking-wider">Total Price</th>
-                        <th className="py-3 pr-4 uppercase tracking-wider">Supplier</th>
-                        <th className="py-3 pr-4 uppercase tracking-wider">Status</th>
-                        <th className="py-3 pr-4 uppercase tracking-wider text-center">PDF Doc</th>
-                        <th className="py-3 uppercase tracking-wider text-right">Created At</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border-color/50">
-                      {purchaseOrders.map((po) => {
-                        let statusColor = "bg-slate-500/10 text-slate-500 border border-slate-500/10";
-                        if (po.status === "completed") statusColor = "bg-emerald-500/10 text-emerald-500 border border-emerald-500/15";
-                        if (po.status === "shipped") statusColor = "bg-blue-500/10 text-blue-500 border border-blue-500/15";
-                        if (po.status === "pending") statusColor = "bg-indigo-500/10 text-indigo-500 border border-indigo-500/15";
-
-                        return (
-                          <tr key={po._id} className="hover:bg-bg-main/40 transition-colors">
-                            <td className="py-3.5 pr-4 font-semibold text-text-main font-mono">
-                              #PO-{po._id.slice(-6).toUpperCase()}
-                            </td>
-                            <td className="py-3.5 pr-4">
-                              <div className="font-semibold text-text-main">{po.productName}</div>
-                              <div className="text-[10px] text-text-secondary mt-0.5 tracking-wider font-mono">SKU: {po.sku || "N/A"}</div>
-                            </td>
-                            <td className="py-3.5 pr-4 text-text-main font-semibold">
-                              {po.quantity} pcs
-                            </td>
-                            <td className="py-3.5 pr-4 text-emerald-500 font-bold">
-                              Rs. {po.totalPrice.toLocaleString()}
-                            </td>
-                            <td className="py-3.5 pr-4 text-text-secondary">
-                              <div className="font-semibold text-text-main">{po.supplier?.name || "—"}</div>
-                              <div className="text-[10px] mt-0.5">{po.supplier?.email || ""}</div>
-                            </td>
-                            <td className="py-3.5 pr-4">
-                              <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${statusColor}`}>
-                                {po.status}
-                              </span>
-                            </td>
-                            <td className="py-3.5 pr-4 text-center">
-                              {po.pdfPath ? (
-                                <a
-                                  href={`http://localhost:5000${po.pdfPath}`}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="inline-flex items-center gap-1 bg-indigo-500/15 text-indigo-500 hover:bg-indigo-600 hover:text-white px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider transition-all"
-                                >
-                                  View PO PDF
-                                </a>
-                              ) : (
-                                <span className="text-text-secondary/50">—</span>
-                              )}
-                            </td>
-                            <td className="py-3.5 text-right text-text-secondary">
-                              <div>{new Date(po.createdAt).toLocaleDateString()}</div>
-                              <div className="text-[10px] mt-0.5 text-text-secondary/70">{new Date(po.createdAt).toLocaleTimeString()}</div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          ) : activeTab === "users" ? (
-            /* Users & RBAC Settings Panel */
+            {/* Existing Users Table */}
             <div className="bg-bg-card border border-border-color rounded-2xl p-6 shadow-sm">
               <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
                 <div>
@@ -842,7 +861,10 @@ const Settings = () => {
                 </div>
               )}
             </div>
-          ) : (
+            </div>
+          )}
+
+          {activeTab === "audit" && (
             /* Audit Logs Panel */
             <div className="bg-bg-card border border-border-color rounded-2xl p-6 shadow-sm">
               <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
@@ -893,6 +915,7 @@ const Settings = () => {
                         if (log.action === "delete") actionColor = "bg-rose-500/10 text-rose-500 border border-rose-500/15";
                         if (log.action === "update") actionColor = "bg-indigo-500/10 text-indigo-500 border border-indigo-500/15";
                         if (log.action === "status_change") actionColor = "bg-amber-500/10 text-amber-500 border border-amber-500/15";
+                        if (log.action === "login") actionColor = "bg-cyan-500/10 text-cyan-500 border border-cyan-500/15";
 
                         return (
                           <tr key={log._id} className="hover:bg-bg-main/40 transition-colors">

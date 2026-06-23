@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
 
 import Login from "./pages/auth/Login";
@@ -16,8 +17,17 @@ import Expenses from "./pages/dashboard/Expenses";
 import Returns from "./pages/dashboard/Returns";
 import AIReports from "./pages/dashboard/AIReports";
 import Settings from "./pages/dashboard/Settings";
+import PurchaseOrders from "./pages/dashboard/PurchaseOrders";
+import AuditLogs from "./pages/dashboard/AuditLogs";
 
 function App() {
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("smartstore_theme_color");
+    if (savedTheme) {
+      document.documentElement.setAttribute("data-theme", savedTheme);
+    }
+  }, []);
+
   return (
     <Routes>
       {/* Login */}
@@ -149,6 +159,24 @@ function App() {
         element={
           <ProtectedRoute>
             <Settings />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/purchase-orders"
+        element={
+          <ProtectedRoute allowedRoles={["admin", "manager"]}>
+            <PurchaseOrders />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/audit-logs"
+        element={
+          <ProtectedRoute allowedRoles={["admin", "manager"]}>
+            <AuditLogs />
           </ProtectedRoute>
         }
       />

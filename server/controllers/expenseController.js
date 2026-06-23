@@ -52,6 +52,15 @@ const createExpense = async (req, res) => {
     await transaction.save();
 
     res.status(201).json(savedExpense);
+
+    const { logAudit } = require("../utils/auditLogger");
+    logAudit({
+      req,
+      action: "create",
+      entity: "Expense",
+      entityId: savedExpense._id,
+      description: `Expense created: Category "${category}", Amount Rs.${Number(amount).toLocaleString()}, Payment: ${paymentMethod || "cash"}. ${description || ""}`,
+    }).catch(err => console.error("Expense create audit failed:", err));
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -68,11 +77,23 @@ const deleteExpense = async (req, res) => {
       return res.status(444).json({ message: "Expense not found" });
     }
 
+    const expenseCategory = expense.category;
+    const expenseAmount = expense.amount;
+
     // Delete corresponding transaction
     await Transaction.deleteMany({ expense: req.params.id });
 
     // Delete expense
     await expense.deleteOne();
+
+    const { logAudit } = require("../utils/auditLogger");
+    await logAudit({
+      req,
+      action: "delete",
+      entity: "Expense",
+      entityId: req.params.id,
+      description: `Expense deleted: Category "${expenseCategory}", Amount Rs.${expenseAmount.toLocaleString()}.`,
+    }).catch(err => console.error("Expense delete audit failed:", err));
 
     res.status(200).json({ message: "Expense deleted successfully" });
   } catch (error) {

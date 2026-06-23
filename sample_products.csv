@@ -1,0 +1,101 @@
+name,category,buyingPrice,sellingPrice,bulkPrice,stock,barcode,unit,productType
+"Samba Rice - 5kg",Staples,1100,1250,1205,158,8800000000001,kg,fixed
+"Keeri Samba Rice - 5kg",Staples,1350,1500,1455,127,8800000000002,kg,fixed
+"Red Raw Rice - 1kg",Staples,190,220,211,54,8800000000003,kg,fixed
+"White Raw Rice - 1kg",Staples,180,210,201,99,8800000000004,kg,fixed
+"Prima Wheat Flour - 1kg",Staples,185,210,203,39,8800000000005,kg,fixed
+"White Sugar - 1kg",Staples,280,310,301,104,8800000000006,kg,fixed
+"Brown Sugar - 1kg",Staples,340,380,368,68,8800000000007,kg,fixed
+"Mysore Dhal - 1kg",Staples,350,400,385,15,8800000000008,kg,fixed
+"Marina Coconut Oil - 1L",Staples,750,850,820,22,8800000000009,l,fixed
+"Fortune Soya Bean Oil - 1L",Staples,900,1050,1005,47,8800000000010,l,fixed
+"Anchor Milk Powder - 400g",Dairy,1150,1250,1220,151,8800000000011,box,fixed
+"Raththi Milk Powder - 400g",Dairy,1100,1200,1170,82,8800000000012,box,fixed
+"Highland Fresh Milk - 1L",Dairy,400,450,435,50,8800000000013,box,fixed
+"Pelwatte Butter - 200g",Dairy,650,750,720,144,8800000000014,pcs,fixed
+"Astra Margarine - 250g",Dairy,350,420,399,161,8800000000015,pcs,fixed
+"Kotmale Cheese Wedges - 120g",Dairy,480,550,529,123,8800000000016,pcs,fixed
+"Brown Eggs - 10 Pack",Dairy,450,550,520,30,8800000000017,box,fixed
+"Wijaya Roasted Curry Powder - 100g",Spices,150,180,171,45,8800000000018,pcs,fixed
+"Wijaya Chilli Powder - 100g",Spices,180,220,208,149,8800000000019,pcs,fixed
+"Wijaya Turmeric Powder - 50g",Spices,80,110,101,21,8800000000020,pcs,fixed
+"Black Pepper Powder - 50g",Spices,120,160,148,157,8800000000021,pcs,fixed
+"Kist Tomato Sauce - 400g",Spices,420,500,476,129,8800000000022,pcs,fixed
+"MD Chilli Sauce - 400g",Spices,400,480,456,84,8800000000023,pcs,fixed
+"Maggi Coconut Milk Powder - 300g",Spices,600,700,670,30,8800000000024,pcs,fixed
+"Marmite - 100g",Spices,750,850,820,148,8800000000025,pcs,fixed
+"Dilmah Ceylon Tea - 400g",Beverages,950,1100,1055,51,8800000000026,box,fixed
+"Watawala Tea - 400g",Beverages,850,980,941,45,8800000000027,box,fixed
+"Nescafe Classic - 50g",Beverages,750,850,820,162,8800000000028,pcs,fixed
+"Coca Cola - 1.5L",Beverages,320,380,362,105,8800000000029,pcs,fixed
+"Sprite - 1.5L",Beverages,320,380,362,31,8800000000030,pcs,fixed
+"Elephant House Cream Soda - 1.5L",Beverages,300,350,335,50,8800000000031,pcs,fixed
+"Milo Powder - 400g",Beverages,980,1100,1064,15,8800000000032,box,fixed
+"Munchee Super Cream Cracker - 400g",Snacks,450,550,520,69,8800000000033,pcs,fixed
+"Maliban Lemon Puff - 200g",Snacks,220,260,248,96,8800000000034,pcs,fixed
+"Munchee Chocolate Biscuit - 200g",Snacks,250,300,285,71,8800000000035,pcs,fixed
+"Maliban Gold Marie - 80g",Snacks,80,100,94,81,8800000000036,pcs,fixed
+"Cassava Chips - 100g",Snacks,180,220,208,46,8800000000037,pcs,fixed
+"Tiara Sponge Cake - 150g",Snacks,200,250,235,137,8800000000038,pcs,fixed
+"Signal Toothpaste - 120g",Personal Care,220,270,255,21,8800000000039,pcs,fixed
+"Clogard Toothpaste - 120g",Personal Care,200,250,235,85,8800000000040,pcs,fixed
+"Lifebuoy Soap - 100g",Personal Care,130,160,151,36,8800000000041,pcs,fixed
+"Sunlight Soap - 120g",Personal Care,110,140,131,52,8800000000042,pcs,fixed
+"Sunsilk Black Shine Shampoo - 180ml",Personal Care,450,550,520,153,8800000000043,pcs,fixed
+"Clear Men Shampoo - 180ml",Personal Care,550,650,620,50,8800000000044,pcs,fixed
+"Dettol Handwash - 200ml",Personal Care,380,450,429,78,8800000000045,pcs,fixed
+"Surf Excel Washing Powder - 1kg",Household,750,880,841,74,8800000000046,pcs,fixed
+"Diva Washing Powder - 1kg",Household,550,650,620,151,8800000000047,pcs,fixed
+"Vim Dishwash Liquid - 500ml",Household,320,390,369,108,8800000000048,pcs,fixed
+"Harpic Toilet Cleaner - 500ml",Household,420,490,469,136,8800000000049,pcs,fixed
+"Mortein Mosquito Coil - 10s",Household,150,180,171,28,8800000000050,pcs,fixed
+"Captain Canned Jack Mackerel - 425g",Canned Goods,580,680,650,135,8800000000051,pcs,fixed
+"Tuna Canned Fish - 425g",Canned Goods,750,850,820,23,8800000000052,pcs,fixed
+"MD Canned Baked Beans - 400g",Canned Goods,450,550,520,48,8800000000053,pcs,fixed
+"Samba Rice - 10kg",Staples,5280,6000,5784,15,8800000000054,kg,fixed
+"Keeri Samba Rice - 10kg",Staples,6480,7200,6984,107,8800000000055,kg,fixed
+"Red Raw Rice - 10kg",Staples,912,1056,1013,74,8800000000056,kg,fixed
+"White Raw Rice - 10kg",Staples,864,1008,965,116,8800000000057,kg,fixed
+"Prima Wheat Flour - 10kg",Staples,888,1008,972,142,8800000000058,kg,fixed
+"White Sugar - 10kg",Staples,1344,1488,1445,37,8800000000059,kg,fixed
+"Brown Sugar - 10kg",Staples,1632,1824,1767,33,8800000000060,kg,fixed
+"Mysore Dhal - 10kg",Staples,1680,1920,1848,24,8800000000061,kg,fixed
+"Marina Coconut Oil - 5L",Staples,3525,3995,3854,139,8800000000062,l,fixed
+"Fortune Soya Bean Oil - 5L",Staples,4230,4935,4724,70,8800000000063,l,fixed
+"Anchor Milk Powder - 400g (Family Pack)",Dairy,2300,2500,2440,159,8800000000064,box,fixed
+"Raththi Milk Powder - 400g (Family Pack)",Dairy,2200,2400,2340,18,8800000000065,box,fixed
+"Highland Fresh Milk - 1L (Family Pack)",Dairy,800,900,870,141,8800000000066,box,fixed
+"Pelwatte Butter - 200g (Large)",Dairy,1170,1350,1296,146,8800000000067,pcs,fixed
+"Astra Margarine - 250g (Large)",Dairy,630,756,719,43,8800000000068,pcs,fixed
+"Kotmale Cheese Wedges - 120g (Large)",Dairy,864,990,953,67,8800000000069,pcs,fixed
+"Brown Eggs - 10 Pack (Family Pack)",Dairy,900,1100,1040,162,8800000000070,box,fixed
+"Wijaya Roasted Curry Powder - 100g (Large)",Spices,270,324,308,111,8800000000071,pcs,fixed
+"Wijaya Chilli Powder - 100g (Large)",Spices,324,396,375,39,8800000000072,pcs,fixed
+"Wijaya Turmeric Powder - 50g (Large)",Spices,144,198,182,71,8800000000073,pcs,fixed
+"Black Pepper Powder - 50g (Large)",Spices,216,288,267,135,8800000000074,pcs,fixed
+"Kist Tomato Sauce - 400g (Large)",Spices,756,900,857,52,8800000000075,pcs,fixed
+"MD Chilli Sauce - 400g (Large)",Spices,720,864,821,19,8800000000076,pcs,fixed
+"Maggi Coconut Milk Powder - 300g (Large)",Spices,1080,1260,1206,94,8800000000077,pcs,fixed
+"Marmite - 100g (Large)",Spices,1350,1530,1476,107,8800000000078,pcs,fixed
+"Dilmah Ceylon Tea - 400g (Family Pack)",Beverages,1900,2200,2110,76,8800000000079,box,fixed
+"Watawala Tea - 400g (Family Pack)",Beverages,1700,1960,1882,21,8800000000080,box,fixed
+"Nescafe Classic - 50g (Large)",Beverages,1350,1530,1476,161,8800000000081,pcs,fixed
+"Coca Cola - 1.5L (Large)",Beverages,576,684,652,150,8800000000082,pcs,fixed
+"Sprite - 1.5L (Large)",Beverages,576,684,652,122,8800000000083,pcs,fixed
+"Elephant House Cream Soda - 1.5L (Large)",Beverages,540,630,603,108,8800000000084,pcs,fixed
+"Milo Powder - 400g (Family Pack)",Beverages,1960,2200,2128,22,8800000000085,box,fixed
+"Munchee Super Cream Cracker - 400g (Large)",Snacks,810,990,936,137,8800000000086,pcs,fixed
+"Maliban Lemon Puff - 200g (Large)",Snacks,396,468,447,151,8800000000087,pcs,fixed
+"Munchee Chocolate Biscuit - 200g (Large)",Snacks,450,540,513,27,8800000000088,pcs,fixed
+"Maliban Gold Marie - 80g (Large)",Snacks,144,180,170,89,8800000000089,pcs,fixed
+"Cassava Chips - 100g (Large)",Snacks,324,396,375,127,8800000000090,pcs,fixed
+"Tiara Sponge Cake - 150g (Large)",Snacks,360,450,423,113,8800000000091,pcs,fixed
+"Signal Toothpaste - 120g (Large)",Personal Care,396,486,459,134,8800000000092,pcs,fixed
+"Clogard Toothpaste - 120g (Large)",Personal Care,360,450,423,70,8800000000093,pcs,fixed
+"Lifebuoy Soap - 100g (Large)",Personal Care,234,288,272,63,8800000000094,pcs,fixed
+"Sunlight Soap - 120g (Large)",Personal Care,198,252,236,22,8800000000095,pcs,fixed
+"Sunsilk Black Shine Shampoo - 180ml (Large)",Personal Care,810,990,936,29,8800000000096,pcs,fixed
+"Clear Men Shampoo - 180ml (Large)",Personal Care,990,1170,1116,89,8800000000097,pcs,fixed
+"Dettol Handwash - 200ml (Large)",Personal Care,684,810,773,100,8800000000098,pcs,fixed
+"Surf Excel Washing Powder - 1kg (Large)",Household,1350,1584,1514,18,8800000000099,pcs,fixed
+"Diva Washing Powder - 1kg (Large)",Household,990,1170,1116,148,8800000000100,pcs,fixed

@@ -6,6 +6,7 @@ const {
   updateProduct,
   deleteProduct,
   bulkAddProducts,
+  bulkDeleteProducts,
   triggerProductRestockAlert,
 } = require("../controllers/productController");
 
@@ -30,6 +31,7 @@ const upload = multer({ storage });
 
 // Routes
 router.post("/bulk", protect, checkPermission("edit_products"), bulkAddProducts);
+router.post("/bulk-delete", protect, checkPermission("edit_products"), bulkDeleteProducts);
 
 router.post("/", protect, checkPermission("edit_products"), upload.single("image"), addProduct);
 

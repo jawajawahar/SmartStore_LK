@@ -14,6 +14,15 @@ const addCustomer = async (req, res) => {
 
     await customer.save();
 
+    const { logAudit } = require("../utils/auditLogger");
+    await logAudit({
+      req,
+      action: "create",
+      entity: "Customer",
+      entityId: customer._id,
+      description: `Customer "${customer.name}" added (Phone: ${customer.phone || "N/A"}, Type: ${customer.customerType || "normal"}).`,
+    }).catch(err => console.error("Customer create audit failed:", err));
+
     res.status(201).json({
       message: "Customer added successfully",
       customer,
@@ -59,6 +68,15 @@ const updateCustomer = async (req, res) => {
 
     await customer.save();
 
+    const { logAudit } = require("../utils/auditLogger");
+    await logAudit({
+      req,
+      action: "update",
+      entity: "Customer",
+      entityId: customer._id,
+      description: `Customer "${customer.name}" updated (Phone: ${customer.phone}, Address: ${customer.address || "N/A"}).`,
+    }).catch(err => console.error("Customer update audit failed:", err));
+
     res.status(200).json({
       message: "Customer updated successfully",
       customer,
@@ -81,7 +99,18 @@ const deleteCustomer = async (req, res) => {
       });
     }
 
+    const customerName = customer.name;
+    const customerPhone = customer.phone;
     await customer.deleteOne();
+
+    const { logAudit } = require("../utils/auditLogger");
+    await logAudit({
+      req,
+      action: "delete",
+      entity: "Customer",
+      entityId: req.params.id,
+      description: `Customer "${customerName}" (Phone: ${customerPhone}) deleted.`,
+    }).catch(err => console.error("Customer delete audit failed:", err));
 
     res.status(200).json({
       message: "Customer deleted successfully",
@@ -130,6 +159,14 @@ const bulkAddCustomers = async (req, res) => {
       inserted = await Customer.insertMany(validRows, { ordered: false });
     }
 
+    const { logAudit } = require("../utils/auditLogger");
+    await logAudit({
+      req,
+      action: "create",
+      entity: "Customer",
+      description: `Bulk import: ${inserted.length} customer(s) added. Names: [${inserted.map(c => c.name).join(", ")}].`,
+    }).catch(err => console.error("Customer bulk audit failed:", err));
+
     res.status(201).json({
       message: `${inserted.length} customer(s) imported successfully`,
       inserted: inserted.length,
@@ -141,10 +178,45 @@ const bulkAddCustomers = async (req, res) => {
   }
 };
 
+// BULK DELETE CUSTOMERS
+const bulkDeleteCustomers = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ message: "No customer IDs provided for deletion" });
+    }
+
+    const customersToDelete = await Customer.find({ _id: { $in: ids } });
+    if (customersToDelete.length === 0) {
+      return res.status(404).json({ message: "No customers found to delete" });
+    }
+
+    const deletedCount = customersToDelete.length;
+    await Customer.deleteMany({ _id: { $in: ids } });
+
+    const { logAudit } = require("../utils/auditLogger");
+    await logAudit({
+      req,
+      action: "delete",
+      entity: "Customer",
+      description: `Bulk deleted ${deletedCount} customer(s). Names: [${customersToDelete.map(c => c.name).join(", ")}]`,
+    });
+
+    res.status(200).json({
+      message: `${deletedCount} customer(s) deleted successfully`,
+      deletedCount,
+    });
+  } catch (error) {
+    console.error("BULK DELETE CUSTOMERS ERROR:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   addCustomer,
   getCustomers,
   updateCustomer,
   deleteCustomer,
   bulkAddCustomers,
+  bulkDeleteCustomers,
 };

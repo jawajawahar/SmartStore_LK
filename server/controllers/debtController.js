@@ -63,6 +63,15 @@ const addDebt = async (req, res) => {
       message: "Debt record processed successfully",
       debt,
     });
+
+    const { logAudit } = require("../utils/auditLogger");
+    logAudit({
+      req,
+      action: "create",
+      entity: "Debt",
+      entityId: debt._id,
+      description: `Debt record created. Total: Rs.${total.toLocaleString()}, Paid upfront: Rs.${paid.toLocaleString()}, Remaining: Rs.${remainingAmount.toLocaleString()}. Description: "${description}".`,
+    }).catch(err => console.error("Debt create audit failed:", err));
   } catch (error) {
     res.status(500).json({
       message: error.message,
@@ -164,6 +173,15 @@ const payDebt = async (req, res) => {
       message: "Payment added",
       debt,
     });
+
+    const { logAudit } = require("../utils/auditLogger");
+    logAudit({
+      req,
+      action: "update",
+      entity: "Debt",
+      entityId: debt._id,
+      description: `Debt payment of Rs.${actualPayment.toLocaleString()} received from "${debt.customer?.name || "Customer"}". Status: ${debt.status}. Remaining: Rs.${debt.remainingAmount.toLocaleString()}.`,
+    }).catch(err => console.error("Debt payment audit failed:", err));
   } catch (error) {
     res.status(500).json({
       message: error.message,
@@ -191,7 +209,19 @@ const deleteDebt = async (req, res) => {
       });
     }
 
+    const debtDesc = debt.description;
+    const debtTotal = debt.totalAmount;
+    const debtRemaining = debt.remainingAmount;
     await debt.deleteOne();
+
+    const { logAudit } = require("../utils/auditLogger");
+    await logAudit({
+      req,
+      action: "delete",
+      entity: "Debt",
+      entityId: req.params.id,
+      description: `Debt record deleted. Description: "${debtDesc}". Total: Rs.${debtTotal.toLocaleString()}, Remaining was: Rs.${debtRemaining.toLocaleString()}.`,
+    }).catch(err => console.error("Debt delete audit failed:", err));
 
     res.status(200).json({
       message: "Debt deleted successfully",
@@ -234,6 +264,15 @@ const updateDebt = async (req, res) => {
     }
 
     res.status(200).json({ message: "Debt record updated successfully", debt });
+
+    const { logAudit } = require("../utils/auditLogger");
+    logAudit({
+      req,
+      action: "update",
+      entity: "Debt",
+      entityId: debt._id,
+      description: `Debt record updated. New Total: Rs.${newTotal.toLocaleString()}, Paid: Rs.${newPaid.toLocaleString()}, Remaining: Rs.${newRemaining.toLocaleString()}.`,
+    }).catch(err => console.error("Debt update audit failed:", err));
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

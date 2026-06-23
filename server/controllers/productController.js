@@ -341,11 +341,46 @@ const triggerProductRestockAlert = async (req, res) => {
   }
 };
 
+// BULK DELETE PRODUCTS
+const bulkDeleteProducts = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ message: "No product IDs provided for deletion" });
+    }
+
+    const productsToDelete = await Product.find({ _id: { $in: ids } });
+    if (productsToDelete.length === 0) {
+      return res.status(404).json({ message: "No products found to delete" });
+    }
+
+    const deletedCount = productsToDelete.length;
+    await Product.deleteMany({ _id: { $in: ids } });
+
+    const { logAudit } = require("../utils/auditLogger");
+    await logAudit({
+      req,
+      action: "delete",
+      entity: "Product",
+      description: `Bulk deleted ${deletedCount} product(s).`,
+    });
+
+    res.status(200).json({
+      message: `${deletedCount} product(s) deleted successfully`,
+      deletedCount,
+    });
+  } catch (error) {
+    console.error("BULK DELETE PRODUCTS ERROR:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   addProduct,
   getProducts,
   updateProduct,
   deleteProduct,
   bulkAddProducts,
+  bulkDeleteProducts,
   triggerProductRestockAlert,
 };

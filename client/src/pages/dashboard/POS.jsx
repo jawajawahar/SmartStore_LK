@@ -66,6 +66,7 @@ const POS = () => {
 
   // Payment Checkout Modal State
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Compact summary toggles
   const [showDiscountInput, setShowDiscountInput] = useState(false);
@@ -145,8 +146,40 @@ const POS = () => {
     }
   }, []);
 
+  // Recalculate cart pricing when selectedCustomer changes (for bulk buyers)
+  useEffect(() => {
+    if (cart.length === 0) return;
+
+    const customer = customers.find((c) => c._id === selectedCustomer);
+    const isBulk = customer?.customerType === "bulk";
+
+    setCart((prevCart) => {
+      let changed = false;
+      const newCart = prevCart.map((item) => {
+        const product = products.find((p) => p._id === item.product);
+        if (!product) return item;
+
+        const correctPrice = isBulk && product.bulkPrice && product.bulkPrice > 0 ? product.bulkPrice : product.sellingPrice;
+        if (item.price !== correctPrice) {
+          changed = true;
+          return {
+            ...item,
+            price: correctPrice,
+            total: item.productType === "weighted" ? item.quantity * correctPrice : item.quantity * correctPrice,
+          };
+        }
+        return item;
+      });
+      return changed ? newCart : prevCart;
+    });
+  }, [selectedCustomer, customers, products]);
+
   // Add To Cart
   const addToCart = (product) => {
+    const customer = customers.find((c) => c._id === selectedCustomer);
+    const isBulk = customer?.customerType === "bulk";
+    const currentPrice = isBulk && product.bulkPrice && product.bulkPrice > 0 ? product.bulkPrice : product.sellingPrice;
+
     const existingItem = cart.find((item) => item.product === product._id);
 
     if (existingItem) {
@@ -162,7 +195,7 @@ const POS = () => {
               ? {
                   ...item,
                   quantity: nextQty,
-                  total: nextQty * item.price,
+                  total: nextQty * currentPrice,
                 }
               : item
           )
@@ -179,8 +212,8 @@ const POS = () => {
           product: product._id,
           name: product.name,
           quantity: product.productType === "weighted" ? 0 : 1,
-          price: product.sellingPrice,
-          total: product.productType === "weighted" ? 0 : product.sellingPrice,
+          price: currentPrice,
+          total: product.productType === "weighted" ? 0 : currentPrice,
           productType: product.productType,
           unit: product.unit || "pcs",
         },
@@ -392,6 +425,8 @@ const POS = () => {
 
   // Checkout
   const handleCheckout = async () => {
+    if (isSubmitting) return;
+
     if (cart.length === 0) {
       toast.error("Cart is empty");
       return;
@@ -410,6 +445,7 @@ const POS = () => {
       return;
     }
 
+    setIsSubmitting(true);
     const checkoutMethod = getPayloadPaymentMethod();
 
     const saleData = {
@@ -463,6 +499,8 @@ const POS = () => {
       } catch (err) {
         console.error("Offline checkout database save error:", err);
         toast.error("Failed to save transaction offline.");
+      } finally {
+        setIsSubmitting(false);
       }
       return;
     }
@@ -502,6 +540,8 @@ const POS = () => {
     } catch (error) {
       console.error("Checkout error:", error);
       toast.error(error.response?.data?.message || "Checkout Failed");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -1417,10 +1457,10 @@ Status: Verified Purchase`;
               <div className="pt-4 border-t border-border-color/60 flex gap-3">
                 <button
                   onClick={handleCheckout}
-                  disabled={cart.length === 0}
+                  disabled={cart.length === 0 || isSubmitting}
                   className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-xl font-bold text-xs uppercase tracking-wide transition-all shadow-md active:scale-[0.98] disabled:opacity-45 disabled:pointer-events-none cursor-pointer"
                 >
-                  Complete & Print
+                  {isSubmitting ? "Processing..." : "Complete & Print"}
                 </button>
                 <button
                   onClick={() => setShowPaymentModal(false)}

@@ -11,9 +11,10 @@ const Customers = () => {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [editingId, setEditingId] = useState(null);
   const [isBulkOpen, setIsBulkOpen] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -140,6 +141,40 @@ const Customers = () => {
       console.log(error);
       toast.error("Failed to delete customer");
     }
+  };
+
+  // Bulk Delete Customers
+  const handleBulkDelete = async () => {
+    try {
+      const confirmDelete = window.confirm(`Are you sure you want to delete ${selectedIds.length} selected customers?`);
+      if (!confirmDelete) return;
+
+      const token = localStorage.getItem("token");
+      await API.post(`/customers/bulk-delete`, { ids: selectedIds }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      toast.success(`${selectedIds.length} customers deleted successfully`);
+      setSelectedIds([]);
+      fetchCustomers();
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to bulk delete customers");
+    }
+  };
+
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      setSelectedIds(filteredCustomers.map(c => c._id));
+    } else {
+      setSelectedIds([]);
+    }
+  };
+
+  const handleSelect = (id) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
   };
 
   // Search Filter
@@ -269,13 +304,25 @@ const Customers = () => {
       )}
 
       {/* Search */}
-      <input
-        type="text"
-        placeholder="Filter customer accounts by name or phone..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        className="w-full bg-bg-card border border-border-color text-text-main placeholder-text-secondary/40 px-5 py-3 rounded-xl outline-none focus:border-indigo-500 transition-colors text-xs mb-6 shadow-xs"
-      />
+      <div className="mb-6 relative flex items-center gap-3">
+        <div className="relative flex-1">
+          <input
+            type="text"
+            placeholder="Filter customer accounts by name or phone..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full bg-bg-card border border-border-color text-text-main placeholder-text-secondary/40 px-5 py-3 rounded-xl outline-none focus:border-indigo-500 transition-colors text-xs shadow-xs"
+          />
+        </div>
+        {selectedIds.length > 0 && (
+          <button
+            onClick={handleBulkDelete}
+            className="flex items-center gap-2 bg-red-600/10 hover:bg-red-600/20 border border-red-600/20 text-red-500 px-4 py-3 rounded-xl text-sm font-semibold transition-all cursor-pointer whitespace-nowrap"
+          >
+            <FaTrash className="text-xs" /> Delete Selected ({selectedIds.length})
+          </button>
+        )}
+      </div>
 
       {/* Customer Table */}
       {loading ? (
@@ -286,6 +333,14 @@ const Customers = () => {
             <table className="w-full">
               <thead className="bg-bg-main/60 border-b border-border-color">
                 <tr>
+                  <th className="px-5 py-3.5 w-12">
+                    <input
+                      type="checkbox"
+                      checked={filteredCustomers.length > 0 && selectedIds.length === filteredCustomers.length}
+                      onChange={handleSelectAll}
+                      className="w-4 h-4 rounded border-border-color bg-bg-card text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                    />
+                  </th>
                   <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Name</th>
                   <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Phone</th>
                   <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Address</th>
@@ -300,8 +355,16 @@ const Customers = () => {
                   currentCustomers.map((customer) => (
                     <tr
                       key={customer._id}
-                      className="hover:bg-bg-main/30 transition-colors"
+                      className="border-b border-border-color/50 hover:bg-bg-main/30 transition-colors group"
                     >
+                      <td className="px-5 py-3.5">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(customer._id)}
+                          onChange={() => handleSelect(customer._id)}
+                          className="w-4 h-4 rounded border-border-color bg-bg-card text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                        />
+                      </td>
                       <td className="px-5 py-3.5 font-bold text-text-main text-xs">{customer.name}</td>
                       <td className="px-5 py-3.5 text-text-secondary text-xs">{customer.phone}</td>
                       <td className="px-5 py-3.5 text-text-secondary text-xs text-slate-500">{customer.address || "—"}</td>

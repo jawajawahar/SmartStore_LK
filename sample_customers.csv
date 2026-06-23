@@ -1,0 +1,101 @@
+name,phone,address,customerType
+"Kasun Senanayake",0766789449,"33/2, Galle Road, Dehiwala",normal
+"Sunil Bandara",0762315881,"23/4, Sea Street, Gampaha",normal
+"Chaminda Liyanage",0768320788,"86/2, High Level Road, Dehiwala",normal
+"Upali Senanayake",0701460161,"82/4, Sea Street, Rajagiriya",normal
+"Samantha Wickramasinghe",0718682678,"129/4, Main Street, Kadawatha",normal
+"Nimal Gunawardena",0714622721,"167/2, Galle Road, Homagama",normal
+"Namal Wijesinghe",0784297881,"24/2, Main Street, Colombo 06",normal
+"Upali Ratnayake",0721229337,"218/1, Duplication Road, Maharagama",normal
+"Ruwan De Silva",0724231461,"124/1, School Lane, Colombo 03",normal
+"Saman Silva",0714581938,"163/5, Negombo Road, Rajagiriya",normal
+"Gayan Ekanayake",0763256216,"117/5, School Lane, Wattala",normal
+"Chaminda Perera",0777883161,"144/1, Havelock Road, Colombo 03",bulk
+"Nimal Karunaratne",0721456414,"151/3, Galle Road, Wattala",bulk
+"Kamal Herath",0764993184,"69/2, School Lane, Battaramulla",normal
+"Sunil Wickramasinghe",0704145837,"185/5, Havelock Road, Kelaniya",bulk
+"Roshan De Silva",0788342828,"223/3, High Level Road, Maharagama",normal
+"Nimal Ekanayake",0762727164,"162/4, Station Road, Malabe",normal
+"Praveen Ratnayake",0769639277,"166/5, School Lane, Nugegoda",bulk
+"Gayan Karunaratne",0776946244,"112/4, Sea Street, Nugegoda",normal
+"Asanka Munasinghe",0771559503,"82/2, Station Road, Gampaha",normal
+"Dinesh Wickramasinghe",0776069460,"220/5, Station Road, Colombo 06",bulk
+"Tharindu Edirisinghe",0784821666,"29/3, Sea Street, Wattala",normal
+"Tharindu Karunaratne",0729698392,"96/3, Station Road, Kottawa",normal
+"Namal Rajapaksha",0771787366,"212/3, Station Road, Kottawa",normal
+"Gayan De Silva",0721614577,"94/1, Duplication Road, Battaramulla",normal
+"Praveen Liyanage",0764820058,"69/5, Main Street, Battaramulla",bulk
+"Mahesh Edirisinghe",0729810965,"49/3, Station Road, Colombo 03",normal
+"Mahesh Silva",0784076664,"135/5, Baseline Road, Ja-Ela",normal
+"Nuwan Ratnayake",0702402739,"221/3, High Level Road, Kadawatha",normal
+"Ruwan Senanayake",0785696073,"108/4, Havelock Road, Kelaniya",normal
+"Saman De Silva",0776584148,"132/5, High Level Road, Rajagiriya",normal
+"Kumara Munasinghe",0709156232,"146/1, Galle Road, Ja-Ela",bulk
+"Chathura Ekanayake",0708004362,"211/5, Galle Road, Malabe",normal
+"Praveen Rajapaksha",0775791310,"55/5, High Level Road, Gampaha",normal
+"Dinesh Edirisinghe",0778488146,"178/4, Main Street, Dehiwala",bulk
+"Praveen Ekanayake",0711974143,"11/5, High Level Road, Colombo 06",bulk
+"Kamal Fernando",0788705698,"165/2, Havelock Road, Colombo 06",normal
+"Gayan Liyanage",0769688908,"122/5, Station Road, Kottawa",bulk
+"Chaminda Perera",0787354407,"201/4, Sea Street, Colombo 06",normal
+"Samantha Dissanayake",0763499522,"194/4, Kandy Road, Kottawa",bulk
+"Gayan Dissanayake",0727666829,"50/4, Main Street, Dehiwala",normal
+"Chaminda Silva",0727489375,"148/1, Negombo Road, Malabe",normal
+"Amila Liyanage",0716880186,"213/1, High Level Road, Dehiwala",bulk
+"Nuwan Senanayake",0728871101,"150/4, Main Street, Dehiwala",normal
+"Chaminda Gunawardena",0775126410,"108/4, Temple Road, Nugegoda",bulk
+"Gayan Karunaratne",0706353735,"106/4, Main Street, Gampaha",normal
+"Sunil Ratnayake",0707034760,"94/3, Duplication Road, Malabe",bulk
+"Gayan Silva",0719789654,"179/5, Baseline Road, Malabe",normal
+"Dinesh Samaranayake",0786257609,"90/3, School Lane, Nugegoda",bulk
+"Kamal Senanayake",0786421440,"18/2, School Lane, Colombo 03",bulk
+"Asanka Silva",0726445356,"27/2, School Lane, Colombo 03",normal
+"Sunil Senanayake",0725036679,"62/3, Kandy Road, Colombo 03",normal
+"Samantha Samaranayake",0703127973,"110/3, Baseline Road, Ja-Ela",normal
+"Nuwan Edirisinghe",0768272504,"216/1, Temple Road, Malabe",normal
+"Mahesh Senanayake",0719052834,"52/4, School Lane, Wattala",normal
+"Namal Karunaratne",0781401382,"33/4, Kandy Road, Colombo 03",normal
+"Upali Bandara",0718698581,"25/2, Station Road, Colombo 06",normal
+"Nuwan Senanayake",0765951381,"178/3, Negombo Road, Wattala",normal
+"Saman Silva",0701954352,"203/1, High Level Road, Dehiwala",bulk
+"Nuwan Perera",0787355087,"55/5, High Level Road, Mount Lavinia",normal
+"Amila Karunaratne",0767287039,"199/3, Negombo Road, Wattala",normal
+"Asanka Karunaratne",0721847071,"21/5, Kandy Road, Kadawatha",bulk
+"Amila De Silva",0719283851,"172/5, Sea Street, Homagama",normal
+"Kumara Gunawardena",0729608367,"243/4, Baseline Road, Dehiwala",bulk
+"Nimal Rajapaksha",0768902430,"191/5, Temple Road, Dehiwala",normal
+"Nuwan Bandara",0768633522,"128/5, Baseline Road, Dehiwala",normal
+"Namal Senanayake",0711759959,"168/3, Negombo Road, Homagama",bulk
+"Ajith Edirisinghe",0717661095,"237/3, Duplication Road, Ja-Ela",bulk
+"Nimal Karunaratne",0787607804,"139/2, School Lane, Battaramulla",normal
+"Samantha Jayasinghe",0729842220,"213/5, Galle Road, Wattala",normal
+"Nuwan Wijesinghe",0715977888,"29/4, Duplication Road, Colombo 06",normal
+"Asanka De Silva",0772205720,"193/3, Havelock Road, Kottawa",normal
+"Chaminda Samaranayake",0718450797,"108/1, Station Road, Kelaniya",normal
+"Roshan Gunawardena",0782386309,"229/1, Station Road, Colombo 03",normal
+"Samantha Wickramasinghe",0703200141,"94/5, Galle Road, Colombo 06",normal
+"Nimal Rajapaksha",0778621636,"239/4, Station Road, Maharagama",normal
+"Upali Jayasinghe",0773002966,"191/5, Negombo Road, Kelaniya",normal
+"Praveen Jayasinghe",0712284692,"201/4, Station Road, Gampaha",normal
+"Chathura Fernando",0765790940,"43/1, Station Road, Ja-Ela",normal
+"Asanka Wijesinghe",0714780864,"120/5, Station Road, Malabe",normal
+"Dinesh Dissanayake",0786707363,"29/3, Station Road, Homagama",normal
+"Namal De Silva",0789816359,"41/3, Kandy Road, Malabe",normal
+"Ajith Bandara",0765251650,"157/2, Havelock Road, Nugegoda",normal
+"Ajith Senanayake",0774277443,"136/3, School Lane, Kottawa",normal
+"Oshada Rajapaksha",0719958624,"14/2, Baseline Road, Rajagiriya",normal
+"Sithum Liyanage",0789559556,"10/4, Duplication Road, Wattala",normal
+"Asanka Herath",0765234912,"127/2, Duplication Road, Wattala",normal
+"Praveen Herath",0782132076,"2/1, Temple Road, Rajagiriya",bulk
+"Kumara Wickramasinghe",0728268641,"177/1, Negombo Road, Colombo 03",normal
+"Upali Karunaratne",0778810788,"58/4, Kandy Road, Malabe",bulk
+"Gayan Dissanayake",0721697569,"213/2, Duplication Road, Ja-Ela",normal
+"Nuwan Bandara",0762617845,"96/4, Duplication Road, Nugegoda",normal
+"Tharindu Liyanage",0704670991,"68/2, Temple Road, Mount Lavinia",normal
+"Oshada Rajapaksha",0786673465,"28/4, Station Road, Gampaha",normal
+"Asanka Edirisinghe",0779030420,"64/2, Station Road, Rajagiriya",normal
+"Sithum De Silva",0774402554,"52/5, High Level Road, Colombo 06",normal
+"Oshada Senanayake",0788938091,"115/3, Negombo Road, Kadawatha",normal
+"Kumara Liyanage",0724804892,"7/2, High Level Road, Malabe",normal
+"Roshan Bandara",0714834293,"113/3, Duplication Road, Ja-Ela",bulk
+"Kumara Gunawardena",0724374423,"75/2, Duplication Road, Colombo 06",normal

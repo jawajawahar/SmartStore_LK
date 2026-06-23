@@ -41,10 +41,10 @@ const normalizePhoneNumber = (phone) => {
 };
 
 // Send message via Twilio REST API using native fetch
-const sendTwilioMessage = async ({ to, body, isWhatsApp }) => {
-  const accountSid = process.env.TWILIO_ACCOUNT_SID;
-  const authToken = process.env.TWILIO_AUTH_TOKEN;
-  const fromPhone = isWhatsApp ? process.env.TWILIO_WHATSAPP_NUMBER : process.env.TWILIO_PHONE_NUMBER;
+const sendTwilioMessage = async ({ to, body, isWhatsApp, contentSid, contentVariables }) => {
+  const accountSid = (process.env.TWILIO_ACCOUNT_SID || "").trim();
+  const authToken = (process.env.TWILIO_AUTH_TOKEN || "").trim();
+  const fromPhone = isWhatsApp ? (process.env.TWILIO_WHATSAPP_NUMBER || "").trim() : (process.env.TWILIO_PHONE_NUMBER || "").trim();
 
   if (!accountSid || !authToken || !fromPhone) {
     throw new Error("Missing Twilio credentials in environment configuration.");
@@ -62,7 +62,15 @@ const sendTwilioMessage = async ({ to, body, isWhatsApp }) => {
   const params = new URLSearchParams();
   params.append("To", formattedTo);
   params.append("From", formattedFrom);
-  params.append("Body", body);
+  
+  if (isWhatsApp && contentSid) {
+    params.append("ContentSid", contentSid);
+    if (contentVariables) {
+      params.append("ContentVariables", JSON.stringify(contentVariables));
+    }
+  } else {
+    params.append("Body", body);
+  }
 
   const response = await fetch(url, {
     method: "POST",
@@ -295,6 +303,12 @@ const checkAndNotifyRestock = async (productDoc, options = { force: false }) => 
             to: supplier.phone,
             body: alertBodyText,
             isWhatsApp: true,
+            // Twilio Sandbox approved template: "Thank you for your order. Your delivery is scheduled for {{1}} at {{2}}."
+            contentSid: "HX350d429d32e64a552466cafecbe95f3c",
+            contentVariables: {
+              "1": product.name,
+              "2": `(Low stock: ${product.stock})`
+            }
           });
           console.log(`[Restock System] Restock WhatsApp sent successfully via Twilio to ${supplier.phone}.`);
         } else {

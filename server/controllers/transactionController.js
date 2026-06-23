@@ -36,6 +36,15 @@ const addTransaction = async (req, res) => {
       user: req.user.id,
     });
 
+    const { logAudit } = require("../utils/auditLogger");
+    logAudit({
+      req,
+      action: "create",
+      entity: "Transaction",
+      entityId: transaction._id,
+      description: `Manual transaction created: "${title}" — Rs.${Number(amount).toLocaleString()} (${flow}) via ${paymentMethod || "cash"}. Person: "${personName || "N/A"}".`,
+    }).catch(err => console.error("Transaction create audit failed:", err));
+
     res.status(201).json({
       message: "Transaction added",
       transaction,

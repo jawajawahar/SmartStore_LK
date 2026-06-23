@@ -155,6 +155,37 @@ const createSale = async (req, res) => {
       });
     }
 
+    // ── Audit Log: Record POS checkout for admin/manager verification ──
+    const { logAudit } = require("../utils/auditLogger");
+    const itemsSummary = items.map(i => `${i.quantity}x ${i.name} @Rs.${Number(i.price).toLocaleString()}`).join(", ");
+    const discountInfo = discount > 0
+      ? ` | Discount: ${discountType === "percentage" ? `${discountValue}%` : `Rs.${discount}`} (-Rs.${discount})`
+      : "";
+    const debtInfo = remainingAmount > 0
+      ? ` | DEBT CREATED: Rs.${remainingAmount.toLocaleString()} outstanding`
+      : "";
+
+    await logAudit({
+      req,
+      action: "create",
+      entity: "Sale",
+      entityId: sale._id,
+      description: `POS Checkout by ${req.user.name || "Unknown"} (${req.user.role}). Customer: ${customerName}. Items: [${itemsSummary}]. Subtotal: Rs.${total.toLocaleString()}${discountInfo} | Tax: Rs.${tax.toLocaleString()} | Net: Rs.${net.toLocaleString()} | Paid: Rs.${paid.toLocaleString()} via ${paymentMethod}${debtInfo}`,
+      changes: {
+        items: items.map(i => ({ name: i.name, qty: i.quantity, price: i.price, total: i.total })),
+        totalAmount: total,
+        discountAmount: discount,
+        taxAmount: tax,
+        netAmount: net,
+        paidAmount: paid,
+        remainingAmount,
+        paymentMethod,
+        customer: customerName,
+        cashier: req.user.name || "Unknown",
+        cashierRole: req.user.role,
+      },
+    }).catch(err => console.error("Sale audit log failed:", err));
+
     res.status(201).json({
       message: "Sale completed successfully",
       sale,
