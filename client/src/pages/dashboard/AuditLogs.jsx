@@ -395,132 +395,122 @@ const AuditLogs = () => {
         )}
       </div>
 
-      {/* ────── Detail Slide-Over Panel ────── */}
+      {/* ────── Centered Pop-up Modal ────── */}
       <AnimatePresence>
         {selectedLog && (
-          <>
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
             {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setSelectedLog(null)}
-              className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             />
 
-            {/* Panel */}
+            {/* Modal Container */}
             <motion.div
-              initial={{ x: "100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "100%" }}
-              transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              className="fixed top-0 right-0 h-full w-full max-w-lg bg-bg-card border-l border-border-color shadow-2xl z-50 flex flex-col"
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className="relative w-full max-w-2xl bg-bg-card rounded-2xl shadow-2xl border border-border-color/60 overflow-hidden flex flex-col max-h-[90vh]"
             >
-              {/* Panel Header */}
-              <div className="flex items-center justify-between p-5 border-b border-border-color shrink-0">
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${getActionColor(selectedLog.action)}`}>
+              {/* Modal Header */}
+              <div className="flex items-center justify-between p-6 border-b border-border-color/50 bg-bg-main/30">
+                <div className="flex items-center gap-4">
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl shadow-sm ${getActionColor(selectedLog.action)}`}>
                     {getActionIcon(selectedLog.action)}
                   </div>
                   <div>
-                    <h2 className="text-base font-bold text-text-main">Event Details</h2>
-                    <p className="text-[10px] text-text-secondary font-mono mt-0.5">
-                      #{selectedLog._id.slice(-8).toUpperCase()}
+                    <h2 className="text-xl font-bold text-text-main">Audit Event Details</h2>
+                    <p className="text-sm font-mono text-text-secondary mt-0.5">
+                      Log ID: #{selectedLog._id}
                     </p>
                   </div>
                 </div>
                 <button
                   onClick={() => setSelectedLog(null)}
-                  className="w-8 h-8 rounded-lg bg-bg-main border border-border-color flex items-center justify-center text-text-secondary hover:text-text-main hover:border-rose-500/30 cursor-pointer transition-all"
+                  className="w-10 h-10 rounded-full bg-bg-main hover:bg-rose-500/10 border border-border-color hover:border-rose-500/30 flex items-center justify-center text-text-secondary hover:text-rose-500 transition-colors"
                 >
-                  <FaTimes className="text-xs" />
+                  <FaTimes />
                 </button>
               </div>
 
-              {/* Panel Body - Scrollable */}
-              <div className="flex-1 overflow-y-auto p-5 space-y-5">
-                {/* Action Badge */}
-                <div className="flex items-center gap-2">
-                  <span className={`px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider ${getActionColor(selectedLog.action)}`}>
+              {/* Modal Body */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                
+                {/* Status Row */}
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className={`px-4 py-2 rounded-lg text-sm font-bold uppercase tracking-wider ${getActionColor(selectedLog.action)}`}>
                     {selectedLog.action.replace("_", " ")}
                   </span>
-                  <span className="text-xs font-semibold text-text-main bg-bg-main px-2.5 py-1 rounded-lg border border-border-color/40">
-                    {selectedLog.entity}
-                  </span>
+                  <div className="px-4 py-2 rounded-lg bg-bg-main border border-border-color/50 text-sm font-medium text-text-main">
+                    Target: <span className="font-bold">{selectedLog.entity}</span>
+                  </div>
                   {selectedLog.entityId && (
-                    <span className="text-[10px] text-text-secondary font-mono bg-bg-main px-2 py-1 rounded-lg border border-border-color/40">
-                      #{selectedLog.entityId.toString().slice(-6).toUpperCase()}
-                    </span>
+                    <div className="px-4 py-2 rounded-lg bg-bg-main border border-border-color/50 text-sm font-mono text-text-secondary">
+                      ID: {selectedLog.entityId.toString().slice(-6).toUpperCase()}
+                    </div>
                   )}
                 </div>
 
-                {/* User Info Card */}
-                <div className="bg-bg-main/60 rounded-xl border border-border-color/50 p-4">
-                  <h4 className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                    <FaUser className="text-[10px]" /> Performed By
-                  </h4>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-500 font-bold text-sm">
-                      {selectedLog.userName ? selectedLog.userName.charAt(0).toUpperCase() : "?"}
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-text-main">{selectedLog.userName}</p>
-                      <p className="text-[10px] text-indigo-500 font-bold uppercase tracking-wider mt-0.5">{selectedLog.userRole}</p>
-                    </div>
+                {/* Event Description */}
+                <div className="bg-bg-main rounded-xl p-5 border border-border-color/50">
+                  <h3 className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-2">Description</h3>
+                  <p className="text-base text-text-main leading-relaxed">
+                    {selectedLog.description}
+                  </p>
+                </div>
+
+                {/* Two Column Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-bg-main rounded-xl p-5 border border-border-color/50">
+                    <h3 className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-2">Performed By</h3>
+                    <p className="text-lg font-bold text-text-main">
+                      {selectedLog.userName}
+                    </p>
+                    <p className="text-sm font-semibold text-indigo-500 mt-1 uppercase">
+                      {selectedLog.userRole}
+                    </p>
                   </div>
-                </div>
 
-                {/* Timestamp Card */}
-                <div className="bg-bg-main/60 rounded-xl border border-border-color/50 p-4">
-                  <h4 className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                    <FaClock className="text-[10px]" /> Timestamp
-                  </h4>
-                  <p className="text-sm font-semibold text-text-main">
-                    {new Date(selectedLog.createdAt).toLocaleDateString("en-US", {
-                      weekday: "long", year: "numeric", month: "long", day: "numeric"
-                    })}
-                  </p>
-                  <p className="text-xs text-text-secondary mt-0.5">
-                    {new Date(selectedLog.createdAt).toLocaleTimeString("en-US", {
-                      hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true
-                    })}
-                  </p>
-                </div>
-
-                {/* Description Card */}
-                <div className="bg-bg-main/60 rounded-xl border border-border-color/50 p-4">
-                  <h4 className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-2">Full Description</h4>
-                  <p className="text-xs text-text-main leading-relaxed whitespace-pre-wrap">
-                    {selectedLog.description || "No description provided."}
-                  </p>
+                  <div className="bg-bg-main rounded-xl p-5 border border-border-color/50">
+                    <h3 className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-2">Date & Time</h3>
+                    <p className="text-lg font-bold text-text-main">
+                      {new Date(selectedLog.createdAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+                    </p>
+                    <p className="text-sm font-medium text-text-secondary mt-1">
+                      {new Date(selectedLog.createdAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", second: "2-digit" })}
+                    </p>
+                  </div>
                 </div>
 
                 {/* Structured Changes */}
-                {selectedLog.changes && renderChanges(selectedLog.changes)}
+                {selectedLog.changes && (
+                  <div className="pt-2">
+                    {renderChanges(selectedLog.changes)}
+                  </div>
+                )}
 
-                {/* Client Info Card */}
-                <div className="bg-bg-main/60 rounded-xl border border-border-color/50 p-4">
-                  <h4 className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-3">Client Information</h4>
-                  <div className="space-y-3">
-                    <div className="flex items-start gap-2.5">
-                      <FaGlobe className="text-text-secondary/50 mt-0.5 text-[10px] shrink-0" />
-                      <div>
-                        <p className="text-[10px] text-text-secondary font-bold uppercase tracking-wider">IP Address</p>
-                        <p className="text-xs text-text-main font-mono mt-0.5">{selectedLog.ipAddress || "Unknown"}</p>
-                      </div>
+                {/* System Info */}
+                <div className="bg-bg-main rounded-xl p-5 border border-border-color/50">
+                  <h3 className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-4">System Context</h3>
+                  <div className="space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 border-b border-border-color/40 pb-4">
+                      <span className="text-sm font-semibold text-text-secondary w-32 shrink-0">IP Address</span>
+                      <span className="text-sm font-mono text-text-main">{selectedLog.ipAddress || "Unknown"}</span>
                     </div>
-                    <div className="flex items-start gap-2.5">
-                      <FaDesktop className="text-text-secondary/50 mt-0.5 text-[10px] shrink-0" />
-                      <div>
-                        <p className="text-[10px] text-text-secondary font-bold uppercase tracking-wider">User Agent</p>
-                        <p className="text-xs text-text-main font-mono mt-0.5 break-all leading-relaxed">{selectedLog.userAgent || "Not captured"}</p>
-                      </div>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
+                      <span className="text-sm font-semibold text-text-secondary w-32 shrink-0">Device / Browser</span>
+                      <span className="text-sm font-mono text-text-main break-all">{selectedLog.userAgent || "Not captured"}</span>
                     </div>
                   </div>
                 </div>
+
               </div>
             </motion.div>
-          </>
+          </div>
         )}
       </AnimatePresence>
     </DashboardLayout>
