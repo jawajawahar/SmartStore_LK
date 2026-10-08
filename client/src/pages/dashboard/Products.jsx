@@ -438,16 +438,13 @@ const Products = () => {
 
             {/* Expiry Date */}
             <div>
-              <label className="block text-text-secondary text-[10px] font-bold uppercase tracking-wider mb-2 flex items-center justify-between">
-                <span>Expiry Date (Optional)</span>
-                <span className="text-[9px] text-amber-500 font-bold bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">AI Expiry Tracking</span>
-              </label>
+              <label className="block text-text-secondary text-[10px] font-bold uppercase tracking-wider mb-2">Expiry Date (Optional)</label>
               <input
                 type="date"
                 name="expiryDate"
                 value={formData.expiryDate}
                 onChange={handleChange}
-                className="w-full bg-bg-main border border-border-color text-text-main px-4 py-2.5 rounded-xl outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/25 transition-all text-sm cursor-pointer"
+                className="w-full bg-bg-main border border-border-color text-text-main px-4 py-2.5 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 transition-all text-sm cursor-pointer"
               />
             </div>
 
