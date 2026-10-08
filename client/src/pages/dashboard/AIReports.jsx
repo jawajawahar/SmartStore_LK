@@ -81,6 +81,7 @@ const REPORT_CATEGORIES = [
       { id: "inventory-valuation", label: "Inventory Valuation", icon: <FaDollarSign />, prompt: "Generate an Inventory Valuation Report showing cost value, retail value, and potential profit from current stock." },
       { id: "stock-movement", label: "Stock Movement Report", icon: <FaHistory />, prompt: "Generate a Stock Movement Report showing sales volume per product and return activity." },
       { id: "returns-report", label: "Returns & Refunds Report", icon: <FaUndoAlt />, prompt: "Generate a Returns and Refunds Report summarizing all product returns and refund amounts." },
+      { id: "expiring-products", label: "Expiring Products Alert Report", icon: <FaExclamationTriangle />, prompt: "Generate an Expiring & Expired Products Report highlighting all items expiring within 30 days or already past expiry date with actionable recommendations." },
     ],
   },
 ];
@@ -364,10 +365,13 @@ Use the following REAL business data for the period from ${data.period.from} to 
 - Low Stock Products: ${data.inventory.lowStockProducts.map(p => `${p.name} (Stock: ${p.stock}, Min: ${p.minStockLevel})`).join("; ")}
 - Out of Stock Products: ${data.inventory.outOfStockProducts.map(p => p.name).join(", ")}
 - Category Breakdown: ${data.inventory.categoryBreakdown.map(c => `${c.category}: ${c.items} items, Rs. ${c.stockValue.toLocaleString()}`).join("; ")}
+- Products Expiring Within 30 Days (${data.inventory.expiringSoonProducts ? data.inventory.expiringSoonProducts.length : 0} items): ${data.inventory.expiringSoonProducts && data.inventory.expiringSoonProducts.length > 0 ? data.inventory.expiringSoonProducts.map(p => `${p.name} (Stock: ${p.stock}, Expires: ${p.expiryDate}, Days Left: ${p.daysLeft})`).join("; ") : "None"}
+- Already Expired Products (${data.inventory.expiredProducts ? data.inventory.expiredProducts.length : 0} items): ${data.inventory.expiredProducts && data.inventory.expiredProducts.length > 0 ? data.inventory.expiredProducts.map(p => `${p.name} (Stock: ${p.stock}, Expired On: ${p.expiryDate})`).join("; ") : "None"}
 
 ## RETURNS & REFUNDS
-- Total Returns: ${data.returns.totalReturns}
-- Total Refund Amount: Rs. ${data.returns.totalRefundAmount.toLocaleString()}
+- Total Return Transactions: ${data.returns.totalReturns}
+- Total Refund / Return Amount: Rs. ${data.returns.totalRefundAmount.toLocaleString()}
+- Returned Items List: ${data.returns.returnItemsList && data.returns.returnItemsList.length > 0 ? data.returns.returnItemsList.join(", ") : "None"}
 
 ## CUSTOMER DEBTS (OUTSTANDING)
 - Total Outstanding Customer Debt: Rs. ${data.debts.totalOutstandingDebt.toLocaleString()}
@@ -385,13 +389,21 @@ INSTRUCTIONS:
 - Write a professional, detailed report in Markdown format
 - Language constraint: Write the entire report in ${activeLang === 'ta' ? 'Tamil (தமிழ்)' : 'English'}. Translate all headings, sections, explanations, analysis, recommendations, and labels to ${activeLang === 'ta' ? 'Tamil (தமிழ்)' : 'English'}.
 - Start with a clear title (# heading) and period
-- Use tables where appropriate for financial data
-- Include key insights, recommendations, and action items at the end
+- MANDATORY SECTIONS: You MUST include the following structured sections:
+  1. Executive Summary & Overview (நிர்வாகச் சுருக்கம்)
+  2. Sales & Revenue Analysis (விற்பனைப் பகுப்பாய்வு)
+  3. Returns & Refunds Breakdown (திரும்பப்பெற்ற பொருட்கள் மற்றும் ரீஃபண்ட் பகுப்பாய்வு)
+  4. Financial & Profitability Summary (நிதி மற்றும் லாப விவரம்)
+  5. Inventory & Stock Status & Expiry Risk (சரக்கு இருப்பு மற்றும் காலாவதியாகும் பொருட்கள் விவரம்)
+  6. Customer Debts & Supplier Payables (கடன் மற்றும் நிலுவைத் தொகைகள்)
+  7. Key Actionable Recommendations (முக்கிய பரிந்துரைகள்)
+- In Section 3 (Returns & Refunds Breakdown), explicitly analyze return activity, count of returns (${data.returns.totalReturns}), total refund/return value (Rs. ${data.returns.totalRefundAmount.toLocaleString()}), returned items, and how returns impact gross vs net revenue or customer debt!
+- CRITICAL EXPIRY RISK ANALYSIS: In Section 5, if any products are expiring within 30 days or already expired, you MUST explicitly detail the product name, stock quantity, expiry date, days remaining, and provide urgent action recommendations (e.g. 20-50% discount sales, bundle offers, or return to supplier)!
+- Use tables where appropriate for financial and inventory data
 - Use Rs. or ரூ. currency format throughout
-- Be specific with numbers from the data provided
+- Be specific with exact numbers from the data provided
 - Use ## for main sections, ### for subsections
-- Provide actionable business insights based on the data
-- The report should be comprehensive but well-organized
+- The report should be comprehensive, thorough, and beautifully formatted in Markdown
       `.trim();
 
       const genAI = new GoogleGenerativeAI(apiKey);

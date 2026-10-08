@@ -15,6 +15,7 @@ const addProduct = async (req, res) => {
       unit,
       supplier,
       minStockLevel,
+      expiryDate,
     } = req.body;
 
     const image = req.file ? req.file.path : "";
@@ -32,6 +33,7 @@ const addProduct = async (req, res) => {
       unit,
       supplier: supplier || null,
       minStockLevel: minStockLevel ? Number(minStockLevel) : undefined,
+      expiryDate: expiryDate ? new Date(expiryDate) : null,
     });
 
     await product.save();
@@ -118,6 +120,7 @@ const bulkAddProducts = async (req, res) => {
           unit: row.unit || "pcs",
           productType: row.productType || "fixed",
           sku,
+          expiryDate: row.expiryDate ? new Date(row.expiryDate) : null,
         });
       }
     }
@@ -189,6 +192,7 @@ const updateProduct = async (req, res) => {
       unit,
       supplier,
       minStockLevel,
+      expiryDate,
     } = req.body;
 
     const product = await Product.findById(req.params.id);
@@ -211,6 +215,7 @@ const updateProduct = async (req, res) => {
       unit,
       supplier: supplier || null,
       minStockLevel: minStockLevel ? Number(minStockLevel) : undefined,
+      expiryDate: expiryDate ? new Date(expiryDate) : null,
     };
 
     // If restocked above the minimum level, reset the restock alert timestamp

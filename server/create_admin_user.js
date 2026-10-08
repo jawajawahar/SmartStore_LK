@@ -1,7 +1,8 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
+const path = require("path");
 const dotenv = require("dotenv");
-dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, ".env") });
 
 const User = require("./models/User");
 
@@ -10,28 +11,37 @@ async function createAdmin() {
     await mongoose.connect(process.env.MONGO_URI);
     console.log("Connected to MongoDB");
 
-    const existing = await User.findOne({ email: "admin@store.com" });
-    if (existing) {
-      console.log("Admin user already exists");
-      process.exit(0);
-    }
+    const adminEmail = "jawajawaharsha@gmail.com";
+    const rawPassword = "Jawa15155-A";
+
+    let existing = await User.findOne({ $or: [{ email: adminEmail }, { role: "admin" }] });
 
     const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash("password123", salt);
+    const hashedPassword = await bcrypt.hash(rawPassword, salt);
 
-    const admin = new User({
-      name: "Admin User",
-      email: "admin@store.com",
-      password: hashedPassword,
-      role: "admin",
-      permissions: ["all"],
-      isActive: true
-    });
+    if (existing) {
+      existing.email = adminEmail;
+      existing.password = hashedPassword;
+      existing.role = "admin";
+      existing.permissions = ["all"];
+      existing.isActive = true;
+      await existing.save();
+      console.log("Admin user updated successfully!");
+    } else {
+      const admin = new User({
+        name: "Admin User",
+        email: adminEmail,
+        password: hashedPassword,
+        role: "admin",
+        permissions: ["all"],
+        isActive: true
+      });
+      await admin.save();
+      console.log("Admin user created successfully!");
+    }
 
-    await admin.save();
-    console.log("Admin user created successfully!");
-    console.log("Email: admin@store.com");
-    console.log("Password: password123");
+    console.log(`Email: ${adminEmail}`);
+    console.log(`Password: ${rawPassword}`);
   } catch (error) {
     console.error("Error creating admin user:", error);
   } finally {

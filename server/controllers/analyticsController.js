@@ -330,6 +330,17 @@ const getReportData = async (req, res) => {
       (p) => (p.stock || 0) <= (p.minStockLevel || 5) && (p.stock || 0) > 0
     );
     const outOfStockProducts = products.filter((p) => (p.stock || 0) === 0);
+    // Expiring Soon (within 30 days) and Expired Products
+    const now = new Date();
+    const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+    const expiredProducts = products.filter((p) => p.expiryDate && new Date(p.expiryDate) < now);
+    const expiringSoonProducts = products.filter((p) => {
+      if (!p.expiryDate) return false;
+      const exp = new Date(p.expiryDate);
+      return exp >= now && exp <= thirtyDaysFromNow;
+    });
+
     const categoryStockMap = {};
     products.forEach((p) => {
       const cat = p.category || "Uncategorized";
@@ -342,6 +353,9 @@ const getReportData = async (req, res) => {
     // --- RETURNS SUMMARY ---
     const totalReturns = returnRecords.length;
     const totalRefundAmount = returnRecords.reduce((a, r) => a + (r.refundAmount || 0), 0);
+    const returnItemsList = returnRecords.flatMap((r) =>
+      (r.items || []).map((i) => `${i.quantity}x ${i.name || "Item"}`)
+    );
 
     // --- DEBT SUMMARY ---
     const totalOutstandingDebt = debts.reduce(
@@ -400,11 +414,25 @@ const getReportData = async (req, res) => {
           sku: p.sku || "",
           category: p.category || "Uncategorized",
         })),
+        expiringSoonProducts: expiringSoonProducts.map((p) => ({
+          name: p.name,
+          sku: p.sku || "",
+          stock: p.stock || 0,
+          expiryDate: new Date(p.expiryDate).toLocaleDateString(),
+          daysLeft: Math.ceil((new Date(p.expiryDate) - now) / (1000 * 60 * 60 * 24)),
+        })),
+        expiredProducts: expiredProducts.map((p) => ({
+          name: p.name,
+          sku: p.sku || "",
+          stock: p.stock || 0,
+          expiryDate: new Date(p.expiryDate).toLocaleDateString(),
+        })),
         categoryBreakdown: Object.values(categoryStockMap),
       },
       returns: {
         totalReturns,
         totalRefundAmount,
+        returnItemsList,
       },
       debts: {
         totalOutstandingDebt,

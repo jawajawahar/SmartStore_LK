@@ -91,12 +91,56 @@ const createReturn = async (req, res) => {
       });
     }
 
+    const Debt = require("../models/Debt");
+
+    // Calculate total return value
+    const totalReturnVal = processedItems.reduce((acc, curr) => acc + curr.total, 0);
+    const requestedRefund = Number(refundAmount) || totalReturnVal;
+
+    // Check if there is a pending debt associated with this sale or customer
+    let debtReduction = 0;
+    let linkedDebt = await Debt.findOne({ sale: sale._id, status: "pending" });
+    if (!linkedDebt && sale.customer) {
+      linkedDebt = await Debt.findOne({ customer: sale.customer._id || sale.customer, status: "pending" }).sort({ createdAt: -1 });
+    }
+
+    if (linkedDebt && linkedDebt.remainingAmount > 0) {
+      debtReduction = Math.min(requestedRefund, linkedDebt.remainingAmount);
+
+      linkedDebt.totalAmount = Math.max(0, linkedDebt.totalAmount - totalReturnVal);
+      linkedDebt.remainingAmount = Math.max(0, linkedDebt.totalAmount - linkedDebt.paidAmount);
+
+      if (linkedDebt.remainingAmount <= 0) {
+        linkedDebt.remainingAmount = 0;
+        linkedDebt.status = "paid";
+      }
+
+      await linkedDebt.save();
+
+      // Reduce customer debt
+      if (sale.customer) {
+        await Customer.findByIdAndUpdate(
+          sale.customer._id || sale.customer,
+          { $inc: { currentDebt: -debtReduction } }
+        );
+      }
+    }
+
+    // Update Sale totals
+    sale.netAmount = Math.max(0, sale.netAmount - totalReturnVal);
+    sale.totalAmount = Math.max(0, sale.totalAmount - totalReturnVal);
+    sale.remainingAmount = Math.max(0, sale.netAmount - sale.paidAmount);
+    await sale.save();
+
+    // Actual cash refund to customer (portion exceeding debt)
+    const actualCashRefund = Math.max(0, requestedRefund - debtReduction);
+
     // Create the Return document
     const newReturn = new Return({
       originalSale: originalSaleId,
       items: processedItems,
       reason: reason || "Customer satisfaction return",
-      refundAmount: Number(refundAmount) || 0,
+      refundAmount: requestedRefund,
       status: "completed",
       user: req.user.id,
     });
@@ -109,16 +153,18 @@ const createReturn = async (req, res) => {
       action: "status_change",
       entity: "Sale",
       entityId: sale._id,
-      description: `Invoice Return/Cancellation processed for Sale #${sale._id.toString().slice(-6)}. Reason: "${reason || 'Customer satisfaction return'}". Refund: Rs. ${refundAmount}. Items: ${processedItems.map(i => `${i.quantity}x ${i.name}`).join(", ")}`,
+      description: `Invoice Return processed for Sale #${sale._id.toString().slice(-6)}. Reason: "${reason || 'Customer satisfaction return'}". Return Value: Rs. ${requestedRefund}${debtReduction > 0 ? ` (Debt reduced by Rs. ${debtReduction})` : ''}${actualCashRefund > 0 ? ` (Cash Refund: Rs. ${actualCashRefund})` : ''}. Items: ${processedItems.map(i => `${i.quantity}x ${i.name}`).join(", ")}`,
       changes: {
-        refundAmount,
+        refundAmount: requestedRefund,
+        debtReduction,
+        cashRefund: actualCashRefund,
         reason,
         itemsCount: processedItems.length
       }
     });
 
-    // Create corresponding Transaction for the refund payout
-    if (Number(refundAmount) > 0) {
+    // Create corresponding Transaction for the cash refund payout if any cash was refunded
+    if (actualCashRefund > 0) {
       let customerName = "Walk-in Customer";
       if (sale.customer) {
         customerName = sale.customer.name;
@@ -128,7 +174,7 @@ const createReturn = async (req, res) => {
         type: "refund",
         title: `Refund: Return for Sale #${sale._id.toString().slice(-6)}`,
         personName: customerName,
-        amount: Number(refundAmount),
+        amount: actualCashRefund,
         flow: "expense",
         paymentMethod: "cash", // default to cash refund
         description: reason || `Refund for return of ${processedItems.length} item(s)`,

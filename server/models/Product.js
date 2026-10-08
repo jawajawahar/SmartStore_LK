@@ -82,6 +82,11 @@ const productSchema = new mongoose.Schema(
       default: false,
     },
 
+    expiryDate: {
+      type: Date,
+      default: null,
+    },
+
     batchTracking: {
       type: Boolean,
       default: false,

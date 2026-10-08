@@ -78,6 +78,7 @@ const Products = () => {
     barcode: "",
     supplier: "",
     minStockLevel: "5",
+    expiryDate: "",
   });
 
   const [suppliers, setSuppliers] = useState([]);
@@ -182,6 +183,7 @@ const Products = () => {
         barcode: "",
         supplier: "",
         minStockLevel: "5",
+        expiryDate: "",
       });
 
       setProductType("fixed");
@@ -210,6 +212,7 @@ const Products = () => {
       barcode: product.barcode || "",
       supplier: product.supplier?._id || product.supplier || "",
       minStockLevel: product.minStockLevel !== undefined ? product.minStockLevel : "5",
+      expiryDate: product.expiryDate ? new Date(product.expiryDate).toISOString().split("T")[0] : "",
     });
 
     setProductType(product.productType || "fixed");
@@ -388,6 +391,7 @@ const Products = () => {
               type="number"
               value={formData.bulkPrice}
               onChange={handleChange}
+              required={false}
             />
 
             <Input
@@ -403,6 +407,7 @@ const Products = () => {
               name="barcode"
               value={formData.barcode}
               onChange={handleChange}
+              required={false}
             />
 
             <Input
@@ -411,6 +416,7 @@ const Products = () => {
               type="number"
               value={formData.minStockLevel}
               onChange={handleChange}
+              required={false}
             />
 
             <div>
@@ -428,6 +434,21 @@ const Products = () => {
                   </option>
                 ))}
               </select>
+            </div>
+
+            {/* Expiry Date */}
+            <div>
+              <label className="block text-text-secondary text-[10px] font-bold uppercase tracking-wider mb-2 flex items-center justify-between">
+                <span>Expiry Date (Optional)</span>
+                <span className="text-[9px] text-amber-500 font-bold bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">AI Expiry Tracking</span>
+              </label>
+              <input
+                type="date"
+                name="expiryDate"
+                value={formData.expiryDate}
+                onChange={handleChange}
+                className="w-full bg-bg-main border border-border-color text-text-main px-4 py-2.5 rounded-xl outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/25 transition-all text-sm cursor-pointer"
+              />
             </div>
 
             {/* Product Type */}
@@ -494,6 +515,7 @@ const Products = () => {
                     barcode: "",
                     supplier: "",
                     minStockLevel: "5",
+                    expiryDate: "",
                   });
                   setProductType("fixed");
                   setUnit("pcs");
@@ -561,6 +583,7 @@ const Products = () => {
                   <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Stock</th>
                   <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Type</th>
                   <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Unit</th>
+                  <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Expiry Date</th>
                   {hasEditProducts && (
                     <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-text-secondary">Actions</th>
                   )}
@@ -673,6 +696,39 @@ const Products = () => {
                       {/* Unit */}
                       <td className="px-5 py-3.5 uppercase text-text-secondary text-[10px] font-bold">{product.unit}</td>
 
+                      {/* Expiry Date */}
+                      <td className="px-5 py-3.5 text-xs">
+                        {product.expiryDate ? (
+                          (() => {
+                            const now = new Date();
+                            const exp = new Date(product.expiryDate);
+                            const days = Math.ceil((exp - now) / (1000 * 60 * 60 * 24));
+                            const isExpired = days < 0;
+                            const isExpiringSoon = days >= 0 && days <= 30;
+
+                            return (
+                              <div className="flex flex-col">
+                                <span className="font-semibold text-text-main text-[11px]">
+                                  {exp.toLocaleDateString()}
+                                </span>
+                                {isExpired && (
+                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-black uppercase bg-rose-500/10 text-rose-500 border border-rose-500/20 w-fit mt-0.5">
+                                    EXPIRED
+                                  </span>
+                                )}
+                                {isExpiringSoon && (
+                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-black uppercase bg-amber-500/10 text-amber-500 border border-amber-500/20 w-fit mt-0.5">
+                                    {days === 0 ? "Expires Today" : `${days}d Left`}
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })()
+                        ) : (
+                          <span className="text-text-secondary/50 text-[10px]">N/A</span>
+                        )}
+                      </td>
+
                       {/* Actions */}
                       {hasEditProducts && (
                         <td className="px-5 py-3.5 text-xs">
@@ -723,7 +779,7 @@ const Products = () => {
 };
 
 // Input Component
-const Input = ({ label, name, type = "text", value, onChange }) => {
+const Input = ({ label, name, type = "text", value, onChange, required = true }) => {
   return (
     <div>
       <label className="block text-text-secondary text-[10px] font-bold uppercase tracking-wider mb-2">{label}</label>
@@ -732,7 +788,7 @@ const Input = ({ label, name, type = "text", value, onChange }) => {
         name={name}
         value={value}
         onChange={onChange}
-        required
+        required={required}
         className="w-full bg-bg-main border border-border-color text-text-main placeholder-text-secondary/40 px-4 py-2.5 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 transition-all text-sm"
       />
     </div>
