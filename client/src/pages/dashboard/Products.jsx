@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import DashboardLayout from "../../layouts/DashboardLayout";
-import { FaEdit, FaTrash, FaPlus, FaFilter, FaCloudUploadAlt, FaWhatsapp, FaPaperPlane } from "react-icons/fa";
+import { FaEdit, FaTrash, FaPlus, FaFilter, FaCloudUploadAlt, FaWhatsapp, FaPaperPlane, FaCamera, FaBarcode } from "react-icons/fa";
 import API from "../../services/api";
 import { toast } from "react-toastify";
 import BulkUpload from "../../components/BulkUpload";
+import BarcodeScanner from "../../components/BarcodeScanner";
 import Pagination from "../../components/Pagination";
 import { TableSkeleton } from "../../components/SkeletonLoader";
 
@@ -18,6 +19,7 @@ const Products = () => {
   const [editingId, setEditingId] = useState(null);
   const [image, setImage] = useState(null);
   const [isBulkOpen, setIsBulkOpen] = useState(false);
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [selectedIds, setSelectedIds] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -58,6 +60,44 @@ const Products = () => {
     } catch (error) {
       console.error("Failed to send restock alert:", error);
       toast.error(error.response?.data?.message || "Failed to trigger restock alert");
+    }
+  };
+
+  // Barcode / QR Code Scanner auto-fill callback
+  const handleScan = (scannedText) => {
+    try {
+      const text = scannedText.trim();
+      if (text.startsWith("{") && text.endsWith("}")) {
+        const parsed = JSON.parse(text);
+        setFormData((prev) => ({
+          ...prev,
+          name: parsed.name || parsed.productName || prev.name,
+          category: parsed.category || prev.category,
+          buyingPrice: parsed.buyingPrice !== undefined ? String(parsed.buyingPrice) : prev.buyingPrice,
+          sellingPrice: parsed.sellingPrice !== undefined ? String(parsed.sellingPrice) : prev.sellingPrice,
+          bulkPrice: parsed.bulkPrice !== undefined ? String(parsed.bulkPrice) : prev.bulkPrice,
+          stock: parsed.stock !== undefined ? String(parsed.stock) : prev.stock,
+          barcode: parsed.barcode || parsed.sku || text,
+          supplier: parsed.supplier || prev.supplier,
+          minStockLevel: parsed.minStockLevel !== undefined ? String(parsed.minStockLevel) : prev.minStockLevel,
+          expiryDate: parsed.expiryDate ? new Date(parsed.expiryDate).toISOString().split("T")[0] : prev.expiryDate,
+        }));
+        if (parsed.unit) setUnit(parsed.unit);
+        if (parsed.productType) setProductType(parsed.productType);
+        toast.success("Product details automatically populated from scanned QR code!");
+      } else {
+        setFormData((prev) => ({
+          ...prev,
+          barcode: text,
+        }));
+        toast.success(`Barcode / SKU set to "${text}"`);
+      }
+    } catch (err) {
+      setFormData((prev) => ({
+        ...prev,
+        barcode: scannedText.trim(),
+      }));
+      toast.success(`Barcode / SKU set to "${scannedText.trim()}"`);
     }
   };
 
@@ -345,9 +385,19 @@ const Products = () => {
       {/* Form */}
       {hasEditProducts && showForm && (
         <div className="bg-bg-card border border-border-color rounded-xl p-6 mb-8 shadow-sm">
-          <h2 className="text-lg font-bold text-text-main mb-5 tracking-tight">
-            {editingId ? "Edit Product Details" : "Add New Product"}
-          </h2>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-5 gap-3">
+            <h2 className="text-lg font-bold text-text-main tracking-tight">
+              {editingId ? "Edit Product Details" : "Add New Product"}
+            </h2>
+            <button
+              type="button"
+              onClick={() => setIsScannerOpen(true)}
+              className="flex items-center gap-2 bg-indigo-500/10 hover:bg-indigo-600 hover:text-white border border-indigo-500/20 text-indigo-500 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs active:scale-95"
+            >
+              <FaCamera className="text-xs" />
+              Scan QR / Barcode to Auto-Fill
+            </button>
+          </div>
 
           <form
             onSubmit={handleSubmit}
@@ -402,13 +452,26 @@ const Products = () => {
               onChange={handleChange}
             />
 
-            <Input
-              label="Barcode / SKU"
-              name="barcode"
-              value={formData.barcode}
-              onChange={handleChange}
-              required={false}
-            />
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-text-secondary text-[10px] font-bold uppercase tracking-wider">Barcode / SKU</label>
+                <button
+                  type="button"
+                  onClick={() => setIsScannerOpen(true)}
+                  className="text-[10px] text-indigo-500 hover:text-indigo-400 font-bold flex items-center gap-1 cursor-pointer"
+                >
+                  <FaCamera className="text-[9px]" /> Scan Camera
+                </button>
+              </div>
+              <input
+                type="text"
+                name="barcode"
+                value={formData.barcode}
+                onChange={handleChange}
+                placeholder="Scan or enter barcode / SKU..."
+                className="w-full bg-bg-main border border-border-color text-text-main placeholder-text-secondary/40 px-4 py-2.5 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 transition-all text-sm"
+              />
+            </div>
 
             <Input
               label="Min Stock Level (Safety Threshold)"
@@ -770,6 +833,11 @@ const Products = () => {
         onClose={() => setIsBulkOpen(false)}
         type="products"
         onSuccess={fetchProducts}
+      />
+      <BarcodeScanner
+        isOpen={isScannerOpen}
+        onClose={() => setIsScannerOpen(false)}
+        onScan={handleScan}
       />
     </DashboardLayout>
   );
